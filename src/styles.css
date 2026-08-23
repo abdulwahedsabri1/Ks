@@ -1,0 +1,200 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --font-display: "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --background: #100c09;
+  --foreground: #f5f0e7;
+  --card: #18120d;
+  --card-foreground: #f5f0e7;
+  --popover: #18120d;
+  --popover-foreground: #f5f0e7;
+  --primary: #f5a623;
+  --primary-foreground: #100c09;
+  --secondary: #3a2818;
+  --secondary-foreground: #f5f0e7;
+  --muted: #18120d;
+  --muted-foreground: #b9b1a7;
+  --accent: #f5a623;
+  --accent-foreground: #100c09;
+  --destructive: oklch(0.6 0.223 27.3);
+  --destructive-foreground: oklch(0.99 0.003 247.9);
+  --success: oklch(0.7 0.153 162.5);
+  --success-foreground: oklch(0.16 0.04 265);
+  --warning: oklch(0.78 0.15 76);
+  --warning-foreground: oklch(0.24 0.05 76);
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #f5a623;
+  --chart-1: oklch(0.7 0.153 162.5);
+  --chart-2: oklch(0.55 0.12 240);
+  --chart-3: oklch(0.78 0.15 76);
+  --chart-4: oklch(0.62 0.19 300);
+  --chart-5: oklch(0.65 0.2 20);
+  --sidebar: #100c09;
+  --sidebar-foreground: #f5f0e7;
+  --sidebar-primary: #f5a623;
+  --sidebar-primary-foreground: #100c09;
+  --sidebar-accent: #3a2818;
+  --sidebar-accent-foreground: #f5f0e7;
+  --sidebar-border: rgba(255, 255, 255, 0.12);
+  --sidebar-ring: #f5a623;
+
+  --gradient-hero: radial-gradient(circle at center, #3a2818 0%, #100c09 70%);
+  --gradient-gold: linear-gradient(135deg, #ffc45a, #f5a623);
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.1), 0 8px 24px -12px rgba(0, 0, 0, 0.2);
+  --shadow-lift: 0 24px 60px -28px rgba(245, 166, 35, 0.15);
+  --shadow-glow: 0 20px 60px -20px rgba(245, 166, 35, 0.25);
+}
+
+.dark {
+  --background: #100c09;
+  --foreground: #f5f0e7;
+  --card: #18120d;
+  --card-foreground: #f5f0e7;
+  --popover: #18120d;
+  --popover-foreground: #f5f0e7;
+  --primary: #f5a623;
+  --primary-foreground: #100c09;
+  --secondary: #3a2818;
+  --secondary-foreground: #f5f0e7;
+  --muted: #18120d;
+  --muted-foreground: #b9b1a7;
+  --accent: #f5a623;
+  --accent-foreground: #100c09;
+  --destructive: oklch(0.6 0.223 27.3);
+  --destructive-foreground: oklch(0.99 0.003 247.9);
+  --success: oklch(0.7 0.153 162.5);
+  --success-foreground: oklch(0.16 0.04 265);
+  --warning: oklch(0.78 0.15 76);
+  --warning-foreground: oklch(0.24 0.05 76);
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #f5a623;
+  --sidebar: #100c09;
+  --sidebar-foreground: #f5f0e7;
+  --sidebar-primary: #f5a623;
+  --sidebar-primary-foreground: #100c09;
+  --sidebar-accent: #3a2818;
+  --sidebar-accent-foreground: #f5f0e7;
+  --sidebar-border: rgba(255, 255, 255, 0.12);
+  --sidebar-ring: #f5a623;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+}
+
+@utility bg-hero-gradient {
+  background-image: var(--gradient-hero);
+}
+
+@utility bg-gold-gradient {
+  background-image: linear-gradient(135deg, #ffc45a, #f5a623);
+}
+
+@utility text-gradient {
+  background-image: linear-gradient(135deg, #ffc45a, #f5a623);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+
+@utility shadow-lift {
+  box-shadow: var(--shadow-lift);
+}
+
+@utility shadow-glow {
+  box-shadow: var(--shadow-glow);
+}
+
+@utility glass-card {
+  background-color: color-mix(in oklab, var(--card) 72%, transparent);
+  backdrop-filter: blur(18px);
+  border: 1px solid color-mix(in oklab, var(--border) 90%, transparent);
+  box-shadow: var(--shadow-soft);
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 100px;
+}
