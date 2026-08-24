@@ -67,11 +67,13 @@ function DashboardPage() {
       ) : !shop ? (
         <CreateShop userId={user?.id} />
       ) : (
-        <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-3">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3">
             <Stat label="Menu views (30d)" value={views} icon={BarChart3} />
             <Stat label="QR scans (30d)" value={scans} icon={QrCode} />
-            <Stat label="Menu items" value={items?.length ?? 0} icon={UtensilsCrossed} />
+            <div className="col-span-2 sm:col-span-1">
+              <Stat label="Menu items" value={items?.length ?? 0} icon={UtensilsCrossed} />
+            </div>
           </div>
 
           {/* ── Payment Warning Banners ─── */}
@@ -88,7 +90,7 @@ function DashboardPage() {
                 >
                   {shop.payment_status === "overdue" ? "Payment Overdue" : "Payment Pending"}
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
                   Your subscription payment of{" "}
                   {money(Number(shop.amount_paid ?? PLAN_PRICE[shop.plan] ?? 0))} is{" "}
                   {shop.payment_status}.
@@ -105,21 +107,21 @@ function DashboardPage() {
               <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-500" />
               <div>
                 <p className="text-sm font-medium text-emerald-600">Subscription Active</p>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
                   Your payment has been confirmed. Enjoy your {shop.plan} plan!
                 </p>
               </div>
             </div>
           )}
 
-          <div className="rounded-2xl border bg-card p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-display text-lg font-semibold">{shop.name}</h2>
-                <p className="text-sm text-muted-foreground">{shop.niche}</p>
+          <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <h2 className="font-display text-base sm:text-lg font-bold truncate">{shop.name}</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">{shop.niche}</p>
               </div>
               <span
-                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold shrink-0 ${
                   subscriptionState(shop) === "active"
                     ? "bg-emerald-500/15 text-emerald-600"
                     : subscriptionState(shop) === "payment_pending"
@@ -135,7 +137,7 @@ function DashboardPage() {
               </span>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-4 grid gap-2.5 grid-cols-2 lg:grid-cols-4">
               <Meta label="Plan" value={<span className="capitalize">{shop.plan}</span>} />
               <Meta
                 label="Payment"
@@ -196,36 +198,37 @@ function DashboardPage() {
               </div>
             )}
 
-            <ul className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
+            <ul className="mt-4 flex flex-wrap gap-1.5 text-xs text-muted-foreground">
               {[
-                { label: `${Number.isFinite(planOf(shop.plan).items) ? planOf(shop.plan).items : "Unlimited"} menu items`, locked: false },
-                { label: planOf(shop.plan).ai ? "AI menu tools" : "AI tools locked", locked: !planOf(shop.plan).ai },
+                { label: `${Number.isFinite(planOf(shop.plan).items) ? planOf(shop.plan).items : "Unlimited"} items`, locked: false },
+                { label: planOf(shop.plan).ai ? "AI tools" : "AI locked", locked: !planOf(shop.plan).ai },
                 { label: planOf(shop.plan).ordering ? "WhatsApp ordering" : "Ordering locked", locked: !planOf(shop.plan).ordering },
-                { label: planOf(shop.plan).analytics ? "Full analytics" : "Basic view counter", locked: !planOf(shop.plan).analytics },
+                { label: planOf(shop.plan).analytics ? "Full analytics" : "Basic views", locked: !planOf(shop.plan).analytics },
               ].map((f) => (
-                <li key={f.label} className={`rounded-full border px-2.5 py-1 ${f.locked ? "border-red-500/20 text-red-500/80 bg-red-500/5" : ""}`}>
-                  {f.locked && <Lock className="inline-block w-3 h-3 mr-1 mb-0.5" />}
+                <li key={f.label} className={`rounded-full border px-2.5 py-0.5 text-[11px] ${f.locked ? "border-red-500/20 text-red-500/80 bg-red-500/5" : "bg-muted/30"}`}>
+                  {f.locked && <Lock className="inline-block size-3 mr-1 mb-0.5" />}
                   {f.label}
                 </li>
               ))}
             </ul>
-            <div className="mt-4 flex flex-wrap gap-2 items-center justify-between">
-              <div className="flex flex-wrap gap-2">
-                <Button asChild variant="outline" size="sm">
+
+            <div className="mt-5 pt-4 border-t border-border flex flex-col sm:flex-row gap-2.5 sm:items-center sm:justify-between">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+                <Button asChild variant="outline" size="sm" className="h-9 text-xs">
                   <a href={`/shop/${shop.slug}`} target="_blank" rel="noreferrer">
-                    <ExternalLink className="size-4" /> View public menu
+                    <ExternalLink className="size-3.5 mr-1" /> View Menu
                   </a>
                 </Button>
-                <Button asChild size="sm">
-                  <Link to="/menu">Edit menu</Link>
+                <Button asChild size="sm" className="h-9 text-xs">
+                  <Link to="/menu">Edit Menu</Link>
                 </Button>
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/qr">Get QR code</Link>
+                <Button asChild variant="outline" size="sm" className="h-9 text-xs col-span-2 sm:col-span-1">
+                  <Link to="/qr">Get QR Code</Link>
                 </Button>
               </div>
               
               {shop.plan === "trial" && (
-                <Button asChild variant="default" size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white font-medium">
+                <Button asChild variant="default" size="sm" className="h-9 text-xs bg-emerald-500 hover:bg-emerald-600 text-white font-medium w-full sm:w-auto">
                   <Link to="/pricing">Unlock All Features</Link>
                 </Button>
               )}
@@ -239,9 +242,9 @@ function DashboardPage() {
 
 function Meta({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-xl border bg-muted/40 p-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-sm font-medium">{value}</p>
+    <div className="rounded-xl border bg-muted/40 p-2.5 sm:p-3">
+      <p className="text-[11px] sm:text-xs text-muted-foreground">{label}</p>
+      <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm font-semibold truncate">{value}</p>
     </div>
   );
 }
@@ -256,12 +259,12 @@ function Stat({
   icon: typeof BarChart3;
 }) {
   return (
-    <div className="rounded-2xl border bg-card p-5">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <Icon className="size-4 text-muted-foreground" />
+    <div className="rounded-2xl border bg-card p-3.5 sm:p-5 shadow-sm">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate">{label}</p>
+        <Icon className="size-4 text-muted-foreground shrink-0" />
       </div>
-      <p className="mt-2 font-display text-3xl font-semibold">{value}</p>
+      <p className="mt-1.5 sm:mt-2 font-display text-2xl sm:text-3xl font-bold">{value}</p>
     </div>
   );
 }
@@ -299,26 +302,27 @@ function CreateShop({ userId }: { userId?: string | undefined }) {
   }
 
   return (
-    <div className="max-w-lg rounded-2xl border bg-card p-6">
-      <h2 className="font-display text-lg font-semibold">Create your shop</h2>
-      <p className="mt-1 text-sm text-muted-foreground">This takes about 30 seconds.</p>
+    <div className="max-w-lg mx-auto sm:mx-0 rounded-2xl border bg-card p-5 sm:p-6 shadow-sm">
+      <h2 className="font-display text-lg font-bold">Create your shop</h2>
+      <p className="mt-1 text-xs sm:text-sm text-muted-foreground">This takes about 30 seconds.</p>
       <div className="mt-5 space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="shop-name">Shop name</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="shop-name" className="text-xs font-semibold">Shop name</Label>
           <Input
             id="shop-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Rafeek Textile"
+            className="text-xs h-10"
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="niche">Business type</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="niche" className="text-xs font-semibold">Business type</Label>
           <select
             id="niche"
             value={niche}
             onChange={(e) => setNiche(e.target.value)}
-            className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+            className="h-10 w-full rounded-md border border-input bg-background px-3 text-xs"
           >
             {NICHES.map((n) => (
               <option key={n} value={n}>
@@ -327,16 +331,17 @@ function CreateShop({ userId }: { userId?: string | undefined }) {
             ))}
           </select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="wa">WhatsApp number (with country code)</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="wa" className="text-xs font-semibold">WhatsApp number (with country code)</Label>
           <Input
             id="wa"
             value={whatsapp}
             onChange={(e) => setWhatsapp(e.target.value)}
             placeholder="919876543210"
+            className="text-xs h-10"
           />
         </div>
-        <Button className="w-full" onClick={create} disabled={saving}>
+        <Button className="w-full h-10 text-xs font-bold" onClick={create} disabled={saving}>
           Create shop
         </Button>
       </div>

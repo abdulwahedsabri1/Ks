@@ -28,13 +28,9 @@ export function Navbar() {
         >
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2 group">
-              <motion.div
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                whileTap={{ scale: 0.9 }}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow"
-              >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow">
                 <QrCode className="size-5" />
-              </motion.div>
+              </div>
               <span className="font-display text-xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary">
                 MY Link QR
               </span>
@@ -43,65 +39,51 @@ export function Navbar() {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                to="/features"
-                className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
-              >
-                Features
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                to="/previews"
-                className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
-              >
-                Live Previews
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                to="/showcase"
-                className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
-              >
-                Showcase
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                to="/demo"
-                className="text-muted-foreground hover:text-primary transition-colors font-semibold flex items-center gap-1.5 py-1 px-2 rounded-lg bg-primary/5 border border-primary/20 shadow-sm"
-              >
-                <span className="size-2 rounded-full bg-primary inline-block animate-pulse" /> Watch Demo
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                to="/pricing"
-                className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
-              >
-                Pricing
-              </Link>
-            </motion.div>
+            <Link
+              to="/features"
+              className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
+            >
+              Features
+            </Link>
+            <Link
+              to="/previews"
+              className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
+            >
+              Live Previews
+            </Link>
+            <Link
+              to="/showcase"
+              className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
+            >
+              Showcase
+            </Link>
+            <Link
+              to="/demo"
+              className="text-muted-foreground hover:text-primary transition-colors font-semibold flex items-center gap-1.5 py-1 px-2 rounded-lg bg-primary/5 border border-primary/20 shadow-sm"
+            >
+              <span className="size-2 rounded-full bg-primary inline-block animate-pulse" /> Watch Demo
+            </Link>
+            <Link
+              to="/pricing"
+              className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
+            >
+              Pricing
+            </Link>
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                to="/auth"
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors px-3 py-1.5"
-              >
-                Sign in
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.94 }}>
-              <Button
-                asChild
-                className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 shadow-glow"
-              >
-                <Link to="/auth">Start free</Link>
-              </Button>
-            </motion.div>
+            <Link
+              to="/auth"
+              className="text-sm font-medium text-foreground hover:text-primary transition-colors px-3 py-1.5"
+            >
+              Sign in
+            </Link>
+            <Button
+              asChild
+              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 shadow-glow"
+            >
+              <Link to="/auth">Start free</Link>
+            </Button>
           </div>
 
           {/* Mobile Menu Button */}
