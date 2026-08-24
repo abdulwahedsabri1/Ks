@@ -14,12 +14,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import QRCode from "qrcode";
 
+import { analyzeEmail } from "@/lib/emailValidation";
+
 const checkoutSchema = z.object({
   businessName: z.string().min(2, "Business name is required"),
   ownerName: z.string().min(2, "Owner name is required"),
   mobileNumber: z.string().min(10, "Valid mobile number is required"),
   whatsappNumber: z.string().min(10, "Valid WhatsApp number is required"),
-  email: z.string().email("Valid email is required"),
+  email: z
+    .string()
+    .email("Valid email is required")
+    .superRefine((val, ctx) => {
+      const analysis = analyzeEmail(val);
+      if (analysis.isDisposable) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Temporary or disposable emails are forbidden for registration",
+        });
+      } else if (!analysis.isValid) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: analysis.message || "Invalid email address format",
+        });
+      }
+    }),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
   category: z.string().min(2, "Category is required"),
