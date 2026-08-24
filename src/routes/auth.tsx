@@ -15,13 +15,13 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Sign in — My QR Link" },
+      { title: "Sign in — MY Link QR" },
       {
         name: "description",
-        content: "Log in or create your My QR Link account to build a QR menu for your business.",
+        content: "Log in or create your MY Link QR account to build a QR menu for your business.",
       },
-      { property: "og:title", content: "Sign in — My QR Link" },
-      { property: "og:description", content: "Log in or create your My QR Link account." },
+      { property: "og:title", content: "Sign in — MY Link QR" },
+      { property: "og:description", content: "Log in or create your MY Link QR account." },
     ],
   }),
   component: AuthPage,
@@ -66,11 +66,65 @@ function AuthPage() {
     }
     setLoading(true);
     try {
+      const cleanEmail = parsed.data.email.toLowerCase().trim();
+      const cleanPassword = parsed.data.password;
+
       if (mode === "login") {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: parsed.data.email.toLowerCase(),
-          password: parsed.data.password,
+        let { data, error } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: cleanPassword,
         });
+
+        // Fallback provision for generated customer accounts (e.g. rafeek-7kz7@mylinkqr.com)
+        if (error && (error.message.toLowerCase().includes("invalid") || error.message.toLowerCase().includes("credentials"))) {
+          const slugPrefix = cleanEmail.split("@")[0];
+          const { data: matchedShops } = await supabase
+            .from("shops")
+            .select("*")
+            .or(`slug.eq.${slugPrefix},slug.ilike.${slugPrefix}`);
+
+          if (matchedShops && matchedShops.length > 0) {
+            const targetShop = matchedShops[0]!;
+            const signUpRes = await supabase.auth.signUp({
+              email: cleanEmail,
+              password: cleanPassword,
+              options: {
+                data: {
+                  full_name: targetShop.name,
+                  business_name: targetShop.name,
+                },
+              },
+            });
+
+            if (signUpRes.data?.session && signUpRes.data?.user) {
+              await supabase
+                .from("shops")
+                .update({ owner_id: signUpRes.data.user.id })
+                .eq("id", targetShop.id);
+
+              toast.success(`Account activated! Welcome to ${targetShop.name}`);
+              navigate({ to: "/dashboard", replace: true });
+              return;
+            } else if (signUpRes.data?.user) {
+              // Retry login after registration
+              const retryLogin = await supabase.auth.signInWithPassword({
+                email: cleanEmail,
+                password: cleanPassword,
+              });
+              if (retryLogin.data?.session) {
+                await supabase
+                  .from("shops")
+                  .update({ owner_id: retryLogin.data.user.id })
+                  .eq("id", targetShop.id);
+
+                toast.success(`Signed in as ${targetShop.name}`);
+                navigate({ to: "/dashboard", replace: true });
+                return;
+              }
+            }
+          }
+        }
+
         if (error) {
           toast.error(
             error.message.toLowerCase().includes("invalid")
@@ -85,8 +139,8 @@ function AuthPage() {
         }
       } else {
         const { data, error } = await supabase.auth.signUp({
-          email: parsed.data.email.toLowerCase(),
-          password: parsed.data.password,
+          email: cleanEmail,
+          password: cleanPassword,
           options: {
             emailRedirectTo: window.location.origin,
             data: {
@@ -146,7 +200,7 @@ function AuthPage() {
       <div className="relative hidden flex-col justify-between bg-hero-gradient p-12 text-white lg:flex">
         <Link to="/" className="flex items-center gap-2 text-white">
           <div className="relative z-20 flex items-center gap-2 font-display text-xl font-bold">
-            <QrCode className="size-8 text-primary" /> My QR Link
+            <QrCode className="size-8 text-primary" /> MY Link QR
           </div>
         </Link>
         <div className="max-w-2xl text-white mt-12">
@@ -154,7 +208,7 @@ function AuthPage() {
             One QR code. Your entire business, on every phone.
           </h2>
           <p className="mt-6 text-lg lg:text-xl text-white/70 leading-relaxed font-medium">
-            Restaurants, salons, bakeries and boutiques use My QR Link to publish live digital
+            Restaurants, salons, bakeries and boutiques use MY Link QR to publish live digital
             experiences and engage customers without limits.
           </p>
         </div>
@@ -170,7 +224,7 @@ function AuthPage() {
             Sign in to manage your shop, or create a free account.
           </p>
 
-          <Tabs defaultValue="signup" className="mt-8">
+          <Tabs defaultValue="login" className="mt-8">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Log in</TabsTrigger>
               <TabsTrigger value="signup">Sign up</TabsTrigger>

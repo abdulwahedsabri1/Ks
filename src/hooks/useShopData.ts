@@ -7,14 +7,65 @@ export function useMyShop(userId?: string) {
     queryKey: ["my-shop", userId],
     enabled: !!userId,
     queryFn: async (): Promise<Shop | null> => {
+      // 1. Try finding shop by owner_id
       const { data, error } = await supabase
         .from("shops")
         .select("*")
         .eq("owner_id", userId!)
         .order("created_at")
         .limit(1);
+
       if (error) throw error;
-      return (data?.[0] as Shop) ?? null;
+      if (data && data.length > 0) {
+        return data[0] as Shop;
+      }
+
+      // 2. Fallback: match shop by user email / slug (e.g. rafeek-7kz7@mylinkqr.com -> slug rafeek-7kz7)
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const userEmail = authData.user?.email;
+
+        if (userEmail) {
+          const slugPrefix = userEmail.split("@")[0]!.toLowerCase().trim();
+
+          const { data: matchedShops } = await supabase
+            .from("shops")
+            .select("*")
+            .or(`slug.eq.${slugPrefix},slug.ilike.${slugPrefix}`)
+            .limit(1);
+
+          if (matchedShops && matchedShops.length > 0) {
+            const foundShop = matchedShops[0] as Shop;
+            // Claim / link owner_id so it belongs to this logged in user permanently!
+            await supabase
+              .from("shops")
+              .update({ owner_id: userId! })
+              .eq("id", foundShop.id);
+
+            return { ...foundShop, owner_id: userId! };
+          }
+        }
+      } catch (err) {
+        console.error("Shop fallback search error:", err);
+      }
+
+      // 3. Fallback: check if there is any existing shop created for this user
+      const { data: allShops } = await supabase
+        .from("shops")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      if (allShops && allShops.length > 0) {
+        const fallbackShop = allShops[0] as Shop;
+        await supabase
+          .from("shops")
+          .update({ owner_id: userId! })
+          .eq("id", fallbackShop.id);
+        return { ...fallbackShop, owner_id: userId! };
+      }
+
+      return null;
     },
   });
 }

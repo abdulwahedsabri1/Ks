@@ -61,9 +61,9 @@ export function HeroSection() {
                 variant="outline"
                 className="rounded-full border-border bg-card/30 hover:bg-card/50 h-14 px-8 text-base backdrop-blur-sm"
               >
-                <a href="#demo">
+                <Link to="/demo">
                   <Play className="mr-2 size-5" /> Watch demo
-                </a>
+                </Link>
               </Button>
             </div>
           </motion.div>

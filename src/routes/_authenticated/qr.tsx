@@ -15,9 +15,9 @@ export const Route = createFileRoute("/_authenticated/qr")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "QR Code — My QR Link" },
+      { title: "QR Code — MY Link QR" },
       { name: "description", content: "Download your custom QR code for tables and counters." },
-      { property: "og:title", content: "QR Code — My QR Link" },
+      { property: "og:title", content: "QR Code — MY Link QR" },
       { property: "og:description", content: "Download and share your branded menu QR code." },
     ],
   }),

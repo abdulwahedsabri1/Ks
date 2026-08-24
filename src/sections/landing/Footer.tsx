@@ -14,51 +14,60 @@ export function Footer() {
                 <QrCode className="size-4" />
               </div>
               <span className="font-display text-lg font-semibold tracking-tight text-foreground">
-                My QR Link
+                MY Link QR
               </span>
             </Link>
-            <p className="text-muted-foreground max-w-sm mb-6">
-              The premium digital experience platform for local businesses, restaurants, and
-              creators.
+            <p className="text-muted-foreground max-w-sm mb-6 text-sm leading-relaxed">
+              The premium digital experience platform for local businesses, restaurants, cafes, salons, and creators.
             </p>
           </div>
 
           <div>
             <h4 className="font-medium text-foreground mb-4">Product</h4>
-            <ul className="space-y-3">
+            <ul className="space-y-3 text-sm">
               <li>
-                <a href="#features" className="text-muted-foreground hover:text-primary">
+                <Link to="/features" className="text-muted-foreground hover:text-primary transition-colors">
                   Features
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#showcase" className="text-muted-foreground hover:text-primary">
-                  QR Builder
-                </a>
+                <Link to="/previews" className="text-muted-foreground hover:text-primary transition-colors">
+                  Live Previews
+                </Link>
               </li>
               <li>
-                <a href="#pricing" className="text-muted-foreground hover:text-primary">
+                <Link to="/showcase" className="text-muted-foreground hover:text-primary transition-colors">
+                  Showcase & Stands
+                </Link>
+              </li>
+              <li>
+                <Link to="/demo" className="text-muted-foreground hover:text-primary transition-colors font-semibold">
+                  Watch Video Demo
+                </Link>
+              </li>
+              <li>
+                <Link to="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
                   Pricing
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-medium text-foreground mb-4">Resources</h4>
-            <ul className="space-y-3">
+            <ul className="space-y-3 text-sm">
               <li>
-                <Link to="/" className="text-muted-foreground hover:text-primary">
+                <Link to="/help" className="text-muted-foreground hover:text-primary transition-colors">
                   Help Center
                 </Link>
               </li>
               <li>
-                <Link to="/" className="text-muted-foreground hover:text-primary">
+                <Link to="/blog" className="text-muted-foreground hover:text-primary transition-colors">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link to="/" className="text-muted-foreground hover:text-primary">
+                <Link to="/templates" className="text-muted-foreground hover:text-primary transition-colors">
                   Templates
                 </Link>
               </li>
@@ -67,19 +76,19 @@ export function Footer() {
 
           <div>
             <h4 className="font-medium text-foreground mb-4">Company</h4>
-            <ul className="space-y-3">
+            <ul className="space-y-3 text-sm">
               <li>
-                <Link to="/" className="text-muted-foreground hover:text-primary">
+                <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
                   About
                 </Link>
               </li>
               <li>
-                <Link to="/" className="text-muted-foreground hover:text-primary">
+                <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
                   Contact
                 </Link>
               </li>
               <li>
-                <Link to="/" className="text-muted-foreground hover:text-primary">
+                <Link to="/legal" className="text-muted-foreground hover:text-primary transition-colors">
                   Legal
                 </Link>
               </li>
@@ -89,13 +98,13 @@ export function Footer() {
 
         <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © {currentYear} My QR Link. All rights reserved.
+            © {currentYear} MY Link QR. All rights reserved.
           </p>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
-            <Link to="/" className="hover:text-primary">
+            <Link to="/privacy" className="hover:text-primary transition-colors">
               Privacy Policy
             </Link>
-            <Link to="/" className="hover:text-primary">
+            <Link to="/terms" className="hover:text-primary transition-colors">
               Terms of Service
             </Link>
           </div>
@@ -104,3 +113,4 @@ export function Footer() {
     </footer>
   );
 }
+

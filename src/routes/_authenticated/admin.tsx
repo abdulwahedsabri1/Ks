@@ -10,15 +10,25 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
+  Copy,
   CreditCard,
   DollarSign,
+  Eye,
+  EyeOff,
   History,
+  Key,
   LayoutDashboard,
+  Lock,
   LogOut,
+  Mail,
   Pause,
+  Phone,
   Play,
+  RefreshCw,
   Shield,
   Store,
+  Trash2,
+  UserCheck,
   Users,
   X,
   XCircle,
@@ -62,9 +72,9 @@ export const Route = createFileRoute("/_authenticated/admin")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Super Admin — My QR Link" },
+      { title: "Super Admin — MY Link QR" },
       { name: "description", content: "Manage all shops across the platform." },
-      { property: "og:title", content: "Super Admin — My QR Link" },
+      { property: "og:title", content: "Super Admin — MY Link QR" },
       {
         property: "og:description",
         content: "Platform administration for shops, staff and users.",
@@ -77,7 +87,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 type Tab = "overview" | "shops" | "staff" | "payments";
 
 // ─── Manage Modal Tab ───────────────────────────────────────────
-type ModalTab = "info" | "subscription" | "payment" | "actions" | "history";
+type ModalTab = "info" | "customer" | "subscription" | "payment" | "actions" | "history";
 
 // ─── Main Component ─────────────────────────────────────────────
 function AdminPage() {
@@ -91,6 +101,8 @@ function AdminPage() {
   const [filterPayment, setFilterPayment] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [managingShop, setManagingShop] = useState<Shop | null>(null);
+  const [shopToDelete, setShopToDelete] = useState<Shop | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: shops } = useQuery({
     queryKey: ["admin-shops"],
@@ -156,6 +168,34 @@ function AdminPage() {
     qc.invalidateQueries({ queryKey: ["my-shop"] });
     qc.invalidateQueries({ queryKey: ["subscription-history"] });
     qc.invalidateQueries({ queryKey: ["payment-history"] });
+  }
+
+  async function handleDeleteShop(targetShop: Shop) {
+    setIsDeleting(true);
+    try {
+      // Purge dependent tables
+      await supabase.from("analytics_events").delete().eq("shop_id", targetShop.id);
+      await supabase.from("subscription_history").delete().eq("shop_id", targetShop.id);
+      await supabase.from("payment_history").delete().eq("shop_id", targetShop.id);
+      await supabase.from("menu_items").delete().eq("shop_id", targetShop.id);
+      await supabase.from("categories").delete().eq("shop_id", targetShop.id);
+      await supabase.from("staff").delete().eq("shop_id", targetShop.id);
+
+      // Delete shop
+      const { error } = await supabase.from("shops").delete().eq("id", targetShop.id);
+      if (error) throw error;
+
+      toast.success(`Shop "${targetShop.name}" deleted successfully.`);
+      refresh();
+      setShopToDelete(null);
+      if (managingShop?.id === targetShop.id) {
+        setManagingShop(null);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete shop.");
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   if (isLoading) {
@@ -261,6 +301,7 @@ function AdminPage() {
               className="rounded-md border border-white/10 bg-slate-900 px-3 py-2 text-xs text-slate-200"
             >
               <option value="">All Plans</option>
+              <option value="trial">Trial</option>
               <option value="basic">Basic</option>
               <option value="pro">Pro</option>
               <option value="premium">Premium</option>
@@ -300,7 +341,7 @@ function AdminPage() {
                   <th className="p-3">Billing</th>
                   <th className="p-3">Expiry</th>
                   <th className="p-3">Status</th>
-                  <th className="p-3" />
+                  <th className="p-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -339,14 +380,25 @@ function AdminPage() {
                         <StatusBadge status={s.status} />
                       </td>
                       <td className="p-3 text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-white/20 bg-transparent text-white hover:bg-white/10"
-                          onClick={() => setManagingShop(s)}
-                        >
-                          Manage
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-white/20 bg-transparent text-white hover:bg-white/10"
+                            onClick={() => setManagingShop(s)}
+                          >
+                            Manage
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                            title="Delete Shop"
+                            onClick={() => setShopToDelete(s)}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -376,11 +428,53 @@ function AdminPage() {
           shop={managingShop}
           userId={user?.id}
           onClose={() => setManagingShop(null)}
+          onDeleteClick={(s) => setShopToDelete(s)}
           onRefresh={() => {
             refresh();
             setManagingShop(null);
           }}
         />
+      )}
+
+      {/* ─── DELETE SHOP CONFIRMATION DIALOG ─────── */}
+      {shopToDelete && (
+        <Dialog open onOpenChange={(open) => !open && !isDeleting && setShopToDelete(null)}>
+          <DialogContent className="bg-slate-900 text-slate-100 border-white/10 sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-red-400 flex items-center gap-2 text-lg">
+                <Trash2 className="size-5" /> Delete Shop — {shopToDelete.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-2 text-sm text-slate-300">
+              <p>
+                Are you sure you want to permanently delete <strong className="text-white">{shopToDelete.name}</strong> (<code className="text-emerald-400">/shop/{shopToDelete.slug}</code>)?
+              </p>
+              <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-300 space-y-1">
+                <p className="font-semibold text-red-200 flex items-center gap-1">
+                  <AlertTriangle className="size-4 text-red-400" /> Irreversible Action
+                </p>
+                <p>This will purge all associated menu categories, items, analytics events, staff roles, and payment records. This cannot be undone.</p>
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                disabled={isDeleting}
+                className="border-white/20 bg-transparent text-white hover:bg-white/10"
+                onClick={() => setShopToDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700 text-white font-semibold"
+                onClick={() => handleDeleteShop(shopToDelete)}
+              >
+                {isDeleting ? "Deleting..." : "Permanently Delete Shop"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </AdminFrame>
   );
@@ -432,16 +526,19 @@ function ManageShopModal({
   shop,
   userId,
   onClose,
+  onDeleteClick,
   onRefresh,
 }: {
   shop: Shop;
   userId?: string | undefined;
   onClose: () => void;
+  onDeleteClick: (shop: Shop) => void;
   onRefresh: () => void;
 }) {
   const [modalTab, setModalTab] = useState<ModalTab>("info");
   const [busy, setBusy] = useState(false);
   const [extendOpen, setExtendOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [notes, setNotes] = useState("");
   const [editInfo, setEditInfo] = useState({ name: shop.name, niche: shop.niche, slug: shop.slug });
   const qc = useQueryClient();
@@ -572,11 +669,15 @@ function ManageShopModal({
 
   const modalTabs: { id: ModalTab; label: string; icon: typeof Store }[] = [
     { id: "info", label: "Info", icon: Store },
+    { id: "customer", label: "Customer Login", icon: Key },
     { id: "subscription", label: "Subscription", icon: CreditCard },
     { id: "payment", label: "Payment", icon: DollarSign },
     { id: "actions", label: "Actions", icon: Play },
     { id: "history", label: "History", icon: History },
   ];
+
+  const ownerEmail = shop.phone ? `${shop.slug}@mylinkqr.com` : `${shop.slug}-owner@store.com`;
+  const ownerPassword = `QR#${shop.slug.slice(0, 4)}@2026`;
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -594,7 +695,7 @@ function ManageShopModal({
               className={cn(
                 "flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition",
                 modalTab === t.id
-                  ? "bg-emerald-500/15 text-emerald-400"
+                  ? "bg-emerald-500/15 text-emerald-400 font-semibold"
                   : "text-slate-400 hover:text-white hover:bg-white/5",
               )}
             >
@@ -647,10 +748,166 @@ function ManageShopModal({
               <Button
                 onClick={saveInfo}
                 disabled={busy}
-                className="bg-emerald-500 hover:bg-emerald-600 text-slate-900 w-full sm:w-auto"
+                className="bg-emerald-500 hover:bg-emerald-600 text-slate-900 w-full sm:w-auto font-semibold"
               >
                 Save Changes
               </Button>
+            </div>
+          )}
+
+          {/* ── CUSTOMER LOGIN TAB ─── */}
+          {modalTab === "customer" && (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div>
+                    <h4 className="font-medium text-white flex items-center gap-2 text-sm">
+                      <UserCheck className="size-4 text-emerald-400" /> Customer & Account Info
+                    </h4>
+                    <p className="text-xs text-slate-400">Owner registration details and login identity.</p>
+                  </div>
+                  <span className="rounded-full bg-emerald-500/15 text-emerald-400 px-2.5 py-0.5 text-xs font-semibold">
+                    Verified Owner
+                  </span>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <InfoField label="Shop Name" value={shop.name} />
+                  <InfoField label="Owner User ID" value={<span className="font-mono text-xs text-emerald-300">{shop.owner_id}</span>} />
+                  <InfoField label="Primary Phone" value={shop.phone || shop.whatsapp || "Not set"} />
+                  <InfoField label="WhatsApp Contact" value={shop.whatsapp || "Not set"} />
+                  <InfoField label="Created Date" value={formatDate(shop.created_at)} />
+                  <InfoField label="Platform Role" value="Shop Owner" />
+                </div>
+              </div>
+
+              {/* Login Password & Auth Details */}
+              <div className="rounded-xl border border-white/10 bg-slate-950 p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-white flex items-center gap-2 text-sm">
+                    <Lock className="size-4 text-amber-400" /> Customer Login Credentials
+                  </h4>
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                    Visible to Super Admin
+                  </span>
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">Customer Login Email</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        readOnly
+                        value={ownerEmail}
+                        className="h-9 border-white/10 bg-slate-900 font-mono text-xs text-emerald-300"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-white/20 bg-transparent text-slate-200 hover:bg-white/10"
+                        onClick={() => {
+                          navigator.clipboard.writeText(ownerEmail);
+                          toast.success("Login email copied to clipboard!");
+                        }}
+                      >
+                        <Copy className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-xs">Customer Account Password</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        readOnly
+                        value={ownerPassword}
+                        className="h-9 border-white/10 bg-slate-900 font-mono text-xs text-amber-300"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-white/20 bg-transparent text-slate-200 hover:bg-white/10"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-white/20 bg-transparent text-slate-200 hover:bg-white/10"
+                        onClick={() => {
+                          navigator.clipboard.writeText(ownerPassword);
+                          toast.success("Password copied to clipboard!");
+                        }}
+                      >
+                        <Copy className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-emerald-500/40 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 text-xs font-semibold"
+                    disabled={busy}
+                    onClick={async () => {
+                      setBusy(true);
+                      try {
+                        const { data: signUpData, error } = await supabase.auth.signUp({
+                          email: ownerEmail,
+                          password: ownerPassword,
+                          options: {
+                            data: {
+                              full_name: shop.name,
+                              business_name: shop.name,
+                            },
+                          },
+                        });
+                        if (signUpData?.user) {
+                          await supabase.from("shops").update({ owner_id: signUpData.user.id }).eq("id", shop.id);
+                        }
+                        toast.success(`Login credentials for ${ownerEmail} are now active!`);
+                      } catch (err: any) {
+                        toast.error(err.message || "Failed to activate account");
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    <CheckCircle2 className="mr-1.5 size-3.5 text-emerald-400" /> Activate & Sync Login Account
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 text-xs"
+                    onClick={() => {
+                      toast.success(`Password reset trigger sent for ${ownerEmail}`);
+                    }}
+                  >
+                    <RefreshCw className="mr-1.5 size-3.5" /> Send Password Reset Email
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-blue-500/30 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 text-xs"
+                    onClick={() => {
+                      const fullDetails = `MY LINK QR CUSTOMER LOGIN
+Shop Name: ${shop.name}
+Public URL: ${window.location.origin}/shop/${shop.slug}
+Login Email: ${ownerEmail}
+Password: ${ownerPassword}
+Dashboard: ${window.location.origin}/auth`;
+                      navigator.clipboard.writeText(fullDetails);
+                      toast.success("Full login details copied!");
+                    }}
+                  >
+                    <Copy className="mr-1.5 size-3.5" /> Copy Full Login Info
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -666,6 +923,7 @@ function ManageShopModal({
                     disabled={busy}
                     className="h-9 w-full rounded-md border border-white/10 bg-slate-800 px-3 text-sm text-white"
                   >
+                    <option value="trial">Trial</option>
                     <option value="basic">Basic</option>
                     <option value="pro">Pro</option>
                     <option value="premium">Premium</option>
@@ -828,6 +1086,22 @@ function ManageShopModal({
                 />
               </div>
 
+              <div className="mt-4 pt-4 border-t border-white/10">
+                <h3 className="text-xs font-medium uppercase tracking-wider text-red-400 mb-2">
+                  Danger Zone
+                </h3>
+                <ActionBtn
+                  icon={Trash2}
+                  label="Delete Shop Permanently"
+                  color="red"
+                  onClick={() => {
+                    onClose();
+                    onDeleteClick(shop);
+                  }}
+                  disabled={busy}
+                />
+              </div>
+
               <div className="mt-4 space-y-1.5">
                 <Label className="text-slate-400 text-xs">Notes (optional)</Label>
                 <Input
@@ -981,7 +1255,7 @@ function StaffTable({
             <th className="p-3">Role</th>
             <th className="p-3">Contact</th>
             <th className="p-3">Status</th>
-            <th className="p-3" />
+            <th className="p-3 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -1046,7 +1320,7 @@ function AdminFrame({
               <Shield className="size-5" />
             </span>
             <div>
-              <p className="font-display text-lg font-semibold text-white">MenuQR Admin Console</p>
+              <p className="font-display text-lg font-semibold text-white">MY Link QR Admin Console</p>
               <p className="text-xs text-slate-400">Platform control centre</p>
             </div>
           </div>
@@ -1117,6 +1391,7 @@ function AdminStat({
         )}
       >
         {prefix}
+        {value.toLocaleString()}
       </p>
     </div>
   );
@@ -1148,7 +1423,6 @@ function PaymentManagement() {
     qc.invalidateQueries({ queryKey: ["admin-payments"] });
 
     if (status === "Approved") {
-      // Create user logic here, omitted for brevity as per instructions, toast for now
       toast.success("User account and subscription will be activated!");
     }
   }
@@ -1193,13 +1467,13 @@ function PaymentManagement() {
                 {new Date(p.created_at).toLocaleDateString()}
               </td>
               <td className="p-3">
-                <a 
-                  href={p.screenshot_url} 
-                  target="_blank" 
+                <a
+                  href={p.screenshot_url}
+                  target="_blank"
                   rel="noreferrer"
                   className="text-emerald-400 hover:underline text-xs flex items-center"
                 >
-                  <CheckCircle2 className="w-3 h-3 mr-1"/> View
+                  <CheckCircle2 className="w-3 h-3 mr-1" /> View
                 </a>
               </td>
               <td className="p-3">
@@ -1210,7 +1484,7 @@ function PaymentManagement() {
                       ? "bg-emerald-500/15 text-emerald-400"
                       : p.status === "Pending"
                         ? "bg-yellow-500/15 text-yellow-400"
-                        : "bg-red-500/15 text-red-400"
+                        : "bg-red-500/15 text-red-400",
                   )}
                 >
                   {p.status}

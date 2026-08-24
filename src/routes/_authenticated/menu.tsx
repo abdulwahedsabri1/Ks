@@ -36,13 +36,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { money, planOf, type MenuItem } from "@/lib/shop";
+import { getFoodImageUrl } from "@/lib/foodImage";
 
 export const Route = createFileRoute("/_authenticated/menu")({
   head: () => ({
     meta: [
-      { title: "Menu Builder — My QR Link" },
+      { title: "Menu Builder — MY Link QR" },
       { name: "description", content: "Add categories and items to your digital menu." },
-      { property: "og:title", content: "Menu Builder — My QR Link" },
+      { property: "og:title", content: "Menu Builder — MY Link QR" },
       {
         property: "og:description",
         content: "Create categories and items for your digital QR menu.",
@@ -74,7 +75,8 @@ function MenuPage() {
   const [scanned, setScanned] = useState<
     { name: string; description: string; price: number; category: string }[]
   >([]);
-  const [form, setForm] = useState({ name: "", price: "", description: "", category_id: "" });
+  const [form, setForm] = useState({ name: "", price: "", description: "", category_id: "", image_url: "" });
+  const [addPhotoBusy, setAddPhotoBusy] = useState(false);
 
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [editForm, setEditForm] = useState({
@@ -95,6 +97,20 @@ function MenuPage() {
       category_id: item.category_id ?? "",
       image_url: item.image_url ?? "",
     });
+  }
+
+  async function uploadNewItemImage(file?: File) {
+    if (!file || !shop) return;
+    setAddPhotoBusy(true);
+    try {
+      const url = await uploadShopMedia(file, shop.id);
+      setForm((prev) => ({ ...prev, image_url: url }));
+      toast.success("Item photo uploaded!");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setAddPhotoBusy(false);
+    }
   }
 
   async function uploadItemImage(file?: File) {
@@ -180,19 +196,21 @@ function MenuPage() {
       toast.error("Enter a valid price");
       return;
     }
+    const finalImageUrl = form.image_url.trim() || getFoodImageUrl(form.name.trim());
     const { error } = await supabase.from("menu_items").insert({
       shop_id: shop.id,
       name: form.name.trim(),
       description: form.description.trim() || null,
       price,
       category_id: form.category_id || null,
+      image_url: finalImageUrl,
       position: items?.length ?? 0,
     });
     if (error) {
       toast.error(error.message);
       return;
     }
-    setForm({ name: "", price: "", description: "", category_id: form.category_id });
+    setForm({ name: "", price: "", description: "", category_id: form.category_id, image_url: "" });
     refresh();
   }
 
@@ -230,6 +248,7 @@ function MenuPage() {
             name: it.name,
             description: it.description,
             price: it.price,
+            image_url: getFoodImageUrl(it.name, cat.name),
             position: ii,
           })),
         );
@@ -312,6 +331,7 @@ function MenuPage() {
           name: item.name.trim(),
           description: item.description.trim() || null,
           price: item.price,
+          image_url: getFoodImageUrl(item.name, item.category),
           position: (items?.length ?? 0) + index,
         })),
       );
@@ -460,29 +480,48 @@ function MenuPage() {
                 </Button>
               </div>
               <div className="mt-4 overflow-hidden rounded-xl border">
-                <div className="grid grid-cols-[1fr_90px] gap-3 bg-muted/60 px-3 py-2 text-xs font-medium text-muted-foreground sm:grid-cols-[130px_1fr_90px]">
+                <div className="grid grid-cols-[1fr_100px_32px] gap-3 bg-muted/60 px-3 py-2 text-xs font-medium text-muted-foreground sm:grid-cols-[130px_1fr_100px_32px]">
                   <span className="hidden sm:block">Category</span>
-                  <span>Item</span>
+                  <span>Item & Details</span>
                   <span className="text-right">Price</span>
+                  <span></span>
                 </div>
-                <ul className="max-h-80 divide-y overflow-y-auto">
+                <ul className="max-h-96 divide-y overflow-y-auto">
                   {scanned.map((item, index) => (
                     <li
                       key={`${item.category}-${item.name}-${index}`}
-                      className="grid grid-cols-[1fr_90px] gap-3 px-3 py-3 text-sm sm:grid-cols-[130px_1fr_90px]"
+                      className="grid grid-cols-[1fr_100px_32px] items-center gap-3 px-3 py-3 text-sm sm:grid-cols-[130px_1fr_100px_32px]"
                     >
-                      <span className="hidden truncate text-muted-foreground sm:block">
+                      <span className="hidden truncate font-medium text-muted-foreground sm:block">
                         {item.category}
                       </span>
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">{item.name}</p>
-                        <p className="truncate text-xs text-muted-foreground sm:hidden">
-                          {item.category}
-                        </p>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <img
+                          src={getFoodImageUrl(item.name, item.category)}
+                          alt={item.name}
+                          className="size-10 rounded-lg object-cover shrink-0 border border-black/10"
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold">{item.name}</p>
+                          {item.description && (
+                            <p className="truncate text-xs text-muted-foreground">{item.description}</p>
+                          )}
+                          <p className="truncate text-xs text-primary sm:hidden font-medium">
+                            {item.category}
+                          </p>
+                        </div>
                       </div>
-                      <span className="text-right font-semibold">
+                      <span className="text-right font-bold">
                         {money(item.price, shop.currency)}
                       </span>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${item.name}`}
+                        onClick={() => setScanned((prev) => prev.filter((_, i) => i !== index))}
+                        className="text-muted-foreground hover:text-destructive transition-colors p-1 flex justify-center"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -534,6 +573,35 @@ function MenuPage() {
                   ))}
                 </select>
               </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="i-photo">Item Photo (Optional)</Label>
+                <div className="flex items-center gap-4">
+                  {form.image_url ? (
+                    <img
+                      src={form.image_url}
+                      alt="Preview"
+                      className="size-14 rounded-xl object-cover border border-white/10 shrink-0"
+                    />
+                  ) : (
+                    <div className="grid size-14 place-items-center rounded-xl border border-dashed bg-muted text-muted-foreground shrink-0">
+                      <ImageIcon className="size-5" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <Input
+                      id="i-photo"
+                      type="file"
+                      accept="image/*"
+                      disabled={addPhotoBusy}
+                      onChange={(e) => uploadNewItemImage(e.target.files?.[0])}
+                      className="cursor-pointer text-xs"
+                    />
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      Choose photo or leave blank for automatic food photo matching
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
             <Button className="mt-4" onClick={addItem}>
               Add item
@@ -545,9 +613,22 @@ function MenuPage() {
             <ul className="mt-3 divide-y">
               {(items ?? []).map((i) => (
                 <li key={i.id} className="flex items-center justify-between gap-3 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{i.name}</p>
-                    <p className="truncate text-sm text-muted-foreground">{i.description}</p>
+                  <div className="flex items-center gap-3 min-w-0">
+                    {i.image_url ? (
+                      <img
+                        src={i.image_url}
+                        alt={i.name}
+                        className="size-12 rounded-xl object-cover shrink-0 border border-black/10"
+                      />
+                    ) : (
+                      <div className="grid size-12 place-items-center rounded-xl border border-dashed bg-muted shrink-0 text-muted-foreground">
+                        <ImageIcon className="size-5" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{i.name}</p>
+                      <p className="truncate text-sm text-muted-foreground">{i.description}</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-semibold">{money(i.price, shop.currency)}</span>

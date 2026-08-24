@@ -12,13 +12,13 @@ import { Footer } from "@/sections/landing/Footer";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "My QR Link — Premium QR Menus & Digital Experiences" },
+      { title: "MY Link QR — Premium QR Menus & Digital Experiences" },
       {
         name: "description",
         content:
           "Create QR menus, business profiles, catalogs, and customer experiences in minutes.",
       },
-      { property: "og:title", content: "My QR Link — Premium QR Menus & Digital Experiences" },
+      { property: "og:title", content: "MY Link QR — Premium QR Menus & Digital Experiences" },
     ],
   }),
   component: LandingPage,

@@ -10,7 +10,7 @@ export function CTASection() {
           Ready to elevate your customer experience?
         </h2>
         <p className="text-xl md:text-2xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto">
-          Join thousands of local businesses using My QR Link to drive sales and engage customers.
+          Join thousands of local businesses using MY Link QR to drive sales and engage customers.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button

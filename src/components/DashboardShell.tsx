@@ -3,6 +3,7 @@ import {
   BarChart3,
   LayoutDashboard,
   LogOut,
+  Palette,
   QrCode,
   Settings,
   Shield,
@@ -19,6 +20,7 @@ const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/menu", label: "Menu", icon: UtensilsCrossed },
   { to: "/qr", label: "QR Code", icon: QrCode },
+  { to: "/themes", label: "Themes", icon: Palette },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/settings", label: "Shop Settings", icon: Settings },
 ] as const;
@@ -53,7 +55,7 @@ export function DashboardShell({
           <span className="grid size-9 place-items-center rounded-xl bg-emerald-gradient text-sidebar-primary-foreground">
             <QrCode className="size-5" />
           </span>
-          <span className="font-display text-lg font-semibold">My QR Link</span>
+          <span className="font-display text-lg font-semibold">MY Link QR</span>
         </Link>
         <nav className="flex flex-1 flex-col gap-1">
           {!isPending &&
@@ -99,9 +101,19 @@ export function DashboardShell({
               <h1 className="font-display text-xl font-semibold sm:text-2xl">{title}</h1>
               {description && <p className="text-sm text-muted-foreground">{description}</p>}
             </div>
-            <div className="flex items-center gap-2">{actions}</div>
+            <div className="flex items-center gap-2">
+              {actions}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={signOut}
+                className="flex lg:hidden items-center gap-1.5 text-xs text-red-500 border-red-500/20 hover:bg-red-500/10"
+              >
+                <LogOut className="size-3.5" /> Sign out
+              </Button>
+            </div>
           </div>
-          <nav className="mt-4 flex gap-1 overflow-x-auto no-scrollbar lg:hidden">
+          <nav className="mt-4 flex items-center gap-1 overflow-x-auto no-scrollbar lg:hidden">
             {!isPending &&
               [
                 ...NAV,
@@ -111,13 +123,19 @@ export function DashboardShell({
                   key={item.to}
                   to={item.to}
                   className={cn(
-                    "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium text-muted-foreground",
-                    pathname === item.to && "border-primary bg-accent text-accent-foreground",
+                    "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors",
+                    pathname === item.to && "border-primary bg-accent text-accent-foreground font-semibold",
                   )}
                 >
                   {item.label}
                 </Link>
               ))}
+            <button
+              onClick={signOut}
+              className="flex items-center gap-1 whitespace-nowrap rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors"
+            >
+              <LogOut className="size-3" /> Sign out
+            </button>
           </nav>
         </header>
         <main className="flex-1 p-5 lg:p-8">
@@ -128,7 +146,7 @@ export function DashboardShell({
               </div>
               <h2 className="mt-6 font-display text-2xl font-bold">Application Under Review</h2>
               <p className="mx-auto mt-2 max-w-md text-muted-foreground">
-                Thank you for creating your business with My QR Link! Your application has been
+                Thank you for creating your business with MY Link QR! Your application has been
                 received and is currently being reviewed by our team.
               </p>
               <p className="mt-4 text-sm font-medium text-muted-foreground">
