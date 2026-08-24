@@ -32,41 +32,43 @@ export function Navbar() {
                 <QrCode className="size-5" />
               </div>
               <span className="font-display text-xl font-semibold tracking-tight text-foreground">
-                My QR Link
+                MY Link QR
               </span>
             </Link>
           </div>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <motion.a
-              whileTap={{ scale: 0.9 }}
-              href="#features"
+            <Link
+              to="/features"
               className="text-muted-foreground hover:text-primary transition-colors"
             >
               Features
-            </motion.a>
-            <motion.a
-              whileTap={{ scale: 0.9 }}
-              href="#previews"
+            </Link>
+            <Link
+              to="/previews"
               className="text-muted-foreground hover:text-primary transition-colors"
             >
               Live Previews
-            </motion.a>
-            <motion.a
-              whileTap={{ scale: 0.9 }}
-              href="#showcase"
+            </Link>
+            <Link
+              to="/showcase"
               className="text-muted-foreground hover:text-primary transition-colors"
             >
               Showcase
-            </motion.a>
-            <motion.a
-              whileTap={{ scale: 0.9 }}
-              href="#pricing"
+            </Link>
+            <Link
+              to="/demo"
+              className="text-muted-foreground hover:text-primary transition-colors font-semibold flex items-center gap-1.5"
+            >
+              <span className="size-2 rounded-full bg-primary inline-block animate-pulse" /> Watch Demo
+            </Link>
+            <Link
+              to="/pricing"
               className="text-muted-foreground hover:text-primary transition-colors"
             >
               Pricing
-            </motion.a>
+            </Link>
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
@@ -84,17 +86,19 @@ export function Navbar() {
             </Button>
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button
-            className="md:hidden p-2 text-foreground"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
-          </button>
+          {/* Mobile Menu Button */}
+          <div className="flex md:hidden">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 text-foreground hover:text-primary transition-colors"
+            >
+              {mobileMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Mobile Nav */}
+      {/* Mobile Menu Dropdown */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
@@ -104,34 +108,41 @@ export function Navbar() {
             className="absolute left-4 right-4 top-24 rounded-2xl border border-border bg-card/95 p-6 shadow-lift backdrop-blur-xl md:hidden"
           >
             <nav className="flex flex-col gap-6">
-              <a
-                href="#features"
+              <Link
+                to="/features"
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 Features
-              </a>
-              <a
-                href="#previews"
+              </Link>
+              <Link
+                to="/previews"
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 Live Previews
-              </a>
-              <a
-                href="#showcase"
+              </Link>
+              <Link
+                to="/showcase"
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 Showcase
-              </a>
-              <a
-                href="#pricing"
+              </Link>
+              <Link
+                to="/demo"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg font-semibold text-primary flex items-center gap-2"
+              >
+                <span className="size-2 rounded-full bg-primary inline-block animate-pulse" /> Watch Demo
+              </Link>
+              <Link
+                to="/pricing"
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 Pricing
-              </a>
+              </Link>
               <div className="h-px bg-border my-2" />
               <div className="flex flex-col gap-4">
                 <Link

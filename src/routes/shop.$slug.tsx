@@ -38,6 +38,7 @@ import {
   type Shop,
   type ThemeId,
 } from "@/lib/shop";
+import { getFoodImageUrl } from "@/lib/foodImage";
 
 export const Route = createFileRoute("/shop/$slug")({
   loader: async ({ params }) => {
@@ -48,7 +49,7 @@ export const Route = createFileRoute("/shop/$slug")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [{ title: "Menu unavailable — My QR Link" }, { name: "robots", content: "noindex" }],
+        meta: [{ title: "Menu unavailable — MY Link QR" }, { name: "robots", content: "noindex" }],
       };
     }
     const { shop } = loaderData;
@@ -341,18 +342,12 @@ function PublicMenu() {
               className={`flex flex-col overflow-hidden rounded-xl border ${theme.border} ${theme.card} transition-all`}
             >
               <div className={`relative aspect-square w-full ${theme.bg}`}>
-                {item.image_url ? (
-                  <img
-                    src={item.image_url}
-                    alt={item.name}
-                    loading="lazy"
-                    className="size-full object-cover transition-transform duration-500 hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex size-full flex-col items-center justify-center">
-                    <Store className={`size-8 ${theme.textMuted} opacity-20`} />
-                  </div>
-                )}
+                <img
+                  src={item.image_url || getFoodImageUrl(item.name, "")}
+                  alt={item.name}
+                  loading="lazy"
+                  className="size-full object-cover transition-transform duration-500 hover:scale-105"
+                />
               </div>
 
               <div className="flex flex-1 flex-col p-4">
@@ -419,7 +414,7 @@ function PublicMenu() {
         >
           Powered by{" "}
           <Link to="/" className={`${theme.accentText} font-display font-medium hover:underline`}>
-            My QR Link
+            MY Link QR
           </Link>
         </div>
       </div>

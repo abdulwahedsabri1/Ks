@@ -428,12 +428,12 @@ export function BusinessPreviewSection() {
                           )}
                         </div>
                         <div className={`p-4 border-t ${p.borderColor} ${p.headerColor}`}>
-                          <Link to="/auth" className="block w-full">
+                          <Link to="/demo" hash="booking-form" className="block w-full">
                             <button
                               onClick={() => setShowCart(false)}
                               className={`w-full py-2.5 rounded-lg text-sm font-bold uppercase tracking-wider ${p.accentBg} ${p.cartText} active:scale-95 transition-transform`}
                             >
-                              Checkout (Sign Up)
+                              Book Demo Consultation
                             </button>
                           </Link>
                         </div>

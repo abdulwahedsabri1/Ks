@@ -24,12 +24,12 @@ import {
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
     meta: [
-      { title: "Shop Settings — My QR Link" },
+      { title: "Shop Settings — MY Link QR" },
       {
         name: "description",
         content: "Update your shop name, branding, WhatsApp number and currency.",
       },
-      { property: "og:title", content: "Shop Settings — My QR Link" },
+      { property: "og:title", content: "Shop Settings — MY Link QR" },
       { property: "og:description", content: "Update your shop branding and contact details." },
     ],
   }),
@@ -279,6 +279,72 @@ function SettingsPage() {
                   <p className="font-semibold text-sm">Warm Amber</p>
                   <p className="text-[11px] text-muted-foreground mt-1">
                     Inviting and elegant, perfect for retail.
+                  </p>
+                </div>
+
+                {/* Royal Emerald */}
+                <div
+                  className={`cursor-pointer rounded-xl border-2 p-3 transition-all ${form.theme === "emerald_bistro" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
+                  onClick={() => setForm({ ...form, theme: "emerald_bistro" })}
+                >
+                  <div className="aspect-[3/4] w-full bg-[#062319] rounded-lg mb-3 p-3 flex flex-col items-center overflow-hidden border border-emerald-500/20">
+                    <div className="w-full bg-[#0B3325] h-6 rounded-md mb-2 flex items-center px-2">
+                      <div className="size-3 bg-[#F59E0B] rounded-sm mr-2" />
+                      <div className="h-1.5 w-16 bg-emerald-200/20 rounded-full" />
+                    </div>
+                    <div className="w-full bg-[#0B3325] h-6 rounded-md flex items-center px-2">
+                      <div className="size-3 bg-[#F59E0B] rounded-sm mr-2" />
+                      <div className="h-1.5 w-12 bg-emerald-200/20 rounded-full" />
+                    </div>
+                    <div className="mt-auto w-full h-4 bg-[#F59E0B] rounded-md" />
+                  </div>
+                  <p className="font-semibold text-sm">Royal Emerald</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Deep forest green with radiant gold details.
+                  </p>
+                </div>
+
+                {/* Cyber Neon */}
+                <div
+                  className={`cursor-pointer rounded-xl border-2 p-3 transition-all ${form.theme === "neon_cyber" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
+                  onClick={() => setForm({ ...form, theme: "neon_cyber" })}
+                >
+                  <div className="aspect-[3/4] w-full bg-[#0D0E15] rounded-lg mb-3 p-3 flex flex-col items-center overflow-hidden border border-cyan-500/20">
+                    <div className="w-full bg-[#161926] h-6 rounded-md mb-2 flex items-center px-2">
+                      <div className="size-3 bg-[#06B6D4] rounded-sm mr-2" />
+                      <div className="h-1.5 w-16 bg-cyan-200/20 rounded-full" />
+                    </div>
+                    <div className="w-full bg-[#161926] h-6 rounded-md flex items-center px-2">
+                      <div className="size-3 bg-[#06B6D4] rounded-sm mr-2" />
+                      <div className="h-1.5 w-12 bg-cyan-200/20 rounded-full" />
+                    </div>
+                    <div className="mt-auto w-full h-4 bg-[#06B6D4] rounded-md" />
+                  </div>
+                  <p className="font-semibold text-sm">Cyber Neon</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Futuristic dark canvas with cyan glow.
+                  </p>
+                </div>
+
+                {/* Rose Gold */}
+                <div
+                  className={`cursor-pointer rounded-xl border-2 p-3 transition-all ${form.theme === "rose_gold" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
+                  onClick={() => setForm({ ...form, theme: "rose_gold" })}
+                >
+                  <div className="aspect-[3/4] w-full bg-[#FFF5F5] rounded-lg mb-3 p-3 flex flex-col items-center overflow-hidden border border-[#E11D48]/15">
+                    <div className="w-full bg-white h-6 rounded-md mb-2 flex items-center px-2 shadow-sm">
+                      <div className="size-3 bg-[#E11D48] rounded-sm mr-2" />
+                      <div className="h-1.5 w-16 bg-rose-200/40 rounded-full" />
+                    </div>
+                    <div className="w-full bg-white h-6 rounded-md flex items-center px-2 shadow-sm">
+                      <div className="size-3 bg-[#E11D48] rounded-sm mr-2" />
+                      <div className="h-1.5 w-12 bg-rose-200/40 rounded-full" />
+                    </div>
+                    <div className="mt-auto w-full h-4 bg-[#E11D48] rounded-md" />
+                  </div>
+                  <p className="font-semibold text-sm">Rose Gold</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Soft blush rose & cream for bakeries & cafes.
                   </p>
                 </div>
               </div>

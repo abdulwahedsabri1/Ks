@@ -11,15 +11,28 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DemoRouteImport } from './routes/demo'
+import { Route as FeaturesRouteImport } from './routes/features'
+import { Route as HelpRouteImport } from './routes/help'
+import { Route as LegalRouteImport } from './routes/legal'
+import { Route as PreviewsRouteImport } from './routes/previews'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ShowcaseRouteImport } from './routes/showcase'
+import { Route as TemplatesRouteImport } from './routes/templates'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedMenuRouteImport } from './routes/_authenticated/menu'
 import { Route as AuthenticatedQrRouteImport } from './routes/_authenticated/qr'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedThemesRouteImport } from './routes/_authenticated/themes'
 import { Route as ShopSlugRouteImport } from './routes/shop.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -31,9 +44,19 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -41,9 +64,59 @@ const CheckoutRoute = CheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeaturesRoute = FeaturesRouteImport.update({
+  id: '/features',
+  path: '/features',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalRoute = LegalRouteImport.update({
+  id: '/legal',
+  path: '/legal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PreviewsRoute = PreviewsRouteImport.update({
+  id: '/previews',
+  path: '/previews',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShowcaseRoute = ShowcaseRouteImport.update({
+  id: '/showcase',
+  path: '/showcase',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TemplatesRoute = TemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -76,6 +149,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedThemesRoute = AuthenticatedThemesRouteImport.update({
+  id: '/themes',
+  path: '/themes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ShopSlugRoute = ShopSlugRouteImport.update({
   id: '/shop/$slug',
   path: '/shop/$slug',
@@ -84,94 +162,184 @@ const ShopSlugRoute = ShopSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRoute
   '/checkout': typeof CheckoutRoute
+  '/contact': typeof ContactRoute
+  '/demo': typeof DemoRoute
+  '/features': typeof FeaturesRoute
+  '/help': typeof HelpRoute
+  '/legal': typeof LegalRoute
+  '/previews': typeof PreviewsRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/showcase': typeof ShowcaseRoute
+  '/templates': typeof TemplatesRoute
+  '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/menu': typeof AuthenticatedMenuRoute
   '/qr': typeof AuthenticatedQrRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/themes': typeof AuthenticatedThemesRoute
   '/shop/$slug': typeof ShopSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRoute
   '/checkout': typeof CheckoutRoute
+  '/contact': typeof ContactRoute
+  '/demo': typeof DemoRoute
+  '/features': typeof FeaturesRoute
+  '/help': typeof HelpRoute
+  '/legal': typeof LegalRoute
+  '/previews': typeof PreviewsRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/showcase': typeof ShowcaseRoute
+  '/templates': typeof TemplatesRoute
+  '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/menu': typeof AuthenticatedMenuRoute
   '/qr': typeof AuthenticatedQrRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/themes': typeof AuthenticatedThemesRoute
   '/shop/$slug': typeof ShopSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
+  '/blog': typeof BlogRoute
   '/checkout': typeof CheckoutRoute
+  '/contact': typeof ContactRoute
+  '/demo': typeof DemoRoute
+  '/features': typeof FeaturesRoute
+  '/help': typeof HelpRoute
+  '/legal': typeof LegalRoute
+  '/previews': typeof PreviewsRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/showcase': typeof ShowcaseRoute
+  '/templates': typeof TemplatesRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/menu': typeof AuthenticatedMenuRoute
   '/_authenticated/qr': typeof AuthenticatedQrRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/themes': typeof AuthenticatedThemesRoute
   '/shop/$slug': typeof ShopSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/auth'
+    | '/blog'
     | '/checkout'
+    | '/contact'
+    | '/demo'
+    | '/features'
+    | '/help'
+    | '/legal'
+    | '/previews'
     | '/pricing'
+    | '/privacy'
+    | '/showcase'
+    | '/templates'
+    | '/terms'
     | '/admin'
     | '/analytics'
     | '/dashboard'
     | '/menu'
     | '/qr'
     | '/settings'
+    | '/themes'
     | '/shop/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/auth'
+    | '/blog'
     | '/checkout'
+    | '/contact'
+    | '/demo'
+    | '/features'
+    | '/help'
+    | '/legal'
+    | '/previews'
     | '/pricing'
+    | '/privacy'
+    | '/showcase'
+    | '/templates'
+    | '/terms'
     | '/admin'
     | '/analytics'
     | '/dashboard'
     | '/menu'
     | '/qr'
     | '/settings'
+    | '/themes'
     | '/shop/$slug'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/about'
     | '/auth'
+    | '/blog'
     | '/checkout'
+    | '/contact'
+    | '/demo'
+    | '/features'
+    | '/help'
+    | '/legal'
+    | '/previews'
     | '/pricing'
+    | '/privacy'
+    | '/showcase'
+    | '/templates'
+    | '/terms'
     | '/_authenticated/admin'
     | '/_authenticated/analytics'
     | '/_authenticated/dashboard'
     | '/_authenticated/menu'
     | '/_authenticated/qr'
     | '/_authenticated/settings'
+    | '/_authenticated/themes'
     | '/shop/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
+  BlogRoute: typeof BlogRoute
   CheckoutRoute: typeof CheckoutRoute
+  ContactRoute: typeof ContactRoute
+  DemoRoute: typeof DemoRoute
+  FeaturesRoute: typeof FeaturesRoute
+  HelpRoute: typeof HelpRoute
+  LegalRoute: typeof LegalRoute
+  PreviewsRoute: typeof PreviewsRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
+  ShowcaseRoute: typeof ShowcaseRoute
+  TemplatesRoute: typeof TemplatesRoute
+  TermsRoute: typeof TermsRoute
   ShopSlugRoute: typeof ShopSlugRoute
 }
 
@@ -191,11 +359,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -205,11 +387,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/features': {
+      id: '/features'
+      path: '/features'
+      fullPath: '/features'
+      preLoaderRoute: typeof FeaturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal': {
+      id: '/legal'
+      path: '/legal'
+      fullPath: '/legal'
+      preLoaderRoute: typeof LegalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/previews': {
+      id: '/previews'
+      path: '/previews'
+      fullPath: '/previews'
+      preLoaderRoute: typeof PreviewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/showcase': {
+      id: '/showcase'
+      path: '/showcase'
+      fullPath: '/showcase'
+      preLoaderRoute: typeof ShowcaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/templates': {
+      id: '/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof TemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -254,6 +506,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/themes': {
+      id: '/_authenticated/themes'
+      path: '/themes'
+      fullPath: '/themes'
+      preLoaderRoute: typeof AuthenticatedThemesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/shop/$slug': {
       id: '/shop/$slug'
       path: '/shop/$slug'
@@ -271,6 +530,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMenuRoute: typeof AuthenticatedMenuRoute
   AuthenticatedQrRoute: typeof AuthenticatedQrRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedThemesRoute: typeof AuthenticatedThemesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -280,6 +540,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMenuRoute: AuthenticatedMenuRoute,
   AuthenticatedQrRoute: AuthenticatedQrRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedThemesRoute: AuthenticatedThemesRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -288,9 +549,21 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
+  BlogRoute: BlogRoute,
   CheckoutRoute: CheckoutRoute,
+  ContactRoute: ContactRoute,
+  DemoRoute: DemoRoute,
+  FeaturesRoute: FeaturesRoute,
+  HelpRoute: HelpRoute,
+  LegalRoute: LegalRoute,
+  PreviewsRoute: PreviewsRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
+  ShowcaseRoute: ShowcaseRoute,
+  TemplatesRoute: TemplatesRoute,
+  TermsRoute: TermsRoute,
   ShopSlugRoute: ShopSlugRoute,
 }
 export const routeTree = rootRouteImport

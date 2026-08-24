@@ -38,12 +38,12 @@ import {
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — My QR Link" },
+      { title: "Dashboard — MY Link QR" },
       {
         name: "description",
-        content: "Manage your shop, menu and QR code from your My QR Link dashboard.",
+        content: "Manage your shop, menu and QR code from your MY Link QR dashboard.",
       },
-      { property: "og:title", content: "Dashboard — My QR Link" },
+      { property: "og:title", content: "Dashboard — MY Link QR" },
       { property: "og:description", content: "Manage your shop, menu and QR code." },
     ],
   }),

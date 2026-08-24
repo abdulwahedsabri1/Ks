@@ -71,7 +71,13 @@ export function shopOnTableEnabled(shop?: Pick<Shop, "features"> | null) {
   return shop?.features?.["on_table"] !== false;
 }
 
-export type ThemeId = "luxury_dark" | "minimalist_light" | "warm_amber";
+export type ThemeId =
+  | "luxury_dark"
+  | "minimalist_light"
+  | "warm_amber"
+  | "emerald_bistro"
+  | "neon_cyber"
+  | "rose_gold";
 
 export function shopTheme(shop?: Pick<Shop, "features"> | null): ThemeId {
   return (shop?.features?.["theme"] as ThemeId) || "luxury_dark";
@@ -151,6 +157,60 @@ export const THEME_CONFIG: Record<
     addBtn: "bg-[#D99A2B] border-transparent text-white",
     addBtnHover: "hover:bg-[#D99A2B]/90",
     headerGradient: "from-[#FFFAF5] via-[#FFFAF5]/60",
+  },
+  emerald_bistro: {
+    bg: "bg-[#062319]",
+    card: "bg-[#0B3325]",
+    text: "text-emerald-50",
+    textMuted: "text-emerald-200/70",
+    textMutedHover: "hover:text-white",
+    accent: "bg-[#F59E0B]",
+    accentText: "text-[#F59E0B]",
+    border: "border-emerald-500/20",
+    selection: "selection:bg-[#F59E0B] selection:text-[#062319]",
+    cartBg: "bg-[#F59E0B]",
+    cartText: "text-[#062319]",
+    cartBtn: "bg-[#062319]/20",
+    cartBtnHover: "hover:bg-[#062319]/30",
+    addBtn: "bg-transparent border border-[#F59E0B]/40 text-[#F59E0B]",
+    addBtnHover: "hover:bg-[#F59E0B]/10",
+    headerGradient: "from-[#062319] via-[#062319]/60",
+  },
+  neon_cyber: {
+    bg: "bg-[#0D0E15]",
+    card: "bg-[#161926]",
+    text: "text-cyan-50",
+    textMuted: "text-cyan-200/70",
+    textMutedHover: "hover:text-cyan-100",
+    accent: "bg-[#06B6D4]",
+    accentText: "text-[#06B6D4]",
+    border: "border-cyan-500/20",
+    selection: "selection:bg-[#06B6D4] selection:text-[#0D0E15]",
+    cartBg: "bg-[#06B6D4]",
+    cartText: "text-[#0D0E15]",
+    cartBtn: "bg-[#0D0E15]/20",
+    cartBtnHover: "hover:bg-[#0D0E15]/30",
+    addBtn: "bg-transparent border border-[#06B6D4]/40 text-[#06B6D4]",
+    addBtnHover: "hover:bg-[#06B6D4]/10",
+    headerGradient: "from-[#0D0E15] via-[#0D0E15]/60",
+  },
+  rose_gold: {
+    bg: "bg-[#FFF5F5]",
+    card: "bg-white shadow-sm",
+    text: "text-[#4A1D24]",
+    textMuted: "text-[#8C4A54]/70",
+    textMutedHover: "hover:text-[#4A1D24]",
+    accent: "bg-[#E11D48]",
+    accentText: "text-[#E11D48]",
+    border: "border-[#E11D48]/15",
+    selection: "selection:bg-[#E11D48]/20 selection:text-[#E11D48]",
+    cartBg: "bg-[#E11D48]",
+    cartText: "text-white",
+    cartBtn: "bg-white/20",
+    cartBtnHover: "hover:bg-white/30",
+    addBtn: "bg-[#E11D48] border-transparent text-white",
+    addBtnHover: "hover:bg-[#E11D48]/90",
+    headerGradient: "from-[#FFF5F5] via-[#FFF5F5]/60",
   },
 };
 
