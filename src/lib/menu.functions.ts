@@ -20,7 +20,7 @@ function publicClient() {
 }
 
 export const getPublicShop = createServerFn({ method: "GET" })
-  .inputValidator((data: { slug: string }) => data)
+  .validator((data: { slug: string }) => data)
   .handler(async ({ data }) => {
     const db = publicClient();
     const { data: shop } = await db

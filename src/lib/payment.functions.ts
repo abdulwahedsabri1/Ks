@@ -4,7 +4,7 @@ import * as crypto from "crypto";
 
 export const createRazorpayOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { amount: number; receipt: string }) => {
+  .validator((data: { amount: number; receipt: string }) => {
     return { amount: data.amount, receipt: data.receipt };
   })
   .handler(async ({ data }) => {
@@ -46,7 +46,7 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
 
 export const verifyRazorpayPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: {
+  .validator((data: {
     razorpay_order_id: string;
     razorpay_payment_id: string;
     razorpay_signature: string;
@@ -96,6 +96,10 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
     }
 
     const shop = shops[0];
+    if (!shop) {
+      throw new Error("No shop found for user. Please create a shop first.");
+    }
+
     const pName = data.plan_name.toLowerCase();
     
     let amount = 0;

@@ -138,30 +138,54 @@ function DemoWatchRoute() {
               <div className="lg:col-span-8">
                 <div className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-2xl">
                   {activeTab === "customer" ? (
-                    <div className="relative">
+                    <div className="relative group">
+                      <div className="bg-card/90 px-4 py-3 border-b border-border flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
+                          <span className="text-xs font-bold text-foreground">Customer QR Ordering Experience</span>
+                        </div>
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-emerald-500/10 text-emerald-500 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                          Mobile View
+                        </span>
+                      </div>
                       <video
                         key="customer-video"
                         controls
+                        autoPlay
+                        muted
+                        loop
                         playsInline
-                        preload="metadata"
-                        className="w-full aspect-video object-cover bg-black rounded-3xl"
+                        preload="auto"
+                        className="w-full aspect-video object-cover bg-black"
                         poster="/hero_qr.jpg"
                       >
-                        <source src="/mock/dsf.mp4" type="video/mp4" />
+                        <source src="/mock/Mylinkqr.mp4" type="video/mp4" />
                         Your browser does not support HTML5 video.
                       </video>
                     </div>
                   ) : (
-                    <div className="relative">
+                    <div className="relative group">
+                      <div className="bg-card/90 px-4 py-3 border-b border-border flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="size-3 rounded-full bg-amber-500 inline-block animate-pulse" />
+                          <span className="text-xs font-bold text-foreground">Restaurant Order Management & Dashboard</span>
+                        </div>
+                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-amber-500/10 text-amber-500 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                          Owner & Staff View
+                        </span>
+                      </div>
                       <video
                         key="owner-video"
                         controls
+                        autoPlay
+                        muted
+                        loop
                         playsInline
-                        preload="metadata"
-                        className="w-full aspect-video object-cover bg-black rounded-3xl"
+                        preload="auto"
+                        className="w-full aspect-video object-cover bg-black"
                         poster="/hero_qr.jpg"
                       >
-                        <source src="/mock/Mylinkqr.mp4" type="video/mp4" />
+                        <source src="/mock/dsf.mp4" type="video/mp4" />
                         Your browser does not support HTML5 video.
                       </video>
                     </div>

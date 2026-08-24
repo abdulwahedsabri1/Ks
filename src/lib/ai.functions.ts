@@ -223,7 +223,7 @@ function buildFallbackMenu(prompt: string): GeneratedMenu {
 
 export const generateMenu = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { prompt: string; currency?: string }) => {
+  .validator((data: { prompt: string; currency?: string }) => {
     const prompt = String(data.prompt ?? "")
       .trim()
       .slice(0, 200);
@@ -345,7 +345,7 @@ export const generateMenu = createServerFn({ method: "POST" })
 
 export const scanMenuPhoto = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { image: string }) => {
+  .validator((data: { image: string }) => {
     const image = String(data.image ?? "");
     if (!image.startsWith("data:image/")) throw new Error("Upload a valid image");
     if (image.length > 8_000_000) throw new Error("Image is too large (max ~5MB)");
@@ -508,7 +508,7 @@ export const scanMenuPhoto = createServerFn({ method: "POST" })
 /** Generates a shop logo or cover image with AI and stores it in shop media. */
 export const generateShopImage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { shopId: string; kind: "logo" | "cover"; prompt: string }) => {
+  .validator((data: { shopId: string; kind: "logo" | "cover"; prompt: string }) => {
     const shopId = String(data.shopId ?? "");
     const prompt = String(data.prompt ?? "")
       .trim()

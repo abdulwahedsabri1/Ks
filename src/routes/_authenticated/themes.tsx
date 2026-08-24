@@ -95,7 +95,7 @@ const THEMES_LIST: {
 ];
 
 function ThemesRoute() {
-  const { data: shop, refresh } = useMyShop();
+  const { data: shop, refetch: refresh } = useMyShop();
   const [busyId, setBusyId] = useState<ThemeId | null>(null);
 
   const activeThemeId = shopTheme(shop);

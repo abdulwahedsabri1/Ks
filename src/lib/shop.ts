@@ -570,6 +570,7 @@ export function buildWhatsAppOrder(
   }
 
   const text = textParts.join("\n");
-  const number = (shop.whatsapp ?? "").replace(/[^0-9]/g, "");
+  const rawNumber = shop.whatsapp || shop.phone || "";
+  const number = rawNumber.replace(/[^0-9]/g, "");
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
 }
