@@ -11,6 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NICHES, slugify } from "@/lib/shop";
 
+import { analyzeEmail } from "@/lib/emailValidation";
+import { CheckCircle2, AlertCircle, AlertTriangle } from "lucide-react";
+
 export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
@@ -63,6 +66,21 @@ function AuthPage() {
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Invalid details");
       return;
+    }
+
+    // Email Analysis & Disposable Email Security Guard
+    const emailAnalysis = analyzeEmail(email);
+    if (mode === "signup") {
+      if (emailAnalysis.isDisposable) {
+        toast.error(
+          "Temporary or disposable emails are forbidden for account registration. Please use a real email.",
+        );
+        return;
+      }
+      if (!emailAnalysis.isValid) {
+        toast.error(emailAnalysis.message ?? "Please enter a valid email address.");
+        return;
+      }
     }
     setLoading(true);
     try {
@@ -282,6 +300,7 @@ function AuthPage() {
                 type="email"
                 placeholder="john@business.com"
                 icon={Mail}
+                showEmailAnalysis
               />
               <Field
                 id="password2"
@@ -343,6 +362,65 @@ function AuthPage() {
   );
 }
 
+function EmailAnalysisStatus({
+  email,
+  onApplySuggestion,
+}: {
+  email: string;
+  onApplySuggestion?: (s: string) => void;
+}) {
+  if (!email.trim()) return null;
+  const analysis = analyzeEmail(email);
+
+  if (analysis.status === "valid") {
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-emerald-500 font-medium mt-1.5">
+        <CheckCircle2 className="size-3.5" />
+        <span>Valid email address</span>
+      </div>
+    );
+  }
+
+  if (analysis.status === "disposable") {
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-red-500 font-medium mt-1.5">
+        <AlertCircle className="size-3.5" />
+        <span>Temporary/disposable emails are not allowed for registration</span>
+      </div>
+    );
+  }
+
+  if (analysis.status === "typo" && analysis.suggestion) {
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-amber-500 font-medium mt-1.5">
+        <AlertTriangle className="size-3.5" />
+        <span>
+          Did you mean{" "}
+          <button
+            type="button"
+            className="underline font-bold hover:text-amber-400 cursor-pointer"
+            onClick={() => onApplySuggestion?.(analysis.suggestion!)}
+          >
+            {analysis.suggestion}
+          </button>
+          ? Click to fix.
+        </span>
+      </div>
+    );
+  }
+
+  if (analysis.status === "invalid" && email.includes("@")) {
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-red-400 font-medium mt-1.5">
+        <AlertCircle className="size-3.5" />
+        <span>{analysis.message}</span>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 function Field({
   id,
   label,
@@ -351,6 +429,7 @@ function Field({
   type = "text",
   placeholder,
   icon: Icon,
+  showEmailAnalysis = false,
 }: {
   id: string;
   label: string;
@@ -359,6 +438,7 @@ function Field({
   type?: string;
   placeholder?: string;
   icon?: React.ElementType;
+  showEmailAnalysis?: boolean;
 }) {
   return (
     <div className="space-y-2">
@@ -380,6 +460,9 @@ function Field({
           className={Icon ? "pl-9" : ""}
         />
       </div>
+      {showEmailAnalysis && (
+        <EmailAnalysisStatus email={value} onApplySuggestion={(s) => onChange(s)} />
+      )}
     </div>
   );
 }
