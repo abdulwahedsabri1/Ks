@@ -94,8 +94,9 @@ export function CheckoutPage() {
           city: data.city,
           state: data.state,
           category: data.category,
-          business_address: data.businessAddress,
-          website: data.website,
+          business_address: data.businessAddress ?? null,
+          website: data.website ?? null,
+          screenshot_url: "",
           status: "Pending",
         });
       } catch (dbErr) {
