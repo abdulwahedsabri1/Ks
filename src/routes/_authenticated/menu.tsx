@@ -356,51 +356,55 @@ function MenuPage() {
   }
 
   return (
-    <DashboardShell title="Menu" description="Build your categories and items." isAdmin={isAdmin}>
-      <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border bg-card p-4 text-sm">
-        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium capitalize text-primary">
+    <DashboardShell title="Menu Builder" description="Build your categories and items." isAdmin={isAdmin}>
+      <div className="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-2 sm:gap-3 rounded-2xl border bg-card p-3.5 sm:p-4 text-xs sm:text-sm shadow-sm">
+        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold capitalize text-primary">
           {shop.plan} plan
         </span>
-        <span className="text-muted-foreground">
-          Items {items?.length ?? 0}
-          {Number.isFinite(features.items) ? ` / ${features.items}` : " (unlimited)"}
-        </span>
-        <span className="text-muted-foreground">
-          Categories {categories?.length ?? 0}
-          {Number.isFinite(features.categories) ? ` / ${features.categories}` : " (unlimited)"}
-        </span>
+        <div className="flex items-center gap-3 text-xs sm:text-sm text-muted-foreground">
+          <span>
+            Items {items?.length ?? 0}
+            {Number.isFinite(features.items) ? ` / ${features.items}` : " (unlimited)"}
+          </span>
+          <span>
+            Categories {categories?.length ?? 0}
+            {Number.isFinite(features.categories) ? ` / ${features.categories}` : " (unlimited)"}
+          </span>
+        </div>
       </div>
-      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-        <div className="space-y-6">
-          <section className="rounded-2xl border bg-card p-5">
+
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-[320px_1fr]">
+        {/* Left Column: AI & Category Controls */}
+        <div className="space-y-4 sm:space-y-6">
+          <section className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="font-semibold">AI menu generator</h2>
+              <h2 className="font-bold text-sm sm:text-base">AI menu generator</h2>
               {!features.ai && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                   <Lock className="size-3" /> Pro
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
               {features.ai
                 ? "Describe your business and get a full draft."
                 : "Upgrade to Pro to generate a full menu from one line of text."}
             </p>
             <Input
-              className="mt-3"
+              className="mt-3 text-xs h-10"
               disabled={!features.ai}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={`${shop.niche} in Kerala`}
             />
-            <Button className="mt-3 w-full" onClick={aiGenerate} disabled={busy || !features.ai}>
+            <Button className="mt-3 w-full h-10 text-xs font-bold" onClick={aiGenerate} disabled={busy || !features.ai}>
               <Sparkles className="size-4" /> {busy ? "Generating…" : "Generate menu"}
             </Button>
           </section>
 
-          <section className="rounded-2xl border bg-card p-5">
+          <section className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="flex items-center gap-2 font-semibold">
+              <h2 className="flex items-center gap-2 font-bold text-sm sm:text-base">
                 <ImageUp className="size-4 text-primary" /> Scan menu photo
               </h2>
               {!features.ai && (
@@ -409,18 +413,18 @@ function MenuPage() {
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
               Upload a clear photo to extract item names, prices and categories.
             </p>
             <Label
               htmlFor="menu-photo"
-              className="mt-4 flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed bg-muted/30 px-4 text-center transition hover:bg-muted/60"
+              className="mt-3 flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed bg-muted/30 p-3 text-center transition hover:bg-muted/60"
             >
-              <Upload className="mb-2 size-5 text-primary" />
-              <span className="text-sm font-medium">
+              <Upload className="mb-1.5 size-5 text-primary" />
+              <span className="text-xs font-semibold">
                 {scanBusy ? "Reading menu…" : scanName || "Choose menu photo"}
               </span>
-              <span className="mt-1 text-xs text-muted-foreground">
+              <span className="mt-1 text-[11px] text-muted-foreground">
                 JPG, PNG or WebP · max 5 MB
               </span>
             </Label>
@@ -434,28 +438,30 @@ function MenuPage() {
             />
           </section>
 
-          <section className="rounded-2xl border bg-card p-5">
-            <h2 className="font-semibold">Categories</h2>
+          <section className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
+            <h2 className="font-bold text-sm sm:text-base">Categories</h2>
             <div className="mt-3 flex gap-2">
               <Input
                 value={catName}
                 onChange={(e) => setCatName(e.target.value)}
                 placeholder="Starters"
+                className="text-xs h-10"
               />
-              <Button onClick={addCategory}>Add</Button>
+              <Button onClick={addCategory} className="h-10 text-xs font-bold px-4">Add</Button>
             </div>
-            <ul className="mt-4 space-y-2">
+            <ul className="mt-3 space-y-2 max-h-60 overflow-y-auto no-scrollbar">
               {(categories ?? []).map((c) => (
                 <li
                   key={c.id}
-                  className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm"
+                  className="flex items-center justify-between rounded-xl border bg-muted/20 px-3 py-2 text-xs sm:text-sm font-medium"
                 >
-                  {c.name}
+                  <span className="truncate pr-2">{c.name}</span>
                   <button
                     aria-label={`Delete ${c.name}`}
                     onClick={() => remove("categories", c.id)}
+                    className="p-1 text-muted-foreground hover:text-destructive transition-colors shrink-0"
                   >
-                    <Trash2 className="size-4 text-muted-foreground" />
+                    <Trash2 className="size-4" />
                   </button>
                 </li>
               ))}
@@ -463,65 +469,52 @@ function MenuPage() {
           </section>
         </div>
 
-        <div className="space-y-6">
+        {/* Right Column: Scanned Items, Add Item & Item List */}
+        <div className="space-y-4 sm:space-y-6">
           {scanned.length > 0 && (
-            <section className="rounded-2xl border border-primary/30 bg-card p-5 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-3">
+            <section className="rounded-2xl border border-primary/30 bg-card p-4 sm:p-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                 <div>
-                  <h2 className="flex items-center gap-2 font-semibold">
-                    <Check className="size-4 text-primary" /> Scan ready
+                  <h2 className="flex items-center gap-2 font-bold text-sm sm:text-base">
+                    <Check className="size-4 text-primary" /> Scan Ready
                   </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     Review {scanned.length} extracted items before importing.
                   </p>
                 </div>
-                <Button onClick={importScanned} disabled={importBusy}>
+                <Button onClick={importScanned} disabled={importBusy} size="sm" className="h-9 text-xs font-bold w-full sm:w-auto">
                   {importBusy ? "Adding…" : `Add all ${scanned.length} items`}
                 </Button>
               </div>
-              <div className="mt-4 overflow-hidden rounded-xl border">
-                <div className="grid grid-cols-[1fr_100px_32px] gap-3 bg-muted/60 px-3 py-2 text-xs font-medium text-muted-foreground sm:grid-cols-[130px_1fr_100px_32px]">
-                  <span className="hidden sm:block">Category</span>
-                  <span>Item & Details</span>
-                  <span className="text-right">Price</span>
-                  <span></span>
-                </div>
-                <ul className="max-h-96 divide-y overflow-y-auto">
+              <div className="overflow-hidden rounded-xl border">
+                <ul className="max-h-80 divide-y overflow-y-auto">
                   {scanned.map((item, index) => (
                     <li
                       key={`${item.category}-${item.name}-${index}`}
-                      className="grid grid-cols-[1fr_100px_32px] items-center gap-3 px-3 py-3 text-sm sm:grid-cols-[130px_1fr_100px_32px]"
+                      className="flex items-center justify-between gap-2.5 p-3 text-xs sm:text-sm"
                     >
-                      <span className="hidden truncate font-medium text-muted-foreground sm:block">
-                        {item.category}
-                      </span>
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <img
                           src={getFoodImageUrl(item.name, item.category)}
                           alt={item.name}
                           className="size-10 rounded-lg object-cover shrink-0 border border-black/10"
                         />
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="truncate font-semibold">{item.name}</p>
-                          {item.description && (
-                            <p className="truncate text-xs text-muted-foreground">{item.description}</p>
-                          )}
-                          <p className="truncate text-xs text-primary sm:hidden font-medium">
-                            {item.category}
-                          </p>
+                          <p className="truncate text-[11px] text-muted-foreground">{item.category}</p>
                         </div>
                       </div>
-                      <span className="text-right font-bold">
-                        {money(item.price, shop.currency)}
-                      </span>
-                      <button
-                        type="button"
-                        aria-label={`Remove ${item.name}`}
-                        onClick={() => setScanned((prev) => prev.filter((_, i) => i !== index))}
-                        className="text-muted-foreground hover:text-destructive transition-colors p-1 flex justify-center"
-                      >
-                        <Trash2 className="size-4" />
-                      </button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="font-bold text-xs sm:text-sm">{money(item.price, shop.currency)}</span>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${item.name}`}
+                          onClick={() => setScanned((prev) => prev.filter((_, i) => i !== index))}
+                          className="text-muted-foreground hover:text-destructive p-1"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -529,39 +522,46 @@ function MenuPage() {
             </section>
           )}
 
-          <section className="rounded-2xl border bg-card p-5">
-            <h2 className="font-semibold">Add item</h2>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="i-name">Name</Label>
+          {/* Add Item Card */}
+          <section className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
+            <h2 className="font-bold text-sm sm:text-base">Add New Item</h2>
+            <div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="i-name" className="text-xs font-semibold">Name *</Label>
                 <Input
                   id="i-name"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="e.g. Chicken Biryani"
+                  className="text-xs h-10"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="i-price">Price</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="i-price" className="text-xs font-semibold">Price *</Label>
                 <Input
                   id="i-price"
                   inputMode="decimal"
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: e.target.value })}
+                  placeholder="240"
+                  className="text-xs h-10"
                 />
               </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="i-desc">Description</Label>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="i-desc" className="text-xs font-semibold">Description</Label>
                 <Input
                   id="i-desc"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Short dish description"
+                  className="text-xs h-10"
                 />
               </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="i-cat">Category</Label>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="i-cat" className="text-xs font-semibold">Category</Label>
                 <select
                   id="i-cat"
-                  className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-xs"
                   value={form.category_id}
                   onChange={(e) => setForm({ ...form, category_id: e.target.value })}
                 >
@@ -573,47 +573,48 @@ function MenuPage() {
                   ))}
                 </select>
               </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="i-photo">Item Photo (Optional)</Label>
-                <div className="flex items-center gap-4">
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="i-photo" className="text-xs font-semibold">Item Photo (Optional)</Label>
+                <div className="flex items-center gap-3">
                   {form.image_url ? (
                     <img
                       src={form.image_url}
                       alt="Preview"
-                      className="size-14 rounded-xl object-cover border border-white/10 shrink-0"
+                      className="size-12 rounded-xl object-cover border border-border shrink-0"
                     />
                   ) : (
-                    <div className="grid size-14 place-items-center rounded-xl border border-dashed bg-muted text-muted-foreground shrink-0">
-                      <ImageIcon className="size-5" />
+                    <div className="grid size-12 place-items-center rounded-xl border border-dashed bg-muted text-muted-foreground shrink-0">
+                      <ImageIcon className="size-4" />
                     </div>
                   )}
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <Input
                       id="i-photo"
                       type="file"
                       accept="image/*"
                       disabled={addPhotoBusy}
                       onChange={(e) => uploadNewItemImage(e.target.files?.[0])}
-                      className="cursor-pointer text-xs"
+                      className="cursor-pointer text-xs h-9"
                     />
-                    <p className="mt-1 text-[11px] text-muted-foreground">
-                      Choose photo or leave blank for automatic food photo matching
+                    <p className="mt-1 text-[10px] text-muted-foreground truncate">
+                      Leave blank for automatic food photo matching
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-            <Button className="mt-4" onClick={addItem}>
-              Add item
+            <Button className="mt-4 w-full sm:w-auto h-10 text-xs font-bold px-6" onClick={addItem}>
+              Add Item
             </Button>
           </section>
 
-          <section className="rounded-2xl border bg-card p-5">
-            <h2 className="font-semibold">Items ({items?.length ?? 0})</h2>
-            <ul className="mt-3 divide-y">
+          {/* Existing Items List - Fully Mobile Optimized */}
+          <section className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
+            <h2 className="font-bold text-sm sm:text-base">Menu Items ({items?.length ?? 0})</h2>
+            <ul className="mt-3 divide-y divide-border/60">
               {(items ?? []).map((i) => (
-                <li key={i.id} className="flex items-center justify-between gap-3 py-3">
-                  <div className="flex items-center gap-3 min-w-0">
+                <li key={i.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     {i.image_url ? (
                       <img
                         src={i.image_url}
@@ -622,33 +623,41 @@ function MenuPage() {
                       />
                     ) : (
                       <div className="grid size-12 place-items-center rounded-xl border border-dashed bg-muted shrink-0 text-muted-foreground">
-                        <ImageIcon className="size-5" />
+                        <ImageIcon className="size-4" />
                       </div>
                     )}
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{i.name}</p>
-                      <p className="truncate text-sm text-muted-foreground">{i.description}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-bold text-sm">{i.name}</p>
+                      {i.description && (
+                        <p className="line-clamp-1 text-xs text-muted-foreground">{i.description}</p>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold">{money(i.price, shop.currency)}</span>
-                    <button
-                      aria-label={`Edit ${i.name}`}
-                      onClick={() => openEdit(i as unknown as MenuItem)}
-                    >
-                      <Edit2 className="size-4 text-muted-foreground hover:text-primary transition-colors" />
-                    </button>
-                    <button
-                      aria-label={`Delete ${i.name}`}
-                      onClick={() => remove("menu_items", i.id)}
-                    >
-                      <Trash2 className="size-4 text-muted-foreground hover:text-destructive transition-colors" />
-                    </button>
+                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-border/40">
+                    <span className="text-sm font-bold text-primary sm:text-foreground">{money(i.price, shop.currency)}</span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        aria-label={`Edit ${i.name}`}
+                        onClick={() => openEdit(i as unknown as MenuItem)}
+                        className="p-1.5 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:text-primary hover:border-primary/40 transition-all"
+                      >
+                        <Edit2 className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Delete ${i.name}`}
+                        onClick={() => remove("menu_items", i.id)}
+                        className="p-1.5 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-all"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </li>
               ))}
               {(items?.length ?? 0) === 0 && (
-                <p className="py-3 text-sm text-muted-foreground">No items yet.</p>
+                <p className="py-4 text-xs text-center text-muted-foreground">No menu items added yet.</p>
               )}
             </ul>
           </section>
@@ -656,69 +665,72 @@ function MenuPage() {
       </div>
 
       <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-[92vw] sm:max-w-md rounded-2xl p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>Edit Menu Item</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg font-bold">Edit Menu Item</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label>Item Photo</Label>
-              <div className="flex items-center gap-4">
+          <div className="grid gap-3 py-2 sm:py-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Item Photo</Label>
+              <div className="flex items-center gap-3">
                 {editForm.image_url ? (
                   <img
                     src={editForm.image_url}
                     alt="Item"
-                    className="size-16 rounded-xl object-cover"
+                    className="size-12 sm:size-14 rounded-xl object-cover border border-border shrink-0"
                   />
                 ) : (
-                  <div className="grid size-16 place-items-center rounded-xl border border-dashed bg-muted">
-                    <ImageIcon className="size-6 text-muted-foreground" />
+                  <div className="grid size-12 sm:size-14 place-items-center rounded-xl border border-dashed bg-muted shrink-0 text-muted-foreground">
+                    <ImageIcon className="size-5" />
                   </div>
                 )}
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <Input
                     type="file"
                     accept="image/*"
                     onChange={(e) => uploadItemImage(e.target.files?.[0])}
                     disabled={editBusy}
-                    className="cursor-pointer"
+                    className="cursor-pointer text-xs h-9"
                   />
-                  <p className="mt-1 text-xs text-muted-foreground">JPG, PNG or WebP · max 5 MB</p>
+                  <p className="mt-1 text-[10px] text-muted-foreground truncate">JPG, PNG or WebP · max 5 MB</p>
                 </div>
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="e-name">Name</Label>
+            <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="e-name" className="text-xs font-semibold">Name</Label>
                 <Input
                   id="e-name"
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="text-xs h-10"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="e-price">Price</Label>
+              <div className="space-y-1">
+                <Label htmlFor="e-price" className="text-xs font-semibold">Price</Label>
                 <Input
                   id="e-price"
                   inputMode="decimal"
                   value={editForm.price}
                   onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+                  className="text-xs h-10"
                 />
               </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="e-desc">Description</Label>
+              <div className="space-y-1 sm:col-span-2">
+                <Label htmlFor="e-desc" className="text-xs font-semibold">Description</Label>
                 <Input
                   id="e-desc"
                   value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  className="text-xs h-10"
                 />
               </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="e-cat">Category</Label>
+              <div className="space-y-1 sm:col-span-2">
+                <Label htmlFor="e-cat" className="text-xs font-semibold">Category</Label>
                 <select
                   id="e-cat"
-                  className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-xs"
                   value={editForm.category_id}
                   onChange={(e) => setEditForm({ ...editForm, category_id: e.target.value })}
                 >
@@ -732,12 +744,12 @@ function MenuPage() {
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingItem(null)} disabled={editBusy}>
+          <DialogFooter className="flex-row justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setEditingItem(null)} disabled={editBusy} className="h-9 text-xs flex-1 sm:flex-initial">
               Cancel
             </Button>
-            <Button onClick={saveEdit} disabled={editBusy}>
-              {editBusy && <Loader2 className="mr-2 size-4 animate-spin" />}
+            <Button onClick={saveEdit} disabled={editBusy} className="h-9 text-xs font-bold flex-1 sm:flex-initial">
+              {editBusy && <Loader2 className="mr-1.5 size-3.5 animate-spin" />}
               Save Changes
             </Button>
           </DialogFooter>
