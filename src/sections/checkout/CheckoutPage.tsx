@@ -14,8 +14,7 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useSearch, useNavigate, Link } from "@tanstack/react-router";
-import { Route } from "@/routes/checkout";
+import { useNavigate, Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import QRCode from "qrcode";
@@ -48,9 +47,12 @@ const checkoutSchema = z.object({
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
+/** @deprecated Checkout is now handled inline on /pricing via Razorpay modal */
 export function CheckoutPage() {
-  const search = useSearch({ from: Route.id });
   const navigate = useNavigate();
+  // This component is deprecated — /checkout redirects to /pricing
+  // Keep as fallback with safe defaults
+  const search = { plan: "Basic", price: 249, period: "/mo" };
   const [loading, setLoading] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
 

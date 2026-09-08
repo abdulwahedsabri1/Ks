@@ -107,8 +107,8 @@ function SettingsPage() {
       code: newCoupon.code.trim().toUpperCase(),
       type: newCoupon.type,
       value: Number(newCoupon.value),
-      min_order: newCoupon.min_order ? Number(newCoupon.min_order) : undefined,
-      expires_at: newCoupon.expires_at ? new Date(newCoupon.expires_at).toISOString() : undefined,
+      ...(newCoupon.min_order ? { min_order: Number(newCoupon.min_order) } : {}),
+      ...(newCoupon.expires_at ? { expires_at: new Date(newCoupon.expires_at).toISOString() } : {}),
     };
     syncCoupons([...form.coupons, coupon]);
     setNewCoupon({ code: "", type: "percent", value: "", min_order: "", expires_at: "" });
