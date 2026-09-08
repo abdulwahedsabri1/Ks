@@ -286,7 +286,6 @@ export const PLANS: {
       "Up to 50 menu items",
       "Basic view counter",
       "Multiple languages support",
-      "WhatsApp ordering & cart",
     ],
   },
   {
@@ -296,6 +295,7 @@ export const PLANS: {
     tagline: "For growing shops",
     features: [
       "Everything in Basic",
+      "WhatsApp ordering & cart",
       "On-Table dining",
       "Take-away orders",
       "Unlimited menu items",
