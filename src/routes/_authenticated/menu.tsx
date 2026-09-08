@@ -75,7 +75,13 @@ function MenuPage() {
   const [scanned, setScanned] = useState<
     { name: string; description: string; price: number; category: string }[]
   >([]);
-  const [form, setForm] = useState({ name: "", price: "", description: "", category_id: "", image_url: "" });
+  const [form, setForm] = useState({
+    name: "",
+    price: "",
+    description: "",
+    category_id: "",
+    image_url: "",
+  });
   const [addPhotoBusy, setAddPhotoBusy] = useState(false);
 
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
@@ -356,7 +362,11 @@ function MenuPage() {
   }
 
   return (
-    <DashboardShell title="Menu Builder" description="Build your categories and items." isAdmin={isAdmin}>
+    <DashboardShell
+      title="Menu Builder"
+      description="Build your categories and items."
+      isAdmin={isAdmin}
+    >
       <div className="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-2 sm:gap-3 rounded-2xl border bg-card p-3.5 sm:p-4 text-xs sm:text-sm shadow-sm">
         <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold capitalize text-primary">
           {shop.plan} plan
@@ -397,7 +407,11 @@ function MenuPage() {
               onChange={(e) => setPrompt(e.target.value)}
               placeholder={`${shop.niche} in Kerala`}
             />
-            <Button className="mt-3 w-full h-10 text-xs font-bold" onClick={aiGenerate} disabled={busy || !features.ai}>
+            <Button
+              className="mt-3 w-full h-10 text-xs font-bold"
+              onClick={aiGenerate}
+              disabled={busy || !features.ai}
+            >
               <Sparkles className="size-4" /> {busy ? "Generating…" : "Generate menu"}
             </Button>
           </section>
@@ -447,7 +461,9 @@ function MenuPage() {
                 placeholder="Starters"
                 className="text-xs h-10"
               />
-              <Button onClick={addCategory} className="h-10 text-xs font-bold px-4">Add</Button>
+              <Button onClick={addCategory} className="h-10 text-xs font-bold px-4">
+                Add
+              </Button>
             </div>
             <ul className="mt-3 space-y-2 max-h-60 overflow-y-auto no-scrollbar">
               {(categories ?? []).map((c) => (
@@ -482,7 +498,12 @@ function MenuPage() {
                     Review {scanned.length} extracted items before importing.
                   </p>
                 </div>
-                <Button onClick={importScanned} disabled={importBusy} size="sm" className="h-9 text-xs font-bold w-full sm:w-auto">
+                <Button
+                  onClick={importScanned}
+                  disabled={importBusy}
+                  size="sm"
+                  className="h-9 text-xs font-bold w-full sm:w-auto"
+                >
                   {importBusy ? "Adding…" : `Add all ${scanned.length} items`}
                 </Button>
               </div>
@@ -501,11 +522,15 @@ function MenuPage() {
                         />
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-semibold">{item.name}</p>
-                          <p className="truncate text-[11px] text-muted-foreground">{item.category}</p>
+                          <p className="truncate text-[11px] text-muted-foreground">
+                            {item.category}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="font-bold text-xs sm:text-sm">{money(item.price, shop.currency)}</span>
+                        <span className="font-bold text-xs sm:text-sm">
+                          {money(item.price, shop.currency)}
+                        </span>
                         <button
                           type="button"
                           aria-label={`Remove ${item.name}`}
@@ -527,7 +552,9 @@ function MenuPage() {
             <h2 className="font-bold text-sm sm:text-base">Add New Item</h2>
             <div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="i-name" className="text-xs font-semibold">Name *</Label>
+                <Label htmlFor="i-name" className="text-xs font-semibold">
+                  Name *
+                </Label>
                 <Input
                   id="i-name"
                   value={form.name}
@@ -537,7 +564,9 @@ function MenuPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="i-price" className="text-xs font-semibold">Price *</Label>
+                <Label htmlFor="i-price" className="text-xs font-semibold">
+                  Price *
+                </Label>
                 <Input
                   id="i-price"
                   inputMode="decimal"
@@ -548,7 +577,9 @@ function MenuPage() {
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="i-desc" className="text-xs font-semibold">Description</Label>
+                <Label htmlFor="i-desc" className="text-xs font-semibold">
+                  Description
+                </Label>
                 <Input
                   id="i-desc"
                   value={form.description}
@@ -558,7 +589,9 @@ function MenuPage() {
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="i-cat" className="text-xs font-semibold">Category</Label>
+                <Label htmlFor="i-cat" className="text-xs font-semibold">
+                  Category
+                </Label>
                 <select
                   id="i-cat"
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-xs"
@@ -574,7 +607,9 @@ function MenuPage() {
                 </select>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="i-photo" className="text-xs font-semibold">Item Photo (Optional)</Label>
+                <Label htmlFor="i-photo" className="text-xs font-semibold">
+                  Item Photo (Optional)
+                </Label>
                 <div className="flex items-center gap-3">
                   {form.image_url ? (
                     <img
@@ -613,7 +648,10 @@ function MenuPage() {
             <h2 className="font-bold text-sm sm:text-base">Menu Items ({items?.length ?? 0})</h2>
             <ul className="mt-3 divide-y divide-border/60">
               {(items ?? []).map((i) => (
-                <li key={i.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3">
+                <li
+                  key={i.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3"
+                >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     {i.image_url ? (
                       <img
@@ -629,12 +667,16 @@ function MenuPage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-bold text-sm">{i.name}</p>
                       {i.description && (
-                        <p className="line-clamp-1 text-xs text-muted-foreground">{i.description}</p>
+                        <p className="line-clamp-1 text-xs text-muted-foreground">
+                          {i.description}
+                        </p>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between sm:justify-end gap-3 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-border/40">
-                    <span className="text-sm font-bold text-primary sm:text-foreground">{money(i.price, shop.currency)}</span>
+                    <span className="text-sm font-bold text-primary sm:text-foreground">
+                      {money(i.price, shop.currency)}
+                    </span>
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
@@ -657,7 +699,9 @@ function MenuPage() {
                 </li>
               ))}
               {(items?.length ?? 0) === 0 && (
-                <p className="py-4 text-xs text-center text-muted-foreground">No menu items added yet.</p>
+                <p className="py-4 text-xs text-center text-muted-foreground">
+                  No menu items added yet.
+                </p>
               )}
             </ul>
           </section>
@@ -692,14 +736,18 @@ function MenuPage() {
                     disabled={editBusy}
                     className="cursor-pointer text-xs h-9"
                   />
-                  <p className="mt-1 text-[10px] text-muted-foreground truncate">JPG, PNG or WebP · max 5 MB</p>
+                  <p className="mt-1 text-[10px] text-muted-foreground truncate">
+                    JPG, PNG or WebP · max 5 MB
+                  </p>
                 </div>
               </div>
             </div>
 
             <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label htmlFor="e-name" className="text-xs font-semibold">Name</Label>
+                <Label htmlFor="e-name" className="text-xs font-semibold">
+                  Name
+                </Label>
                 <Input
                   id="e-name"
                   value={editForm.name}
@@ -708,7 +756,9 @@ function MenuPage() {
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="e-price" className="text-xs font-semibold">Price</Label>
+                <Label htmlFor="e-price" className="text-xs font-semibold">
+                  Price
+                </Label>
                 <Input
                   id="e-price"
                   inputMode="decimal"
@@ -718,7 +768,9 @@ function MenuPage() {
                 />
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <Label htmlFor="e-desc" className="text-xs font-semibold">Description</Label>
+                <Label htmlFor="e-desc" className="text-xs font-semibold">
+                  Description
+                </Label>
                 <Input
                   id="e-desc"
                   value={editForm.description}
@@ -727,7 +779,9 @@ function MenuPage() {
                 />
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <Label htmlFor="e-cat" className="text-xs font-semibold">Category</Label>
+                <Label htmlFor="e-cat" className="text-xs font-semibold">
+                  Category
+                </Label>
                 <select
                   id="e-cat"
                   className="h-10 w-full rounded-md border border-input bg-background px-3 text-xs"
@@ -745,10 +799,19 @@ function MenuPage() {
             </div>
           </div>
           <DialogFooter className="flex-row justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setEditingItem(null)} disabled={editBusy} className="h-9 text-xs flex-1 sm:flex-initial">
+            <Button
+              variant="outline"
+              onClick={() => setEditingItem(null)}
+              disabled={editBusy}
+              className="h-9 text-xs flex-1 sm:flex-initial"
+            >
               Cancel
             </Button>
-            <Button onClick={saveEdit} disabled={editBusy} className="h-9 text-xs font-bold flex-1 sm:flex-initial">
+            <Button
+              onClick={saveEdit}
+              disabled={editBusy}
+              className="h-9 text-xs font-bold flex-1 sm:flex-initial"
+            >
               {editBusy && <Loader2 className="mr-1.5 size-3.5 animate-spin" />}
               Save Changes
             </Button>

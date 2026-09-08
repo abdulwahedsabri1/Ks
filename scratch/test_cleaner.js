@@ -1,10 +1,10 @@
 function cleanItemName(raw) {
   let s = raw.trim();
 
-  // Remove leading non-alphanumeric characters, copyright symbols, bullet points, numbers like 3g. 
+  // Remove leading non-alphanumeric characters, copyright symbols, bullet points, numbers like 3g.
   s = s.replace(/^[^a-zA-Z0-9]+/, "");
   s = s.replace(/^[©®°™•\-*_.]+\s*/, "");
-  s = s.replace(/^[a-z0-9]{1,2}\.\s+/i, ""); 
+  s = s.replace(/^[a-z0-9]{1,2}\.\s+/i, "");
   s = s.replace(/^[e_]\s+/i, "");
 
   // Remove trailing leader dots, trailing noise like ccc..., co..., ---, etc.
@@ -24,12 +24,17 @@ function cleanItemName(raw) {
 }
 
 function inferCategory(itemName, rawCategory) {
-  let cat = rawCategory.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, " ").trim();
-  
+  let cat = rawCategory
+    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
   if (cat.length < 3 || cat.toLowerCase().includes("te") || cat.toLowerCase() === "menu") {
     const itemLower = itemName.toLowerCase();
     if (itemLower.includes("noodle")) {
-      return itemLower.includes("chicken") || itemLower.includes("egg") ? "Chicken Noodles" : "Veg Noodles";
+      return itemLower.includes("chicken") || itemLower.includes("egg")
+        ? "Chicken Noodles"
+        : "Veg Noodles";
     }
     if (itemLower.includes("fish") || itemLower.includes("prawn") || itemLower.includes("sea")) {
       return "Sea Foods";

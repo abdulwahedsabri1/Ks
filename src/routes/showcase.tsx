@@ -82,7 +82,8 @@ function ShowcaseRoute() {
           </h1>
 
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8">
-            Explore physical table stand mockups, custom acrylic displays, and print vector SVG/PNG files created for restaurants and local businesses.
+            Explore physical table stand mockups, custom acrylic displays, and print vector SVG/PNG
+            files created for restaurants and local businesses.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
@@ -91,7 +92,12 @@ function ShowcaseRoute() {
                 Create Your QR Stand <ArrowRight className="ml-2 size-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="rounded-full h-12 px-8 text-sm font-bold">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="rounded-full h-12 px-8 text-sm font-bold"
+            >
               <Link to="/demo">Book Free Setup & Demo</Link>
             </Button>
           </div>
@@ -152,14 +158,22 @@ function ShowcaseRoute() {
               Vector SVG & 300 DPI Export Included
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground max-w-xl mx-auto mb-8 leading-relaxed">
-              Download high-resolution vector files embedded with your shop logo. Send them directly to any local print shop or order pre-made stands through our WhatsApp support.
+              Download high-resolution vector files embedded with your shop logo. Send them directly
+              to any local print shop or order pre-made stands through our WhatsApp support.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Button asChild size="lg" className="rounded-full font-bold h-12 px-8">
                 <Link to="/auth">Generate Free Vector QR</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-full font-bold h-12 px-8">
-                <Link to="/demo" hash="booking-form">Order Printed Stands (+91 9392318135)</Link>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="rounded-full font-bold h-12 px-8"
+              >
+                <Link to="/demo" hash="booking-form">
+                  Order Printed Stands (+91 9392318135)
+                </Link>
               </Button>
             </div>
           </div>

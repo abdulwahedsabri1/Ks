@@ -18,7 +18,8 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-muted-foreground max-w-sm mb-6 text-sm leading-relaxed">
-              The premium digital experience platform for local businesses, restaurants, cafes, salons, and creators.
+              The premium digital experience platform for local businesses, restaurants, cafes,
+              salons, and creators.
             </p>
           </div>
 
@@ -26,27 +27,42 @@ export function Footer() {
             <h4 className="font-medium text-foreground mb-4">Product</h4>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link to="/features" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  to="/features"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Features
                 </Link>
               </li>
               <li>
-                <Link to="/previews" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  to="/previews"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Live Previews
                 </Link>
               </li>
               <li>
-                <Link to="/showcase" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  to="/showcase"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Showcase & Stands
                 </Link>
               </li>
               <li>
-                <Link to="/demo" className="text-muted-foreground hover:text-primary transition-colors font-semibold">
+                <Link
+                  to="/demo"
+                  className="text-muted-foreground hover:text-primary transition-colors font-semibold"
+                >
                   Watch Video Demo
                 </Link>
               </li>
               <li>
-                <Link to="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  to="/pricing"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Pricing
                 </Link>
               </li>
@@ -57,17 +73,26 @@ export function Footer() {
             <h4 className="font-medium text-foreground mb-4">Resources</h4>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link to="/help" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  to="/help"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Help Center
                 </Link>
               </li>
               <li>
-                <Link to="/blog" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  to="/blog"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Blog
                 </Link>
               </li>
               <li>
-                <Link to="/templates" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  to="/templates"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Templates
                 </Link>
               </li>
@@ -78,17 +103,26 @@ export function Footer() {
             <h4 className="font-medium text-foreground mb-4">Company</h4>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  to="/about"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   About
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  to="/contact"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Contact
                 </Link>
               </li>
               <li>
-                <Link to="/legal" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link
+                  to="/legal"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
                   Legal
                 </Link>
               </li>
@@ -113,4 +147,3 @@ export function Footer() {
     </footer>
   );
 }
-

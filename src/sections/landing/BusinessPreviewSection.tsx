@@ -145,7 +145,7 @@ export function BusinessPreviewSection() {
     setShowCart(false);
   };
 
-  const handleAddToCart = (item: any) => {
+  const handleAddToCart = (item: { name: string; price: string }) => {
     const amount = parseInt(item.price.replace(/[^0-9]/g, "")) || 0;
     setCart((prev) => [...prev, { name: item.name, price: amount }]);
   };

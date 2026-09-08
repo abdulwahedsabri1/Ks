@@ -20,6 +20,7 @@ import { Route as DemoRouteImport } from './routes/demo'
 import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as LegalRouteImport } from './routes/legal'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PreviewsRouteImport } from './routes/previews'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -33,6 +34,8 @@ import { Route as AuthenticatedMenuRouteImport } from './routes/_authenticated/m
 import { Route as AuthenticatedQrRouteImport } from './routes/_authenticated/qr'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedThemesRouteImport } from './routes/_authenticated/themes'
+import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth/reset-password'
 import { Route as ShopSlugRouteImport } from './routes/shop.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -87,6 +90,11 @@ const HelpRoute = HelpRouteImport.update({
 const LegalRoute = LegalRouteImport.update({
   id: '/legal',
   path: '/legal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PreviewsRoute = PreviewsRouteImport.update({
@@ -154,6 +162,16 @@ const AuthenticatedThemesRoute = AuthenticatedThemesRouteImport.update({
   path: '/themes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => AuthRoute,
+} as any)
 const ShopSlugRoute = ShopSlugRouteImport.update({
   id: '/shop/$slug',
   path: '/shop/$slug',
@@ -163,7 +181,7 @@ const ShopSlugRoute = ShopSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/blog': typeof BlogRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
@@ -171,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/features': typeof FeaturesRoute
   '/help': typeof HelpRoute
   '/legal': typeof LegalRoute
+  '/onboarding': typeof OnboardingRoute
   '/previews': typeof PreviewsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -184,12 +203,14 @@ export interface FileRoutesByFullPath {
   '/qr': typeof AuthenticatedQrRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/themes': typeof AuthenticatedThemesRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/shop/$slug': typeof ShopSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/blog': typeof BlogRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
@@ -197,6 +218,7 @@ export interface FileRoutesByTo {
   '/features': typeof FeaturesRoute
   '/help': typeof HelpRoute
   '/legal': typeof LegalRoute
+  '/onboarding': typeof OnboardingRoute
   '/previews': typeof PreviewsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -210,6 +232,8 @@ export interface FileRoutesByTo {
   '/qr': typeof AuthenticatedQrRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/themes': typeof AuthenticatedThemesRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/shop/$slug': typeof ShopSlugRoute
 }
 export interface FileRoutesById {
@@ -217,7 +241,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/blog': typeof BlogRoute
   '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
@@ -225,6 +249,7 @@ export interface FileRoutesById {
   '/features': typeof FeaturesRoute
   '/help': typeof HelpRoute
   '/legal': typeof LegalRoute
+  '/onboarding': typeof OnboardingRoute
   '/previews': typeof PreviewsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -238,6 +263,8 @@ export interface FileRoutesById {
   '/_authenticated/qr': typeof AuthenticatedQrRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/themes': typeof AuthenticatedThemesRoute
+  '/auth/callback': typeof AuthCallbackRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/shop/$slug': typeof ShopSlugRoute
 }
 export interface FileRouteTypes {
@@ -253,6 +280,7 @@ export interface FileRouteTypes {
     | '/features'
     | '/help'
     | '/legal'
+    | '/onboarding'
     | '/previews'
     | '/pricing'
     | '/privacy'
@@ -266,6 +294,8 @@ export interface FileRouteTypes {
     | '/qr'
     | '/settings'
     | '/themes'
+    | '/auth/callback'
+    | '/auth/reset-password'
     | '/shop/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -279,6 +309,7 @@ export interface FileRouteTypes {
     | '/features'
     | '/help'
     | '/legal'
+    | '/onboarding'
     | '/previews'
     | '/pricing'
     | '/privacy'
@@ -292,6 +323,8 @@ export interface FileRouteTypes {
     | '/qr'
     | '/settings'
     | '/themes'
+    | '/auth/callback'
+    | '/auth/reset-password'
     | '/shop/$slug'
   id:
     | '__root__'
@@ -306,6 +339,7 @@ export interface FileRouteTypes {
     | '/features'
     | '/help'
     | '/legal'
+    | '/onboarding'
     | '/previews'
     | '/pricing'
     | '/privacy'
@@ -319,6 +353,8 @@ export interface FileRouteTypes {
     | '/_authenticated/qr'
     | '/_authenticated/settings'
     | '/_authenticated/themes'
+    | '/auth/callback'
+    | '/auth/reset-password'
     | '/shop/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -326,7 +362,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   BlogRoute: typeof BlogRoute
   CheckoutRoute: typeof CheckoutRoute
   ContactRoute: typeof ContactRoute
@@ -334,6 +370,7 @@ export interface RootRouteChildren {
   FeaturesRoute: typeof FeaturesRoute
   HelpRoute: typeof HelpRoute
   LegalRoute: typeof LegalRoute
+  OnboardingRoute: typeof OnboardingRoute
   PreviewsRoute: typeof PreviewsRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -420,6 +457,13 @@ declare module '@tanstack/react-router' {
       path: '/legal'
       fullPath: '/legal'
       preLoaderRoute: typeof LegalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/previews': {
@@ -513,6 +557,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedThemesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/shop/$slug': {
       id: '/shop/$slug'
       path: '/shop/$slug'
@@ -546,11 +604,23 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   BlogRoute: BlogRoute,
   CheckoutRoute: CheckoutRoute,
   ContactRoute: ContactRoute,
@@ -558,6 +628,7 @@ const rootRouteChildren: RootRouteChildren = {
   FeaturesRoute: FeaturesRoute,
   HelpRoute: HelpRoute,
   LegalRoute: LegalRoute,
+  OnboardingRoute: OnboardingRoute,
   PreviewsRoute: PreviewsRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,

@@ -10,7 +10,8 @@ export const Route = createFileRoute("/blog")({
       { title: "Blog & Guides — MY Link QR" },
       {
         name: "description",
-        content: "Explore industry insights, QR menu best practices, restaurant growth strategies, and digital store tutorials.",
+        content:
+          "Explore industry insights, QR menu best practices, restaurant growth strategies, and digital store tutorials.",
       },
       { property: "og:title", content: "Blog & Guides — MY Link QR" },
     ],
@@ -22,62 +23,74 @@ const articles = [
   {
     id: 1,
     title: "10 Proven Ways to Increase Restaurant Revenue Using QR Menus in 2026",
-    excerpt: "Discover how top-performing cafes and restaurants use high-resolution digital menus, upsell tags, and WhatsApp ordering to boost average check sizes.",
+    excerpt:
+      "Discover how top-performing cafes and restaurants use high-resolution digital menus, upsell tags, and WhatsApp ordering to boost average check sizes.",
     category: "Growth & Sales",
     author: "Sabri Wahed",
     date: "Aug 20, 2026",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+    image:
+      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: 2,
     title: "Why Printed Paper Menus Are Losing You Customers (And How to Fix It)",
-    excerpt: "Paper menus get smudged, torn, and outdated fast. Learn how dynamic QR codes keep your business looking pristine and professional.",
+    excerpt:
+      "Paper menus get smudged, torn, and outdated fast. Learn how dynamic QR codes keep your business looking pristine and professional.",
     category: "Customer Experience",
     author: "Priya Sharma",
     date: "Aug 15, 2026",
     readTime: "4 min read",
-    image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
+    image:
+      "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: 3,
     title: "The Complete Guide to Setting Up WhatsApp Ordering for Your Store",
-    excerpt: "Step-by-step instructions on enabling digital carts, direct order routing, and managing customer inquiries straight from your mobile phone.",
+    excerpt:
+      "Step-by-step instructions on enabling digital carts, direct order routing, and managing customer inquiries straight from your mobile phone.",
     category: "Tutorials",
     author: "Alex Morgan",
     date: "Aug 10, 2026",
     readTime: "7 min read",
-    image: "https://images.unsplash.com/photo-1556742049-0a670f4a4591?auto=format&fit=crop&w=800&q=80",
+    image:
+      "https://images.unsplash.com/photo-1556742049-0a670f4a4591?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: 4,
     title: "Designing QR Codes That Get Scanned: Best Practices for Table Displays",
-    excerpt: "Color choices, frame placement, lighting tips, and call-to-action text that increase QR scan rates by over 40%.",
+    excerpt:
+      "Color choices, frame placement, lighting tips, and call-to-action text that increase QR scan rates by over 40%.",
     category: "Design & Branding",
     author: "Sabri Wahed",
     date: "Aug 02, 2026",
     readTime: "6 min read",
-    image: "https://images.unsplash.com/photo-1590846406792-0adc7f938f1d?auto=format&fit=crop&w=800&q=80",
+    image:
+      "https://images.unsplash.com/photo-1590846406792-0adc7f938f1d?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: 5,
     title: "How Beauty Salons & Spas Use MY Link QR for Service Catalogs",
-    excerpt: "Service menus with pricing, treatment details, and instant booking inquiries are transforming appointment workflows for modern salons.",
+    excerpt:
+      "Service menus with pricing, treatment details, and instant booking inquiries are transforming appointment workflows for modern salons.",
     category: "Industry Case Study",
     author: "Sara Chen",
     date: "Jul 28, 2026",
     readTime: "5 min read",
-    image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80",
+    image:
+      "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: 6,
     title: "Understanding Menu Analytics: Turning Scan Data Into Smart Decisions",
-    excerpt: "Learn how to read view counters, peak customer scan hours, and item engagement to optimize your product offerings.",
+    excerpt:
+      "Learn how to read view counters, peak customer scan hours, and item engagement to optimize your product offerings.",
     category: "Analytics",
     author: "Priya Sharma",
     date: "Jul 18, 2026",
     readTime: "4 min read",
-    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80",
+    image:
+      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80",
   },
 ];
 
@@ -95,10 +108,12 @@ function BlogPage() {
               Insights & Guides
             </span>
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold mb-6">
-              Grow your business with <span className="italic text-primary">smart digital menus</span>
+              Grow your business with{" "}
+              <span className="italic text-primary">smart digital menus</span>
             </h1>
             <p className="text-lg text-muted-foreground">
-              Expert articles, growth tactics, case studies, and tutorials crafted for local business owners.
+              Expert articles, growth tactics, case studies, and tutorials crafted for local
+              business owners.
             </p>
           </div>
 
@@ -174,7 +189,8 @@ function BlogPage() {
                 <div className="p-6 pt-0 flex items-center justify-between border-t border-border text-xs text-muted-foreground mt-4">
                   <span>{art.date}</span>
                   <span className="flex items-center gap-1 font-medium text-primary">
-                    Read article <ArrowRight className="size-3 transition-transform group-hover:translate-x-1" />
+                    Read article{" "}
+                    <ArrowRight className="size-3 transition-transform group-hover:translate-x-1" />
                   </span>
                 </div>
               </article>
@@ -192,7 +208,11 @@ function BlogPage() {
               <p className="text-white/70 text-lg mb-8">
                 Join thousands of businesses who elevated their storefronts with MY Link QR today.
               </p>
-              <Button asChild size="lg" className="rounded-full bg-primary hover:bg-primary/90 text-white px-8">
+              <Button
+                asChild
+                size="lg"
+                className="rounded-full bg-primary hover:bg-primary/90 text-white px-8"
+              >
                 <Link to="/auth">Start Free Trial</Link>
               </Button>
             </div>

@@ -1,7 +1,6 @@
 export type Plan = "trial" | "basic" | "pro" | "premium";
 export type ShopStatus = "active" | "suspended" | "expired";
-export type PaymentStatus =
-  "paid" | "pending" | "overdue" | "not_paid" | "refunded" | "partially_paid";
+export type PaymentStatus = "paid" | "pending" | "unpaid";
 export type BillingCycle = "monthly" | "yearly";
 export type SubscriptionState =
   "active" | "payment_pending" | "grace_period" | "expired" | "suspended" | "cancelled";
@@ -9,10 +8,7 @@ export type SubscriptionState =
 export const PAYMENT_STATUSES: { value: PaymentStatus; label: string; color: string }[] = [
   { value: "paid", label: "Paid", color: "emerald" },
   { value: "pending", label: "Pending", color: "yellow" },
-  { value: "overdue", label: "Overdue", color: "red" },
-  { value: "not_paid", label: "Not Paid", color: "slate" },
-  { value: "refunded", label: "Refunded", color: "blue" },
-  { value: "partially_paid", label: "Partially Paid", color: "orange" },
+  { value: "unpaid", label: "Unpaid", color: "red" },
 ];
 
 export const BILLING_CYCLES: { value: BillingCycle; label: string }[] = [
@@ -44,6 +40,7 @@ export type Shop = {
   plan_expires_at?: string | null;
   payment_status?: string | null;
   amount_paid?: number | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   features?: Record<string, any> | null;
   billing_cycle?: string | null;
   grace_period_days?: number | null;
@@ -59,27 +56,31 @@ export function shopSocialLink(shop?: Pick<Shop, "features"> | null) {
   return shop?.features?.["social_link"] as string | undefined;
 }
 
-export function shopDeliveryEnabled(shop?: Pick<Shop, "features"> | null) {
+export function shopGoogleReviewLink(shop?: Pick<Shop, "plan" | "features"> | null) {
+  if (!shopFeatures(shop).google_reviews) return undefined;
+  return shop?.features?.["google_review_link"] as string | undefined;
+}
+
+export function shopDeliveryEnabled(shop?: Pick<Shop, "plan" | "features"> | null) {
+  if (!shopFeatures(shop).delivery) return false;
   return shop?.features?.["delivery"] !== false;
 }
 
-export function shopTakeawayEnabled(shop?: Pick<Shop, "features"> | null) {
+export function shopTakeawayEnabled(shop?: Pick<Shop, "plan" | "features"> | null) {
+  if (!shopFeatures(shop).take_away) return false;
   return shop?.features?.["takeaway"] !== false;
 }
 
-export function shopOnTableEnabled(shop?: Pick<Shop, "features"> | null) {
+export function shopOnTableEnabled(shop?: Pick<Shop, "plan" | "features"> | null) {
+  if (!shopFeatures(shop).on_table) return false;
   return shop?.features?.["on_table"] !== false;
 }
 
 export type ThemeId =
-  | "luxury_dark"
-  | "minimalist_light"
-  | "warm_amber"
-  | "emerald_bistro"
-  | "neon_cyber"
-  | "rose_gold";
+  "luxury_dark" | "minimalist_light" | "warm_amber" | "emerald_bistro" | "neon_cyber" | "rose_gold";
 
-export function shopTheme(shop?: Pick<Shop, "features"> | null): ThemeId {
+export function shopTheme(shop?: Pick<Shop, "plan" | "features"> | null): ThemeId {
+  if (!shopFeatures(shop).themes) return "luxury_dark";
   return (shop?.features?.["theme"] as ThemeId) || "luxury_dark";
 }
 
@@ -275,18 +276,27 @@ export const PLANS: {
   {
     id: "basic",
     name: "Basic",
-    price: "₹99/7 days",
+    price: "\u20b9249/mo",
     tagline: "Get your first QR menu live",
-    features: ["1 QR code", "Up to 50 menu items", "Mobile menu page", "Basic view counter"],
+    features: [
+      "Digital QR menu page",
+      "Business Logo & Cover photo",
+      "Social media link",
+      "Opening hours display",
+      "Up to 50 menu items",
+      "Basic view counter",
+    ],
   },
   {
     id: "pro",
     name: "Pro",
-    price: "₹299/mo",
+    price: "\u20b9499/mo",
     tagline: "For growing shops",
-    highlight: true,
     features: [
-      "Unlimited categories",
+      "Everything in Basic",
+      "WhatsApp ordering & cart",
+      "On-Table dining",
+      "Take-away orders",
       "Unlimited menu items",
       "Full analytics dashboard",
       "AI menu generator",
@@ -296,19 +306,21 @@ export const PLANS: {
   {
     id: "premium",
     name: "Premium",
-    price: "₹499/mo",
-    tagline: "Sell, not just show",
+    price: "\u20b9999/mo",
+    tagline: "The complete business toolkit",
+    highlight: true,
     features: [
       "Everything in Pro",
-      "WhatsApp ordering",
-      "Online ordering cart",
+      "Custom themes",
+      "Delivery options",
+      "Google Reviews integration",
       "Custom domain",
       "Priority support",
     ],
   },
 ];
 
-export const PLAN_PRICE: Record<string, number> = { trial: 0, basic: 99, pro: 299, premium: 499 };
+export const PLAN_PRICE: Record<string, number> = { trial: 0, basic: 249, pro: 499, premium: 999 };
 
 export type PlanFeatures = {
   items: number;
@@ -319,6 +331,14 @@ export type PlanFeatures = {
   qr_downloads: boolean;
   custom_domain: boolean;
   priority_support: boolean;
+  on_table: boolean;
+  take_away: boolean;
+  delivery: boolean;
+  themes: boolean;
+  google_reviews: boolean;
+  logo_cover: boolean;
+  social_link: boolean;
+  opening_hours: boolean;
 };
 
 export const PLAN_FEATURES: Record<string, PlanFeatures> = {
@@ -331,6 +351,14 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     qr_downloads: false,
     custom_domain: false,
     priority_support: false,
+    on_table: false,
+    take_away: false,
+    delivery: false,
+    themes: false,
+    google_reviews: false,
+    logo_cover: false,
+    social_link: false,
+    opening_hours: false,
   },
   basic: {
     items: 50,
@@ -341,16 +369,32 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     qr_downloads: false,
     custom_domain: false,
     priority_support: false,
+    on_table: false,
+    take_away: false,
+    delivery: false,
+    themes: false,
+    google_reviews: false,
+    logo_cover: true,
+    social_link: true,
+    opening_hours: true,
   },
   pro: {
     items: Infinity,
     categories: Infinity,
     ai: true,
-    ordering: false,
+    ordering: true,
     analytics: true,
     qr_downloads: true,
     custom_domain: false,
     priority_support: false,
+    on_table: true,
+    take_away: true,
+    delivery: false,
+    themes: false,
+    google_reviews: false,
+    logo_cover: true,
+    social_link: true,
+    opening_hours: true,
   },
   premium: {
     items: Infinity,
@@ -361,19 +405,48 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     qr_downloads: true,
     custom_domain: true,
     priority_support: true,
+    on_table: true,
+    take_away: true,
+    delivery: true,
+    themes: true,
+    google_reviews: true,
+    logo_cover: true,
+    social_link: true,
+    opening_hours: true,
   },
 };
 
 export type FeatureKey =
-  "ai" | "ordering" | "analytics" | "qr_downloads" | "custom_domain" | "priority_support";
+  | "ai"
+  | "ordering"
+  | "analytics"
+  | "qr_downloads"
+  | "custom_domain"
+  | "priority_support"
+  | "on_table"
+  | "take_away"
+  | "delivery"
+  | "themes"
+  | "google_reviews"
+  | "logo_cover"
+  | "social_link"
+  | "opening_hours";
 
 export const FEATURE_LABELS: Record<FeatureKey, string> = {
+  logo_cover: "Business logo & cover photo",
+  social_link: "Social media link",
+  opening_hours: "Opening hours display",
   ai: "AI menu generator & photo scan",
   ordering: "WhatsApp ordering & cart",
   analytics: "Full analytics dashboard",
   qr_downloads: "PNG / SVG / PDF QR downloads",
   custom_domain: "Custom domain",
   priority_support: "Priority support",
+  on_table: "On-Table dining",
+  take_away: "Take-away orders",
+  delivery: "Delivery options",
+  themes: "Custom themes",
+  google_reviews: "Google Reviews integration",
 };
 
 export const FEATURE_KEYS = Object.keys(FEATURE_LABELS) as FeatureKey[];
@@ -429,7 +502,7 @@ export function subscriptionState(
   if (shop.status === "suspended") return "suspended";
   if (shop.status === "cancelled") return "cancelled";
 
-  const ps = shop.payment_status ?? "not_paid";
+  const ps = shop.payment_status ?? "unpaid";
   const expiry = shop.plan_expires_at ? new Date(shop.plan_expires_at).getTime() : null;
   const now = Date.now();
   const grace = (shop.grace_period_days ?? 7) * 86400000;
@@ -521,6 +594,14 @@ export function detectDevice() {
 
 export type CartLine = { item: MenuItem; qty: number };
 
+export type Coupon = {
+  code: string;
+  type: "percent" | "fixed";
+  value: number;
+  min_order?: number;
+  expires_at?: string;
+};
+
 export function buildWhatsAppOrder(
   shop: Shop,
   lines: CartLine[],
@@ -530,13 +611,25 @@ export function buildWhatsAppOrder(
     notes?: string;
     type?: "delivery" | "takeaway" | "on_table";
     location?: string | null;
+    coupon?: Coupon;
   },
 ) {
   const rows = lines.map((l) => {
     const unit = l.item.discount_price ?? l.item.price;
     return `• ${l.item.name} x${l.qty} — ${money(unit * l.qty, shop.currency)}`;
   });
-  const total = lines.reduce((sum, l) => sum + (l.item.discount_price ?? l.item.price) * l.qty, 0);
+  const subtotal = lines.reduce((sum, l) => sum + (l.item.discount_price ?? l.item.price) * l.qty, 0);
+
+  let discountAmount = 0;
+  if (details?.coupon && (!details.coupon.min_order || subtotal >= details.coupon.min_order)) {
+    if (details.coupon.type === "percent") {
+      discountAmount = subtotal * (details.coupon.value / 100);
+    } else {
+      discountAmount = details.coupon.value;
+    }
+  }
+
+  const total = Math.max(0, subtotal - discountAmount);
 
   const textParts = [
     `Hello ${shop.name},`,
@@ -544,8 +637,21 @@ export function buildWhatsAppOrder(
     "I want to order:",
     ...rows,
     "",
+    ...(discountAmount > 0
+      ? [
+          `Subtotal: ${money(subtotal, shop.currency)}`,
+          `Discount (${details!.coupon!.code}): -${money(discountAmount, shop.currency)}`,
+        ]
+      : []),
     `Total: ${money(total, shop.currency)}`,
   ];
+
+  const upiId = (shop.features as any)?.upi_id;
+  if (upiId) {
+    textParts.push("");
+    textParts.push("💳 Payment Method: UPI");
+    textParts.push(`Please pay ${money(total, shop.currency)} to the following UPI ID: ${upiId}`);
+  }
 
   if (details?.type) {
     const typeLabel =
@@ -573,4 +679,24 @@ export function buildWhatsAppOrder(
   const rawNumber = shop.whatsapp || shop.phone || "";
   const number = rawNumber.replace(/[^0-9]/g, "");
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
+}
+
+export const AVAILABLE_LANGUAGES = [
+  { code: "en", name: "English" },
+  { code: "hi", name: "Hindi (हिंदी)" },
+  { code: "ur", name: "Urdu (اردو)" },
+  { code: "te", name: "Telugu (తెలుగు)" },
+  { code: "ar", name: "Arabic (العربية)" },
+  { code: "es", name: "Spanish (Español)" },
+  { code: "fr", name: "French (Français)" },
+  { code: "ml", name: "Malayalam (മലയാളം)" },
+];
+
+export function shopLanguages(shop?: Shop | null): string[] {
+  if (!shop) return ["en"];
+  const features = shop.features as Record<string, unknown>;
+  if (features && Array.isArray(features["languages"]) && features["languages"].length > 0) {
+    return features["languages"] as string[];
+  }
+  return ["en"];
 }

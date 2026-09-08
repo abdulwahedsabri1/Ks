@@ -18,9 +18,11 @@ import {
   History,
   Key,
   LayoutDashboard,
+  Loader2,
   Lock,
   LogOut,
   Mail,
+  MessageSquare,
   Pause,
   Phone,
   Play,
@@ -32,6 +34,7 @@ import {
   Users,
   X,
   XCircle,
+  Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,6 +44,7 @@ import {
   useSubscriptionHistory,
   usePaymentHistory,
 } from "@/hooks/useShopData";
+import { useAllReviews, useReviewStats } from "@/hooks/useReviews";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +55,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import {
   type Shop,
@@ -59,6 +64,7 @@ import {
   PLAN_PRICE,
   NICHES,
   formatDate,
+  toDateInput,
   money,
   subscriptionState,
   subscriptionStateLabel,
@@ -66,6 +72,11 @@ import {
   addMonths,
   addDays,
   daysRemaining,
+  shopGoogleReviewLink,
+  FEATURE_LABELS,
+  FEATURE_KEYS,
+  type FeatureKey,
+  planOf,
 } from "@/lib/shop";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -84,10 +95,11 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type Tab = "overview" | "shops" | "staff" | "payments";
+type Tab = "overview" | "shops" | "staff" | "payments" | "reviews";
 
 // ─── Manage Modal Tab ───────────────────────────────────────────
-type ModalTab = "info" | "customer" | "subscription" | "payment" | "actions" | "history";
+type ModalTab =
+  "info" | "customer" | "subscription" | "payment" | "features" | "actions" | "history";
 
 // ─── Main Component ─────────────────────────────────────────────
 function AdminPage() {
@@ -191,6 +203,7 @@ function AdminPage() {
       if (managingShop?.id === targetShop.id) {
         setManagingShop(null);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast.error(err.message || "Failed to delete shop.");
     } finally {
@@ -227,7 +240,6 @@ function AdminPage() {
   const pendingApproval = allShops.filter((s) => s.status === "pending").length;
   const suspended = allShops.filter((s) => s.status === "suspended").length;
   const paymentPending = allShops.filter((s) => s.payment_status === "pending").length;
-  const paymentOverdue = allShops.filter((s) => s.payment_status === "overdue").length;
   const paidThisMonth = allShops.filter((s) => s.payment_status === "paid").length;
   const expiringSoon = allShops.filter((s) => {
     const d = daysRemaining(s);
@@ -248,7 +260,6 @@ function AdminPage() {
             <AdminStat label="Active shops" value={active} color="emerald" />
             <AdminStat label="Suspended" value={suspended} color="red" />
             <AdminStat label="Payment Pending" value={paymentPending} color="yellow" />
-            <AdminStat label="Overdue Payments" value={paymentOverdue} color="red" />
             <AdminStat label="Paid Plans" value={paidThisMonth} color="emerald" />
             <AdminStat label="Monthly Revenue" value={monthlyRevenue} prefix="₹" />
             <AdminStat label="Expiring ≤7 days" value={expiringSoon} color="orange" />
@@ -377,7 +388,7 @@ function AdminPage() {
                       </td>
                       <td className="p-3 text-slate-300">{formatDate(s.plan_expires_at)}</td>
                       <td className="p-3">
-                        <StatusBadge status={s.status} />
+                        <StatusBadge status={subscriptionState(s)} />
                       </td>
                       <td className="p-3 text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -420,7 +431,7 @@ function AdminPage() {
       {tab === "staff" && <StaffTable staff={staff ?? []} />}
 
       {/* ─── PAYMENTS ────────────────────────────── */}
-      {tab === "payments" && <PaymentManagement />}
+      {tab === "payments" && <PaymentManagement isAdmin={isAdmin} />}
 
       {/* ─── MANAGE MODAL ────────────────────────── */}
       {managingShop && (
@@ -447,13 +458,18 @@ function AdminPage() {
             </DialogHeader>
             <div className="space-y-3 py-2 text-sm text-slate-300">
               <p>
-                Are you sure you want to permanently delete <strong className="text-white">{shopToDelete.name}</strong> (<code className="text-emerald-400">/shop/{shopToDelete.slug}</code>)?
+                Are you sure you want to permanently delete{" "}
+                <strong className="text-white">{shopToDelete.name}</strong> (
+                <code className="text-emerald-400">/shop/{shopToDelete.slug}</code>)?
               </p>
               <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-300 space-y-1">
                 <p className="font-semibold text-red-200 flex items-center gap-1">
                   <AlertTriangle className="size-4 text-red-400" /> Irreversible Action
                 </p>
-                <p>This will purge all associated menu categories, items, analytics events, staff roles, and payment records. This cannot be undone.</p>
+                <p>
+                  This will purge all associated menu categories, items, analytics events, staff
+                  roles, and payment records. This cannot be undone.
+                </p>
               </div>
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
@@ -476,6 +492,9 @@ function AdminPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* ─── REVIEWS ────────────────────────────── */}
+      {tab === "reviews" && <ReviewsPanel isAdmin={!!isAdmin} />}
     </AdminFrame>
   );
 }
@@ -485,10 +504,8 @@ function PaymentBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
     paid: "bg-emerald-500/15 text-emerald-400",
     pending: "bg-yellow-500/15 text-yellow-400",
-    overdue: "bg-red-500/15 text-red-400",
     not_paid: "bg-slate-500/15 text-slate-400",
-    refunded: "bg-blue-500/15 text-blue-400",
-    partially_paid: "bg-orange-500/15 text-orange-400",
+    unpaid: "bg-red-500/15 text-red-400",
   };
   const label = PAYMENT_STATUSES.find((p) => p.value === status)?.label ?? status;
   return (
@@ -504,19 +521,20 @@ function PaymentBadge({ status }: { status: string }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const isPending = status === "pending";
+  const isPending = status === "pending" || status === "payment_pending";
+  const isGrace = status === "grace_period";
   return (
     <span
       className={cn(
         "rounded-full px-2 py-0.5 text-xs capitalize",
         status === "active"
           ? "bg-emerald-500/15 text-emerald-400"
-          : isPending
+          : isPending || isGrace
             ? "bg-yellow-500/15 text-yellow-400"
             : "bg-red-500/15 text-red-400",
       )}
     >
-      {status}
+      {status.replace("_", " ")}
     </span>
   );
 }
@@ -541,6 +559,18 @@ function ManageShopModal({
   const [showPassword, setShowPassword] = useState(false);
   const [notes, setNotes] = useState("");
   const [editInfo, setEditInfo] = useState({ name: shop.name, niche: shop.niche, slug: shop.slug });
+  const [localShop, setLocalShop] = useState(shop);
+  // Billing form state
+  const [billingForm, setBillingForm] = useState({
+    startDate: toDateInput(localShop.plan_started_at ?? localShop.created_at),
+    endDate: toDateInput(localShop.plan_expires_at),
+    payStatus: localShop.payment_status ?? "unpaid",
+    quickMonths: 1,
+  });
+  const [renewalForm, setRenewalForm] = useState({
+    autoRenew: localShop.auto_renew !== false,
+    gracePeriod: localShop.grace_period_days ?? 7,
+  });
   const qc = useQueryClient();
 
   const { data: subHistory } = useSubscriptionHistory(shop.id);
@@ -560,6 +590,7 @@ function ManageShopModal({
   }
 
   async function updateShop(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     patch: any,
     action: string,
     prevVal: string,
@@ -578,8 +609,8 @@ function ManageShopModal({
     qc.invalidateQueries({ queryKey: ["admin-shops"] });
     qc.invalidateQueries({ queryKey: ["my-shop"] });
     qc.invalidateQueries({ queryKey: ["subscription-history"] });
+    setLocalShop((prev: Shop) => ({ ...prev, ...patch }));
     setBusy(false);
-    onRefresh();
   }
 
   async function saveInfo() {
@@ -592,6 +623,7 @@ function ManageShopModal({
   }
 
   async function markPayment(newStatus: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const patch: any = { payment_status: newStatus };
     if (newStatus === "paid") {
       patch.status = "active";
@@ -611,56 +643,59 @@ function ManageShopModal({
         payment_date: now.toISOString(),
         due_date: exp.toISOString(),
       });
+    } else if (["unpaid", "pending"].includes(newStatus)) {
+      patch.status = "suspended";
     }
     await updateShop(
       patch,
       "payment_status_changed",
-      shop.payment_status ?? "not_paid",
+      localShop.payment_status ?? "not_paid",
       newStatus,
       notes || undefined,
     );
   }
 
   async function changePlan(newPlan: string) {
-    const cycle = shop.billing_cycle ?? "monthly";
+    const cycle = localShop.billing_cycle ?? "monthly";
     await updateShop(
       { plan: newPlan, amount_paid: planAmount(newPlan, cycle) },
       "plan_changed",
-      shop.plan,
+      localShop.plan,
       newPlan,
     );
   }
 
   async function changeBilling(newCycle: string) {
     await updateShop(
-      { billing_cycle: newCycle, amount_paid: planAmount(shop.plan, newCycle) },
+      { billing_cycle: newCycle, amount_paid: planAmount(localShop.plan, newCycle) },
       "billing_cycle_changed",
-      shop.billing_cycle ?? "monthly",
+      localShop.billing_cycle ?? "monthly",
       newCycle,
     );
   }
 
   async function toggleStatus() {
-    const newStatus = shop.status === "active" ? "suspended" : "active";
-    await updateShop({ status: newStatus }, "status_changed", shop.status, newStatus);
+    const newStatus = localShop.status === "active" ? "suspended" : "active";
+    await updateShop({ status: newStatus }, "status_changed", localShop.status, newStatus);
   }
 
   async function cancelSubscription() {
     await updateShop(
       { status: "cancelled", payment_status: "not_paid" },
       "subscription_cancelled",
-      shop.status,
+      localShop.status,
       "cancelled",
+      notes || undefined,
     );
   }
 
   async function extendSubscription(days: number) {
-    const base = shop.plan_expires_at ? new Date(shop.plan_expires_at) : new Date();
+    const base = localShop.plan_expires_at ? new Date(localShop.plan_expires_at) : new Date();
     const newExpiry = addDays(base, days);
     await updateShop(
       { plan_expires_at: newExpiry.toISOString(), next_billing_date: newExpiry.toISOString() },
       "subscription_extended",
-      formatDate(shop.plan_expires_at),
+      formatDate(localShop.plan_expires_at),
       formatDate(newExpiry.toISOString()),
       `Extended by ${days} days`,
     );
@@ -672,6 +707,7 @@ function ManageShopModal({
     { id: "customer", label: "Customer Login", icon: Key },
     { id: "subscription", label: "Subscription", icon: CreditCard },
     { id: "payment", label: "Payment", icon: DollarSign },
+    { id: "features", label: "Feature Access", icon: Shield },
     { id: "actions", label: "Actions", icon: Play },
     { id: "history", label: "History", icon: History },
   ];
@@ -744,6 +780,24 @@ function ManageShopModal({
                 <InfoField label="Account Status" value={shop.status} />
                 <InfoField label="Subscription State" value={subscriptionStateLabel(subState)} />
                 <InfoField label="Shop ID" value={shop.id.slice(0, 8) + "…"} />
+                <div className="col-span-2 space-y-1.5">
+                  <Label className="text-slate-400 text-xs">Google Review Link</Label>
+                  {shopGoogleReviewLink(shop) ? (
+                    <a
+                      href={shopGoogleReviewLink(shop)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1.5 text-xs text-amber-400 hover:underline break-all"
+                    >
+                      <Star className="size-3.5 fill-amber-400 text-amber-400 shrink-0" />
+                      {shopGoogleReviewLink(shop)}
+                    </a>
+                  ) : (
+                    <p className="text-xs text-slate-500 italic">
+                      Not set — owner can add this in Shop Settings.
+                    </p>
+                  )}
+                </div>
               </div>
               <Button
                 onClick={saveInfo}
@@ -764,7 +818,9 @@ function ManageShopModal({
                     <h4 className="font-medium text-white flex items-center gap-2 text-sm">
                       <UserCheck className="size-4 text-emerald-400" /> Customer & Account Info
                     </h4>
-                    <p className="text-xs text-slate-400">Owner registration details and login identity.</p>
+                    <p className="text-xs text-slate-400">
+                      Owner registration details and login identity.
+                    </p>
                   </div>
                   <span className="rounded-full bg-emerald-500/15 text-emerald-400 px-2.5 py-0.5 text-xs font-semibold">
                     Verified Owner
@@ -773,8 +829,16 @@ function ManageShopModal({
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <InfoField label="Shop Name" value={shop.name} />
-                  <InfoField label="Owner User ID" value={<span className="font-mono text-xs text-emerald-300">{shop.owner_id}</span>} />
-                  <InfoField label="Primary Phone" value={shop.phone || shop.whatsapp || "Not set"} />
+                  <InfoField
+                    label="Owner User ID"
+                    value={
+                      <span className="font-mono text-xs text-emerald-300">{shop.owner_id}</span>
+                    }
+                  />
+                  <InfoField
+                    label="Primary Phone"
+                    value={shop.phone || shop.whatsapp || "Not set"}
+                  />
                   <InfoField label="WhatsApp Contact" value={shop.whatsapp || "Not set"} />
                   <InfoField label="Created Date" value={formatDate(shop.created_at)} />
                   <InfoField label="Platform Role" value="Shop Owner" />
@@ -830,7 +894,11 @@ function ManageShopModal({
                         className="border-white/20 bg-transparent text-slate-200 hover:bg-white/10"
                         onClick={() => setShowPassword(!showPassword)}
                       >
-                        {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                        {showPassword ? (
+                          <EyeOff className="size-3.5" />
+                        ) : (
+                          <Eye className="size-3.5" />
+                        )}
                       </Button>
                       <Button
                         size="sm"
@@ -867,9 +935,13 @@ function ManageShopModal({
                           },
                         });
                         if (signUpData?.user) {
-                          await supabase.from("shops").update({ owner_id: signUpData.user.id }).eq("id", shop.id);
+                          await supabase
+                            .from("shops")
+                            .update({ owner_id: signUpData.user.id })
+                            .eq("id", shop.id);
                         }
                         toast.success(`Login credentials for ${ownerEmail} are now active!`);
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       } catch (err: any) {
                         toast.error(err.message || "Failed to activate account");
                       } finally {
@@ -877,7 +949,8 @@ function ManageShopModal({
                       }
                     }}
                   >
-                    <CheckCircle2 className="mr-1.5 size-3.5 text-emerald-400" /> Activate & Sync Login Account
+                    <CheckCircle2 className="mr-1.5 size-3.5 text-emerald-400" /> Activate & Sync
+                    Login Account
                   </Button>
                   <Button
                     size="sm"
@@ -911,9 +984,125 @@ Dashboard: ${window.location.origin}/auth`;
             </div>
           )}
 
+          {/* ── FEATURE ACCESS TAB ─── */}
+          {modalTab === "features" && (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-1">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
+                  <div>
+                    <h4 className="font-medium text-white flex items-center gap-2 text-sm">
+                      <Shield className="size-4 text-emerald-400" /> Feature Access Overrides
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Toggle features on/off for this shop, overriding the plan defaults.
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-emerald-500/15 text-emerald-400 px-2.5 py-0.5 text-xs font-semibold capitalize">
+                    {shop.plan} plan
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {FEATURE_KEYS.map((key) => {
+                    const planDefault = planOf(shop.plan)[key];
+                    const currentOverride = shop.features?.[key];
+                    const effectiveValue =
+                      typeof currentOverride === "boolean" ? currentOverride : planDefault;
+
+                    async function toggleFeature(val: boolean) {
+                      setBusy(true);
+                      const updatedFeatures = {
+                        ...(shop.features ?? {}),
+                        [key]: val,
+                      };
+                      const { error } = await supabase
+                        .from("shops")
+                        .update({ features: updatedFeatures })
+                        .eq("id", shop.id);
+                      if (error) {
+                        toast.error(error.message);
+                      } else {
+                        await logAction(
+                          "feature_override",
+                          `${key}: ${effectiveValue}`,
+                          `${key}: ${val}`,
+                        );
+                        toast.success(`${FEATURE_LABELS[key]} ${val ? "enabled" : "disabled"}`);
+                        qc.invalidateQueries({ queryKey: ["admin-shops"] });
+                        qc.invalidateQueries({ queryKey: ["my-shop"] });
+                        onRefresh();
+                      }
+                      setBusy(false);
+                    }
+
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-center justify-between rounded-lg border border-white/5 bg-slate-800/60 px-4 py-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-white">{FEATURE_LABELS[key]}</p>
+                          <p
+                            className={`text-[11px] mt-0.5 ${
+                              typeof currentOverride === "boolean"
+                                ? currentOverride
+                                  ? "text-emerald-400"
+                                  : "text-red-400"
+                                : "text-slate-500"
+                            }`}
+                          >
+                            {typeof currentOverride === "boolean"
+                              ? `Admin override: ${currentOverride ? "enabled" : "disabled"}`
+                              : `Plan default: ${planDefault ? "enabled" : "disabled"}`}
+                          </p>
+                        </div>
+                        <Switch
+                          checked={effectiveValue}
+                          onCheckedChange={toggleFeature}
+                          disabled={busy}
+                          className="data-[state=checked]:bg-emerald-500"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-3 border-t border-white/10 mt-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    className="border-slate-500/40 text-slate-400 hover:bg-slate-500/10 text-xs"
+                    onClick={async () => {
+                      setBusy(true);
+                      const cleanedFeatures = { ...(shop.features ?? {}) };
+                      FEATURE_KEYS.forEach((k) => delete cleanedFeatures[k]);
+                      const { error } = await supabase
+                        .from("shops")
+                        .update({ features: cleanedFeatures })
+                        .eq("id", shop.id);
+                      if (error) {
+                        toast.error(error.message);
+                      } else {
+                        toast.success("All feature overrides reset to plan defaults");
+                        qc.invalidateQueries({ queryKey: ["admin-shops"] });
+                        qc.invalidateQueries({ queryKey: ["my-shop"] });
+                        onRefresh();
+                      }
+                      setBusy(false);
+                    }}
+                  >
+                    <RefreshCw className="size-3 mr-1.5" /> Reset All to Plan Defaults
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ── SUBSCRIPTION TAB ─── */}
           {modalTab === "subscription" && (
             <div className="space-y-4">
+              {/* Plan & Billing Cycle */}
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label className="text-slate-400 text-xs">Current Plan</Label>
@@ -924,31 +1113,166 @@ Dashboard: ${window.location.origin}/auth`;
                     className="h-9 w-full rounded-md border border-white/10 bg-slate-800 px-3 text-sm text-white"
                   >
                     <option value="trial">Trial</option>
-                    <option value="basic">Basic</option>
-                    <option value="pro">Pro</option>
-                    <option value="premium">Premium</option>
+                    <option value="basic">Basic · ₹{PLAN_PRICE["basic"]}</option>
+                    <option value="pro">Pro · ₹{PLAN_PRICE["pro"]}</option>
+                    <option value="premium">Premium · ₹{PLAN_PRICE["premium"]}</option>
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-400 text-xs">Billing Cycle</Label>
+                  <Label className="text-slate-400 text-xs">Payment Status</Label>
                   <select
-                    value={shop.billing_cycle ?? "monthly"}
-                    onChange={(e) => changeBilling(e.target.value)}
+                    value={billingForm.payStatus}
+                    onChange={(e) => setBillingForm({ ...billingForm, payStatus: e.target.value })}
                     disabled={busy}
                     className="h-9 w-full rounded-md border border-white/10 bg-slate-800 px-3 text-sm text-white"
                   >
-                    {BILLING_CYCLES.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.label}
+                    {PAYMENT_STATUSES.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
                       </option>
                     ))}
                   </select>
                 </div>
-                <InfoField
-                  label="Start Date"
-                  value={formatDate(shop.plan_started_at ?? shop.created_at)}
+                <div className="space-y-1.5">
+                  <Label className="text-slate-400 text-xs">Start Date</Label>
+                  <Input
+                    type="date"
+                    value={billingForm.startDate}
+                    onChange={(e) => setBillingForm({ ...billingForm, startDate: e.target.value })}
+                    disabled={busy}
+                    className="h-9 border-white/10 bg-slate-800 text-sm text-white"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-slate-400 text-xs">End Date</Label>
+                  <Input
+                    type="date"
+                    value={billingForm.endDate}
+                    onChange={(e) => setBillingForm({ ...billingForm, endDate: e.target.value })}
+                    disabled={busy}
+                    className="h-9 border-white/10 bg-slate-800 text-sm text-white"
+                  />
+                </div>
+              </div>
+
+              {/* Quick-set months */}
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy}
+                  className="border-white/10 text-slate-300 hover:bg-white/10 text-xs"
+                  onClick={() => {
+                    const base = billingForm.startDate
+                      ? new Date(billingForm.startDate)
+                      : new Date();
+                    const end = addMonths(base, billingForm.quickMonths);
+                    setBillingForm({
+                      ...billingForm,
+                      endDate: toDateInput(end.toISOString()),
+                    });
+                  }}
+                >
+                  <CalendarPlus className="size-3.5 mr-1" />
+                  Set {billingForm.quickMonths} month{billingForm.quickMonths !== 1 ? "s" : ""}
+                </Button>
+                <Input
+                  type="number"
+                  min={1}
+                  max={24}
+                  value={billingForm.quickMonths}
+                  onChange={(e) =>
+                    setBillingForm({
+                      ...billingForm,
+                      quickMonths: parseInt(e.target.value, 10) || 1,
+                    })
+                  }
+                  disabled={busy}
+                  className="w-20 h-9 border-white/10 bg-slate-800 text-white text-center text-sm"
                 />
-                <InfoField label="Expiry Date" value={formatDate(shop.plan_expires_at)} />
+                <Button
+                  size="sm"
+                  disabled={busy}
+                  className="bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold text-xs"
+                  onClick={async () => {
+                    setBusy(true);
+                    const startIso = billingForm.startDate
+                      ? new Date(billingForm.startDate).toISOString()
+                      : null;
+                    const endIso = billingForm.endDate
+                      ? new Date(billingForm.endDate).toISOString()
+                      : null;
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const patch: any = {
+                      payment_status: billingForm.payStatus,
+                      plan_started_at: startIso,
+                      plan_expires_at: endIso,
+                      next_billing_date: endIso,
+                    };
+                    if (billingForm.payStatus === "paid") {
+                      patch.status = "active";
+                      patch.amount_paid = planAmount(
+                        localShop.plan,
+                        localShop.billing_cycle ?? "monthly",
+                      );
+                    } else if (["unpaid", "pending"].includes(billingForm.payStatus)) {
+                      patch.status = "suspended";
+                    }
+                    const { error } = await supabase
+                      .from("shops")
+                      .update(patch)
+                      .eq("id", localShop.id);
+                    if (error) {
+                      toast.error(error.message);
+                    } else {
+                      await logAction(
+                        "billing_updated",
+                        `${localShop.payment_status} / ${formatDate(localShop.plan_expires_at)}`,
+                        `${billingForm.payStatus} / ${billingForm.endDate || "—"}`,
+                      );
+                      toast.success("Billing saved");
+                      qc.invalidateQueries({ queryKey: ["admin-shops"] });
+                      qc.invalidateQueries({ queryKey: ["my-shop"] });
+                      // Update local state so UI reflects changes without closing
+                      setLocalShop({ ...localShop, ...patch });
+                    }
+                    setBusy(false);
+                  }}
+                >
+                  Save Billing
+                </Button>
+              </div>
+
+              <p className="text-[11px] text-slate-500">
+                An expired shop is automatically suspended and no longer appears publicly.
+              </p>
+
+              {/* Summary footer */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/10 pt-3 text-xs text-slate-400">
+                <span
+                  className={
+                    localShop.payment_status === "paid" ? "text-emerald-400" : "text-red-400"
+                  }
+                >
+                  {localShop.payment_status === "unpaid" || !localShop.payment_status
+                    ? "unpaid"
+                    : (PAYMENT_STATUSES.find((s) => s.value === localShop.payment_status)?.label ??
+                      localShop.payment_status)}
+                </span>
+                <span>₹{localShop.amount_paid ?? 0} recorded</span>
+                <span
+                  className={`flex items-center gap-1 ${
+                    subscriptionState(localShop) === "active" ? "text-emerald-400" : "text-red-400"
+                  }`}
+                >
+                  {subscriptionState(localShop) === "active" ? "✓" : "✗"} Public access
+                  {subscriptionState(localShop) === "active" ? " available" : " unavailable"}
+                </span>
+              </div>
+
+              {/* Remaining read-only info */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <InfoField label="Billing Cycle" value={shop.billing_cycle ?? "monthly"} />
                 <InfoField label="Next Billing" value={formatDate(shop.next_billing_date)} />
                 <InfoField
                   label="Days Remaining"
@@ -958,8 +1282,83 @@ Dashboard: ${window.location.origin}/auth`;
                       : `${daysRemaining(shop)} days`
                   }
                 />
-                <InfoField label="Auto Renew" value={shop.auto_renew !== false ? "Yes" : "No"} />
                 <InfoField label="Grace Period" value={`${shop.grace_period_days ?? 7} days`} />
+                <InfoField label="Auto Renew" value={shop.auto_renew !== false ? "Yes" : "No"} />
+                <InfoField
+                  label="Subscription State"
+                  value={subscriptionStateLabel(subscriptionState(shop))}
+                />
+              </div>
+
+              {/* Renewal & Grace Settings */}
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-4">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Renewal &amp; Grace Settings
+                </h4>
+                <div className="flex items-center justify-between rounded-lg border border-white/5 bg-slate-800/60 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-white">Auto Renew</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Automatically renew subscription on expiry
+                    </p>
+                  </div>
+                  <Switch
+                    checked={renewalForm.autoRenew}
+                    disabled={busy}
+                    className="data-[state=checked]:bg-emerald-500"
+                    onCheckedChange={(val) => setRenewalForm({ ...renewalForm, autoRenew: val })}
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-white/5 bg-slate-800/60 px-4 py-3 gap-4">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">Grace Period (days)</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Days the shop stays active after expiry before suspension
+                    </p>
+                  </div>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={30}
+                    value={renewalForm.gracePeriod}
+                    onChange={(e) =>
+                      setRenewalForm({
+                        ...renewalForm,
+                        gracePeriod: parseInt(e.target.value, 10) || 0,
+                      })
+                    }
+                    disabled={busy}
+                    className="w-20 h-9 border-white/10 bg-slate-800 text-white text-center text-sm"
+                  />
+                </div>
+                <div className="flex justify-end pt-2">
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    className="bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-semibold text-xs"
+                    onClick={async () => {
+                      if (renewalForm.autoRenew !== localShop.auto_renew) {
+                        await updateShop(
+                          { auto_renew: renewalForm.autoRenew },
+                          "auto_renew_changed",
+                          String(localShop.auto_renew !== false),
+                          String(renewalForm.autoRenew),
+                        );
+                      }
+                      if (renewalForm.gracePeriod !== (localShop.grace_period_days ?? 7)) {
+                        await updateShop(
+                          { grace_period_days: renewalForm.gracePeriod },
+                          "grace_period_changed",
+                          String(localShop.grace_period_days ?? 7),
+                          String(renewalForm.gracePeriod),
+                        );
+                      }
+                      toast.success("Settings saved");
+                    }}
+                  >
+                    Save Settings
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -1044,13 +1443,6 @@ Dashboard: ${window.location.origin}/auth`;
                   onClick={() => markPayment("pending")}
                   disabled={busy}
                 />
-                <ActionBtn
-                  icon={AlertTriangle}
-                  label="Mark as Overdue"
-                  color="red"
-                  onClick={() => markPayment("overdue")}
-                  disabled={busy}
-                />
               </div>
 
               <h3 className="mt-4 text-xs font-medium uppercase tracking-wider text-slate-400">
@@ -1065,15 +1457,15 @@ Dashboard: ${window.location.origin}/auth`;
                   disabled={busy}
                 />
                 <ActionBtn
-                  icon={shop.status === "active" ? Pause : Play}
+                  icon={localShop.status === "active" ? Pause : Play}
                   label={
-                    shop.status === "active"
+                    localShop.status === "active"
                       ? "Suspend Shop"
-                      : shop.status === "pending"
+                      : localShop.status === "pending"
                         ? "Approve Shop"
                         : "Activate Shop"
                   }
-                  color={shop.status === "active" ? "orange" : "emerald"}
+                  color={localShop.status === "active" ? "orange" : "emerald"}
                   onClick={toggleStatus}
                   disabled={busy}
                 />
@@ -1310,6 +1702,7 @@ function AdminFrame({
     { id: "shops", label: "Shops", icon: Building2 },
     { id: "staff", label: "Staff", icon: Users },
     { id: "payments", label: "Payments", icon: CreditCard },
+    { id: "reviews", label: "Reviews", icon: Star },
   ];
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -1320,7 +1713,9 @@ function AdminFrame({
               <Shield className="size-5" />
             </span>
             <div>
-              <p className="font-display text-lg font-semibold text-white">MY Link QR Admin Console</p>
+              <p className="font-display text-lg font-semibold text-white">
+                MY Link QR Admin Console
+              </p>
               <p className="text-xs text-slate-400">Platform control centre</p>
             </div>
           </div>
@@ -1398,11 +1793,17 @@ function AdminStat({
 }
 
 // ─── Payment Management Table ────────────────────────────────────────────────
-function PaymentManagement() {
+function PaymentManagement({ isAdmin }: { isAdmin?: boolean | undefined }) {
   const qc = useQueryClient();
+  const [selectedProof, setSelectedProof] = useState<string | null>(null);
 
-  const { data: payments, isLoading } = useQuery({
+  const {
+    data: payments,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["admin-payments"],
+    enabled: isAdmin !== false,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payments")
@@ -1413,116 +1814,447 @@ function PaymentManagement() {
     },
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function updatePaymentStatus(payment: any, status: string) {
     const { error } = await supabase.from("payments").update({ status }).eq("id", payment.id);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success(`Payment ${status.toLowerCase()}`);
+    toast.success(`Payment set to ${status}`);
     qc.invalidateQueries({ queryKey: ["admin-payments"] });
 
     if (status === "Approved") {
-      toast.success("User account and subscription will be activated!");
+      const now = new Date();
+      const exp = addMonths(now, 1);
+      const planLower = (payment.plan_name || "basic").toLowerCase();
+
+      // Find matching shop by business name or mobile number
+      const { data: matchedShops } = await supabase
+        .from("shops")
+        .select("*")
+        .or(`name.ilike.${payment.business_name},whatsapp.eq.${payment.mobile}`);
+
+      if (matchedShops && matchedShops.length > 0) {
+        for (const targetShop of matchedShops) {
+          await supabase
+            .from("shops")
+            .update({
+              payment_status: "paid",
+              status: "active",
+              plan: planLower,
+              amount_paid: Number(payment.amount),
+              plan_expires_at: exp.toISOString(),
+              next_billing_date: exp.toISOString(),
+            })
+            .eq("id", targetShop.id);
+
+          await supabase.from("payment_history").insert({
+            shop_id: targetShop.id,
+            amount: Number(payment.amount),
+            plan: planLower,
+            billing_cycle: "monthly",
+            payment_status: "paid",
+            payment_date: now.toISOString(),
+            due_date: exp.toISOString(),
+          });
+        }
+        qc.invalidateQueries({ queryKey: ["admin-shops"] });
+        qc.invalidateQueries({ queryKey: ["my-shop"] });
+        toast.success(`Active subscription enabled for ${payment.business_name}!`);
+      }
+    } else if (status === "Rejected") {
+      const { data: matchedShops } = await supabase
+        .from("shops")
+        .select("*")
+        .or(`name.ilike.${payment.business_name},whatsapp.eq.${payment.mobile}`);
+
+      if (matchedShops && matchedShops.length > 0) {
+        for (const targetShop of matchedShops) {
+          await supabase
+            .from("shops")
+            .update({
+              payment_status: "unpaid",
+              status: "suspended",
+            })
+            .eq("id", targetShop.id);
+        }
+        qc.invalidateQueries({ queryKey: ["admin-shops"] });
+        qc.invalidateQueries({ queryKey: ["my-shop"] });
+      }
     }
   }
 
   if (isLoading) {
-    return <p className="text-slate-400">Loading payments...</p>;
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-slate-400">
+        <Loader2 className="mx-auto size-6 animate-spin text-emerald-400 mb-2" />
+        Loading platform payments...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-center text-red-400">
+        <AlertTriangle className="mx-auto size-6 text-red-400 mb-2" />
+        Failed to load payments: {(error as Error).message}
+      </div>
+    );
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
-      <table className="w-full text-sm text-slate-200">
-        <thead className="border-b border-white/10 text-left text-xs text-slate-400 uppercase tracking-wider">
-          <tr>
-            <th className="p-3">Business</th>
-            <th className="p-3">Plan</th>
-            <th className="p-3">Amount</th>
-            <th className="p-3">Contact</th>
-            <th className="p-3">Date</th>
-            <th className="p-3">Proof</th>
-            <th className="p-3">Status</th>
-            <th className="p-3 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(payments ?? []).map((p: any) => (
-            <tr key={p.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
-              <td className="p-3">
-                <p className="font-medium text-white">{p.business_name}</p>
-                <p className="text-xs text-slate-400">{p.owner_name}</p>
-              </td>
-              <td className="p-3">
-                <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs capitalize">
-                  {p.plan_name}
-                </span>
-              </td>
-              <td className="p-3 text-white">₹{p.amount}</td>
-              <td className="p-3 text-xs text-slate-400">
-                <p>{p.mobile}</p>
-                <p>{p.email}</p>
-              </td>
-              <td className="p-3 text-slate-400 text-xs">
-                {new Date(p.created_at).toLocaleDateString()}
-              </td>
-              <td className="p-3">
-                <a
-                  href={p.screenshot_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-emerald-400 hover:underline text-xs flex items-center"
-                >
-                  <CheckCircle2 className="w-3 h-3 mr-1" /> View
-                </a>
-              </td>
-              <td className="p-3">
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-xs",
-                    p.status === "Approved"
-                      ? "bg-emerald-500/15 text-emerald-400"
-                      : p.status === "Pending"
-                        ? "bg-yellow-500/15 text-yellow-400"
-                        : "bg-red-500/15 text-red-400",
-                  )}
-                >
-                  {p.status}
-                </span>
-              </td>
-              <td className="p-3 text-right flex justify-end gap-2">
-                {p.status === "Pending" && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 bg-transparent h-7 text-xs px-2"
-                      onClick={() => updatePaymentStatus(p, "Approved")}
-                    >
-                      <CheckCircle2 className="size-3 mr-1" /> Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-red-500/30 text-red-400 hover:bg-red-500/10 bg-transparent h-7 text-xs px-2"
-                      onClick={() => updatePaymentStatus(p, "Rejected")}
-                    >
-                      <XCircle className="size-3 mr-1" /> Reject
-                    </Button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
-          {(payments ?? []).length === 0 && (
+    <div className="space-y-4">
+      <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
+        <table className="w-full text-sm text-slate-200">
+          <thead className="border-b border-white/10 text-left text-xs text-slate-400 uppercase tracking-wider">
             <tr>
-              <td className="p-4 text-center text-slate-400" colSpan={8}>
-                No payments found.
-              </td>
+              <th className="p-3">Business & Owner</th>
+              <th className="p-3">Plan</th>
+              <th className="p-3">Amount</th>
+              <th className="p-3">Contact Info</th>
+              <th className="p-3">Address</th>
+              <th className="p-3">Date</th>
+              <th className="p-3">Proof</th>
+              <th className="p-3">Status</th>
+              <th className="p-3 text-right">Actions</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {(payments ?? []).map((p: any) => (
+              <tr
+                key={p.id}
+                className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]"
+              >
+                <td className="p-3">
+                  <p className="font-bold text-white">{p.business_name}</p>
+                  <p className="text-xs text-slate-400">{p.owner_name}</p>
+                </td>
+                <td className="p-3">
+                  <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold capitalize text-emerald-300">
+                    {p.plan_name}
+                  </span>
+                </td>
+                <td className="p-3 font-bold text-white">₹{p.amount}</td>
+                <td className="p-3 text-xs text-slate-400">
+                  <p className="text-slate-300 font-mono">{p.mobile}</p>
+                  <p className="text-slate-400">{p.email}</p>
+                </td>
+                <td className="p-3 text-xs text-slate-400 max-w-[150px] truncate">
+                  {p.business_address || "N/A"}
+                </td>
+                <td className="p-3 text-slate-400 text-xs whitespace-nowrap">
+                  {new Date(p.created_at).toLocaleDateString()}
+                </td>
+                <td className="p-3">
+                  {p.screenshot_url ? (
+                    <button
+                      onClick={() => setSelectedProof(p.screenshot_url)}
+                      className="text-emerald-400 hover:underline text-xs flex items-center font-medium cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5 mr-1" /> View Proof
+                    </button>
+                  ) : (
+                    <span className="text-xs text-slate-500">UPI Standard</span>
+                  )}
+                </td>
+                <td className="p-3">
+                  <span
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-xs font-semibold",
+                      p.status === "Approved"
+                        ? "bg-emerald-500/15 text-emerald-400"
+                        : p.status === "Pending"
+                          ? "bg-yellow-500/15 text-yellow-400"
+                          : "bg-red-500/15 text-red-400",
+                    )}
+                  >
+                    {p.status}
+                  </span>
+                </td>
+                <td className="p-3 text-right">
+                  <div className="flex items-center justify-end gap-1.5">
+                    {p.status === "Pending" ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 bg-emerald-500/10 h-7 text-xs px-2.5 font-semibold"
+                          onClick={() => updatePaymentStatus(p, "Approved")}
+                        >
+                          <CheckCircle2 className="size-3 mr-1" /> Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-red-500/30 text-red-400 hover:bg-red-500/20 bg-red-500/10 h-7 text-xs px-2.5 font-semibold"
+                          onClick={() => updatePaymentStatus(p, "Rejected")}
+                        >
+                          <XCircle className="size-3 mr-1" /> Reject
+                        </Button>
+                      </>
+                    ) : (
+                      <span className="text-xs text-slate-500 italic">No actions</span>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {(payments ?? []).length === 0 && (
+              <tr>
+                <td className="p-6 text-center text-slate-400" colSpan={9}>
+                  No payments recorded yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Proof Dialog */}
+      {selectedProof && (
+        <Dialog open onOpenChange={() => setSelectedProof(null)}>
+          <DialogContent className="bg-slate-900 border-white/10 text-white sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-white text-base font-bold">
+                Payment Proof Screenshot
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex justify-center p-2">
+              <img
+                src={selectedProof}
+                alt="Payment Proof"
+                className="max-h-96 rounded-xl object-contain"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}
+
+// --- Reviews Panel ----------------------------------------------
+function ReviewsPanel({ isAdmin }: { isAdmin: boolean }) {
+  const { data: reviews = [], isLoading } = useAllReviews(isAdmin);
+  const stats = useReviewStats(reviews);
+  const [filterRating, setFilterRating] = useState<string>("");
+  const [filterType, setFilterType] = useState<string>("");
+  const [filterShop, setFilterShop] = useState<string>("");
+
+  const filtered = reviews.filter((r) => {
+    if (filterRating && r.rating !== Number(filterRating)) return false;
+    if (filterType && r.review_type !== filterType) return false;
+    if (filterShop && !r.shop_name?.toLowerCase().includes(filterShop.toLowerCase())) return false;
+    return true;
+  });
+
+  if (isLoading) {
+    return (
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-slate-400">
+        <Loader2 className="mx-auto size-6 animate-spin text-emerald-400 mb-2" />
+        Loading reviews...
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <p className="text-sm text-slate-400">Total Reviews</p>
+          <p className="mt-2 font-display text-3xl font-semibold text-white">{stats.total}</p>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <p className="text-sm text-slate-400">Average Rating</p>
+          <p className="mt-2 font-display text-3xl font-semibold text-amber-400">
+            {stats.avgRating.toFixed(1)} <span className="text-lg">&#11088;</span>
+          </p>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <p className="text-sm text-slate-400">Positive (4-5 Star)</p>
+          <p className="mt-2 font-display text-3xl font-semibold text-emerald-400">
+            {stats.positive}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <p className="text-sm text-slate-400">Redirected to Google</p>
+          <p className="mt-2 font-display text-3xl font-semibold text-blue-400">
+            {stats.redirected}
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <h3 className="text-sm font-semibold text-slate-300 mb-4">Rating Distribution</h3>
+          <div className="space-y-3">
+            {stats.counts.map(({ star, count }) => {
+              const pct = stats.total > 0 ? (count / stats.total) * 100 : 0;
+              return (
+                <div key={star} className="flex items-center gap-3 text-sm">
+                  <span className="w-14 text-slate-400 shrink-0">{star} Star</span>
+                  <div className="flex-1 h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${star >= 4 ? "bg-emerald-500" : star === 3 ? "bg-yellow-500" : "bg-red-500"}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="w-8 text-right text-slate-400 shrink-0">{count}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <h3 className="text-sm font-semibold text-slate-300 mb-4">Monthly Review Trend</h3>
+          <div className="flex items-end gap-2 h-28">
+            {stats.monthlyTrend.map(({ month, count }) => {
+              const maxCount = Math.max(...stats.monthlyTrend.map((m) => m.count), 1);
+              const pct = (count / maxCount) * 100;
+              return (
+                <div key={month} className="flex flex-col items-center gap-1 flex-1">
+                  <span className="text-[10px] text-slate-400">{count}</span>
+                  <div
+                    className="w-full rounded-t-md bg-emerald-500/80 transition-all duration-700"
+                    style={{ height: `${Math.max(4, pct)}%` }}
+                  />
+                  <span className="text-[10px] text-slate-500">{month}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-3 items-center">
+        <input
+          type="text"
+          placeholder="Filter by shop..."
+          value={filterShop}
+          onChange={(e) => setFilterShop(e.target.value)}
+          className="h-9 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white placeholder:text-slate-500 w-48"
+        />
+        <select
+          value={filterRating}
+          onChange={(e) => setFilterRating(e.target.value)}
+          className="h-9 rounded-lg border border-white/10 bg-slate-900 px-3 text-sm text-white"
+        >
+          <option value="">All Ratings</option>
+          {[5, 4, 3, 2, 1].map((r) => (
+            <option key={r} value={r}>
+              {r} Stars
+            </option>
+          ))}
+        </select>
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          className="h-9 rounded-lg border border-white/10 bg-slate-900 px-3 text-sm text-white"
+        >
+          <option value="">All Types</option>
+          <option value="positive">Positive</option>
+          <option value="negative">Feedback</option>
+        </select>
+        {(filterRating || filterType || filterShop) && (
+          <button
+            onClick={() => {
+              setFilterRating("");
+              setFilterType("");
+              setFilterShop("");
+            }}
+            className="text-xs text-slate-400 hover:text-white transition"
+          >
+            Clear
+          </button>
+        )}
+        <span className="ml-auto text-xs text-slate-500">
+          {filtered.length} of {reviews.length}
+        </span>
+      </div>
+      <div className="overflow-x-auto rounded-2xl border border-white/10">
+        <table className="w-full text-sm text-slate-300">
+          <thead className="border-b border-white/10 bg-white/5">
+            <tr>
+              <th className="p-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Shop
+              </th>
+              <th className="p-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Customer
+              </th>
+              <th className="p-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Rating
+              </th>
+              <th className="p-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Type
+              </th>
+              <th className="p-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Comment
+              </th>
+              <th className="p-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Date
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {filtered.map((r) => (
+              <tr key={r.id} className="transition hover:bg-white/5">
+                <td className="p-3 font-medium text-white">{r.shop_name ?? "Unknown"}</td>
+                <td className="p-3 text-slate-400">
+                  <div>{r.customer_name ?? "Anonymous"}</div>
+                  {r.customer_phone && (
+                    <div className="text-xs text-slate-600">{r.customer_phone}</div>
+                  )}
+                </td>
+                <td className="p-3">
+                  <span className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((v) => (
+                      <Star
+                        key={v}
+                        className={`size-3.5 ${v <= r.rating ? "fill-amber-400 text-amber-400" : "text-white/10"}`}
+                      />
+                    ))}
+                  </span>
+                </td>
+                <td className="p-3">
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-xs font-medium",
+                      r.review_type === "positive"
+                        ? "bg-emerald-500/15 text-emerald-400"
+                        : "bg-red-500/15 text-red-400",
+                    )}
+                  >
+                    {r.review_type === "positive" ? "Positive" : "Feedback"}
+                  </span>
+                </td>
+                <td className="p-3 max-w-[220px]">
+                  <div className="flex items-center gap-1.5">
+                    <MessageSquare className="size-3.5 shrink-0 text-slate-500" />
+                    <p className="text-xs text-slate-400 truncate">
+                      {(r.review_type === "positive" ? r.review_comment : r.feedback_comment) ??
+                        "No comment"}
+                    </p>
+                  </div>
+                </td>
+                <td className="p-3 whitespace-nowrap text-xs text-slate-500">
+                  {new Date(r.created_at).toLocaleDateString("en-IN", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td className="p-8 text-center text-slate-500" colSpan={6}>
+                  No reviews found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

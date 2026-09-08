@@ -145,24 +145,96 @@ export type Database = {
           },
         ];
       };
-      profiles: {
+      onboarding_data: {
         Row: {
-          created_at: string;
-          email: string | null;
-          full_name: string | null;
           id: string;
+          user_id: string;
+          logo_url: string | null;
+          google_review_link: string | null;
+          instagram_url: string | null;
+          facebook_url: string | null;
+          twitter_url: string | null;
+          website_url: string | null;
+          completed: boolean;
+          created_at: string;
+          updated_at: string;
         };
         Insert: {
+          id?: string;
+          user_id: string;
+          logo_url?: string | null;
+          google_review_link?: string | null;
+          instagram_url?: string | null;
+          facebook_url?: string | null;
+          twitter_url?: string | null;
+          website_url?: string | null;
+          completed?: boolean;
           created_at?: string;
-          email?: string | null;
-          full_name?: string | null;
-          id: string;
+          updated_at?: string;
         };
         Update: {
+          id?: string;
+          user_id?: string;
+          logo_url?: string | null;
+          google_review_link?: string | null;
+          instagram_url?: string | null;
+          facebook_url?: string | null;
+          twitter_url?: string | null;
+          website_url?: string | null;
+          completed?: boolean;
           created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      profiles: {
+        Row: {
+          id: string;
+          email: string | null;
+          full_name: string | null;
+          business_name: string | null;
+          business_category: string | null;
+          avatar_url: string | null;
+          google_user: boolean;
+          subscription_plan: string;
+          payment_status: string;
+          role: string;
+          onboarding_completed: boolean;
+          remember_me: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
           email?: string | null;
           full_name?: string | null;
+          business_name?: string | null;
+          business_category?: string | null;
+          avatar_url?: string | null;
+          google_user?: boolean;
+          subscription_plan?: string;
+          payment_status?: string;
+          role?: string;
+          onboarding_completed?: boolean;
+          remember_me?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
           id?: string;
+          email?: string | null;
+          full_name?: string | null;
+          business_name?: string | null;
+          business_category?: string | null;
+          avatar_url?: string | null;
+          google_user?: boolean;
+          subscription_plan?: string;
+          payment_status?: string;
+          role?: string;
+          onboarding_completed?: boolean;
+          remember_me?: boolean;
+          created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -486,9 +558,10 @@ export type Database = {
       };
       owns_shop: { Args: { _shop_id: string }; Returns: boolean };
       shop_is_active: { Args: { _shop_id: string }; Returns: boolean };
+      get_user_role: { Args: { _user_id: string }; Returns: string };
     };
     Enums: {
-      app_role: "admin" | "owner";
+      app_role: "admin" | "owner" | "staff";
     };
     CompositeTypes: {
       [_ in never]: never;

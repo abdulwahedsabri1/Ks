@@ -38,27 +38,30 @@ Chicken Noodles
 `;
 
 function parseMenuText(text) {
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
   const items = [];
   let currentCategory = "General";
 
   for (const line of lines) {
-    if (line.toUpperCase() === 'MENU' || line.startsWith('***')) continue;
-    if (!line.match(/\d+/) && line.length < 35 && !line.includes('/-')) {
-      currentCategory = line.replace(/[^a-zA-Z0-9\s]/g, '').trim() || currentCategory;
+    if (line.toUpperCase() === "MENU" || line.startsWith("***")) continue;
+    if (!line.match(/\d+/) && line.length < 35 && !line.includes("/-")) {
+      currentCategory = line.replace(/[^a-zA-Z0-9\s]/g, "").trim() || currentCategory;
       continue;
     }
 
     const priceMatch = line.match(/(.*?)\s+(\d{2,4})\s*(?:\/|-|rs|inr|\.|$)/i);
     if (priceMatch) {
-      let rawName = priceMatch[1].replace(/^[•*\-\s]+/, '').trim();
+      let rawName = priceMatch[1].replace(/^[•*\-\s]+/, "").trim();
       const price = parseInt(priceMatch[2], 10);
       if (rawName.length > 2 && price > 0) {
         items.push({
           name: rawName,
           description: "",
           price,
-          category: currentCategory
+          category: currentCategory,
         });
       }
     }

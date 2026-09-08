@@ -11,6 +11,7 @@ import {
   Clock,
   Link as LinkIcon,
   ChevronRight,
+  Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -28,17 +29,21 @@ import {
   planOf,
   shopTiming,
   shopSocialLink,
+  shopGoogleReviewLink,
   shopDeliveryEnabled,
   shopTakeawayEnabled,
   shopOnTableEnabled,
   shopTheme,
+  shopLanguages,
   THEME_CONFIG,
   type CartLine,
+  type Coupon,
   type MenuItem,
   type Shop,
   type ThemeId,
 } from "@/lib/shop";
 import { getFoodImageUrl } from "@/lib/foodImage";
+import { GoogleReviewModal } from "@/components/GoogleReviewModal";
 
 export const Route = createFileRoute("/shop/$slug")({
   loader: async ({ params }) => {
@@ -95,9 +100,14 @@ function PublicMenu() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [active, setActive] = useState<string>("all");
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [specialInstructions, setSpecialInstructions] = useState("");
+  
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [couponError, setCouponError] = useState("");
 
   const themeId = shopTheme(shop);
   const theme = THEME_CONFIG[themeId];
@@ -105,6 +115,11 @@ function PublicMenu() {
   const isDelivery = shopDeliveryEnabled(shop);
   const isTakeaway = shopTakeawayEnabled(shop);
   const isOnTable = shopOnTableEnabled(shop);
+
+  const languages = shopLanguages(shop);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isMultiLanguageEnabled = (shop.features as any)?.multi_language_enabled !== false;
+  const showTranslate = isMultiLanguageEnabled && languages.length > 0 && !(languages.length === 1 && languages[0] === "en");
 
   const defaultOrderType = isDelivery
     ? "delivery"
@@ -186,6 +201,37 @@ function PublicMenu() {
       .then(() => undefined);
   }, [shop.id]);
 
+  useEffect(() => {
+    if (!showTranslate) return;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).googleTranslateElementInit = () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      new (window as any).google.translate.TranslateElement(
+        { 
+          pageLanguage: 'en', 
+          includedLanguages: languages.join(','), 
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          layout: (window as any).google.translate.TranslateElement.InlineLayout.SIMPLE 
+        },
+        'google_translate_element'
+      );
+    };
+
+    const script = document.createElement('script');
+    script.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (window as any).googleTranslateElementInit;
+    };
+  }, [showTranslate, languages]);
+
   const lines: CartLine[] = useMemo(
     () =>
       Object.entries(cart)
@@ -193,7 +239,24 @@ function PublicMenu() {
         .filter((l) => l.item && l.qty > 0),
     [cart, items],
   );
-  const total = lines.reduce((s, l) => s + (l.item.discount_price ?? l.item.price) * l.qty, 0);
+  
+  const subtotal = lines.reduce((s, l) => s + (l.item.discount_price ?? l.item.price) * l.qty, 0);
+
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.min_order && subtotal < appliedCoupon.min_order) {
+      // automatically remove or ignore if subtotal drops
+      discountAmount = 0;
+    } else {
+      if (appliedCoupon.type === "percent") {
+        discountAmount = subtotal * (appliedCoupon.value / 100);
+      } else {
+        discountAmount = appliedCoupon.value;
+      }
+    }
+  }
+  const total = Math.max(0, subtotal - discountAmount);
+
   const visible = items.filter(
     (i) => i.is_available && (active === "all" || i.category_id === active),
   );
@@ -203,11 +266,13 @@ function PublicMenu() {
     setCart((c) => ({ ...c, [id]: Math.max(0, (c[id] ?? 0) + delta) }));
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const container: any = {
     hidden: { opacity: 0 },
     show: { opacity: 1, transition: { staggerChildren: 0.05 } },
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const itemAnim: any = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
@@ -217,6 +282,12 @@ function PublicMenu() {
     <div
       className={`min-h-screen ${theme.bg} ${theme.text} pb-32 font-sans ${theme.selection} transition-colors duration-500`}
     >
+      {showTranslate && (
+        <div className="fixed top-4 right-4 z-50 rounded-lg overflow-hidden shadow-lg border border-white/20 bg-background/80 backdrop-blur-md p-2">
+          <div id="google_translate_element"></div>
+        </div>
+      )}
+      
       {/* Banner */}
       <header className="relative isolate h-56 w-full overflow-hidden sm:h-72">
         {shop.cover_url ? (
@@ -295,6 +366,15 @@ function PublicMenu() {
               >
                 <LinkIcon className="size-4 shrink-0" /> Social Media
               </a>
+            )}
+            {shopGoogleReviewLink(shop) && (
+              <button
+                type="button"
+                onClick={() => setReviewModalOpen(true)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${theme.border} transition-all hover:scale-105 hover:bg-amber-400/10 ${theme.textMutedHover}`}
+              >
+                <Star className="size-3.5 fill-amber-400 text-amber-400 shrink-0" /> Google Review
+              </button>
             )}
           </div>
         </motion.section>
@@ -408,6 +488,20 @@ function PublicMenu() {
             </motion.article>
           ))}
         </motion.div>
+
+        {shopGoogleReviewLink(shop) && (
+          <div className="mt-8 text-center">
+            <a
+              href={shopGoogleReviewLink(shop)}
+              target="_blank"
+              rel="noreferrer"
+              className={`inline-flex items-center gap-2 rounded-xl border ${theme.border} ${theme.card} px-4 py-2 text-xs font-medium ${theme.text} shadow-sm transition hover:scale-105`}
+            >
+              <Star className="size-4 fill-amber-400 text-amber-400 shrink-0" />
+              Enjoyed your visit? Rate us on Google
+            </a>
+          </div>
+        )}
 
         <div
           className={`border-t ${theme.border} mt-10 pt-6 pb-4 text-center text-xs ${theme.textMuted}`}
@@ -656,6 +750,89 @@ function PublicMenu() {
                   </div>
                 </div>
 
+                <div className={`space-y-3 mb-6 p-4 rounded-xl border ${theme.border} bg-black/5`}>
+                  <Label className={theme.textMuted}>Discount Code</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter code"
+                      value={couponCode}
+                      onChange={(e) => {
+                        setCouponCode(e.target.value.toUpperCase());
+                        setCouponError("");
+                      }}
+                      className={`bg-transparent ${theme.border} ${theme.text}`}
+                      disabled={!!appliedCoupon}
+                    />
+                    {!appliedCoupon ? (
+                      <Button 
+                        variant="secondary" 
+                        onClick={() => {
+                          const shopCoupons = (shop.features as any)?.coupons as Coupon[] || [];
+                          const found = shopCoupons.find(c => c.code === couponCode);
+                          if (!found) {
+                            setCouponError("Invalid coupon code");
+                            return;
+                          }
+                          if (found.min_order && subtotal < found.min_order) {
+                            setCouponError(`Minimum order amount is ${money(found.min_order, shop.currency)}`);
+                            return;
+                          }
+                          if (found.expires_at && new Date(found.expires_at).getTime() < Date.now()) {
+                            setCouponError("This coupon has expired");
+                            return;
+                          }
+                          setAppliedCoupon(found);
+                          setCouponError("");
+                        }}
+                      >
+                        Apply
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="destructive" 
+                        onClick={() => {
+                          setAppliedCoupon(null);
+                          setCouponCode("");
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                  {couponError && <p className="text-xs text-red-500 font-medium">{couponError}</p>}
+                  {appliedCoupon && discountAmount > 0 && (
+                    <p className="text-sm font-medium text-green-500">
+                      Coupon applied: -{money(discountAmount, shop.currency)}
+                    </p>
+                  )}
+                </div>
+
+                {(shop.features as any)?.upi_id && (
+                  <div className={`space-y-2 mb-6 p-4 rounded-xl border border-green-500/30 bg-green-500/10`}>
+                    <div className="flex items-center gap-2">
+                      <div className="size-6 rounded-full bg-green-500 flex items-center justify-center text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      </div>
+                      <Label className="text-green-700 font-bold dark:text-green-400">UPI Payment Accepted</Label>
+                    </div>
+                    <p className="text-xs text-green-700/80 dark:text-green-400/80 font-medium">
+                      Pay securely now using the buttons below, or wait for instructions via WhatsApp.
+                    </p>
+                    <div className="flex gap-2 pt-2">
+                      <Button asChild variant="outline" size="sm" className="flex-1 bg-white border-green-200 text-green-800 hover:bg-green-50 shadow-sm">
+                        <a href={`upi://pay?pa=${(shop.features as any)?.upi_id}&pn=${encodeURIComponent(shop.name)}&am=${total}&cu=INR`} target="_blank" rel="noreferrer">
+                          GPay
+                        </a>
+                      </Button>
+                      <Button asChild variant="outline" size="sm" className="flex-1 bg-white border-green-200 text-green-800 hover:bg-green-50 shadow-sm">
+                        <a href={`phonepe://pay?pa=${(shop.features as any)?.upi_id}&pn=${encodeURIComponent(shop.name)}&am=${total}&cu=INR`} target="_blank" rel="noreferrer">
+                          PhonePe
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="pt-2">
                   <Button
                     asChild
@@ -667,6 +844,7 @@ function PublicMenu() {
                         name: customerName,
                         phone: customerPhone,
                         notes: specialInstructions,
+                        ...(appliedCoupon && discountAmount > 0 ? { coupon: appliedCoupon } : {}),
                         location:
                           orderType === "delivery"
                             ? [deliveryAddress, deliveryCity, deliveryPincode]
@@ -676,7 +854,15 @@ function PublicMenu() {
                       })}
                       target="_blank"
                       rel="noreferrer"
-                      onClick={() => setIsCartOpen(false)}
+                      onClick={() => {
+                        setIsCartOpen(false);
+                        setTimeout(() => {
+                          setReviewModalOpen(true);
+                          setCart({});
+                          setAppliedCoupon(null);
+                          setCouponCode("");
+                        }, 500);
+                      }}
                     >
                       <MessageCircle className="mr-2 size-5" />
                       Send Order ({money(total, shop.currency)})
@@ -688,6 +874,19 @@ function PublicMenu() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Google Review Modal */}
+      <GoogleReviewModal
+        open={reviewModalOpen}
+        onClose={() => setReviewModalOpen(false)}
+        shop={{
+          id: shop.id,
+          name: shop.name,
+          logo_url: shop.logo_url,
+          niche: shop.niche,
+          googleReviewLink: shopGoogleReviewLink(shop) ?? null,
+        }}
+      />
     </div>
   );
 }
@@ -701,6 +900,7 @@ function Chip({
   label: string;
   active: boolean;
   onClick: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   theme: any;
 }) {
   return (

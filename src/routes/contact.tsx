@@ -14,7 +14,8 @@ export const Route = createFileRoute("/contact")({
       { title: "Contact Support — MY Link QR" },
       {
         name: "description",
-        content: "Get in touch with MY Link QR support team. WhatsApp, phone, email, and live inquiry assistance.",
+        content:
+          "Get in touch with MY Link QR support team. WhatsApp, phone, email, and live inquiry assistance.",
       },
       { property: "og:title", content: "Contact Support — MY Link QR" },
     ],
@@ -75,7 +76,8 @@ ${message}`;
               We're here to <span className="italic text-primary">help you grow</span>
             </h1>
             <p className="text-lg text-muted-foreground">
-              Have a question about our QR menus, custom templates, or pricing? Reach out to our team anytime.
+              Have a question about our QR menus, custom templates, or pricing? Reach out to our
+              team anytime.
             </p>
           </div>
 
@@ -84,10 +86,14 @@ ${message}`;
             <div className="lg:col-span-2 space-y-8">
               <div className="bg-card text-foreground p-8 md:p-10 rounded-3xl border border-border shadow-xl relative overflow-hidden space-y-8">
                 <div className="absolute inset-0 bg-primary/10 blur-[100px] pointer-events-none" />
-                
+
                 <div>
-                  <h2 className="font-display text-2xl font-semibold mb-2">Direct Contact Information</h2>
-                  <p className="text-sm text-muted-foreground">Connect directly with our support engineers.</p>
+                  <h2 className="font-display text-2xl font-semibold mb-2">
+                    Direct Contact Information
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Connect directly with our support engineers.
+                  </p>
                 </div>
 
                 <div className="space-y-6 text-sm">
@@ -96,8 +102,12 @@ ${message}`;
                       <MessageCircle className="size-5" />
                     </div>
                     <div>
-                      <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1">WhatsApp Support</p>
-                      <p className="font-mono text-base font-semibold text-foreground">+91 9392318135</p>
+                      <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1">
+                        WhatsApp Support
+                      </p>
+                      <p className="font-mono text-base font-semibold text-foreground">
+                        +91 9392318135
+                      </p>
                       <p className="text-xs text-muted-foreground">Instant response (24/7)</p>
                     </div>
                   </div>
@@ -107,7 +117,9 @@ ${message}`;
                       <Mail className="size-5" />
                     </div>
                     <div>
-                      <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1">Email Inquiry</p>
+                      <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1">
+                        Email Inquiry
+                      </p>
                       <p className="font-medium text-foreground">support@mylinkqr.com</p>
                       <p className="text-xs text-muted-foreground">Response within 2 hours</p>
                     </div>
@@ -118,8 +130,12 @@ ${message}`;
                       <Clock className="size-5" />
                     </div>
                     <div>
-                      <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1">Operating Hours</p>
-                      <p className="font-medium text-foreground">Mon – Sun: 9:00 AM – 9:00 PM IST</p>
+                      <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1">
+                        Operating Hours
+                      </p>
+                      <p className="font-medium text-foreground">
+                        Mon – Sun: 9:00 AM – 9:00 PM IST
+                      </p>
                     </div>
                   </div>
 
@@ -128,7 +144,9 @@ ${message}`;
                       <MapPin className="size-5" />
                     </div>
                     <div>
-                      <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1">Headquarters</p>
+                      <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-1">
+                        Headquarters
+                      </p>
                       <p className="font-medium text-foreground">Mumbai, Maharashtra, India</p>
                     </div>
                   </div>
@@ -139,7 +157,9 @@ ${message}`;
                 <CheckCircle2 className="size-8 text-green-500 shrink-0" />
                 <div>
                   <h3 className="font-display font-semibold text-base">Quick WhatsApp Help</h3>
-                  <p className="text-xs text-muted-foreground">Click submit to immediately initiate a WhatsApp live support chat.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Click submit to immediately initiate a WhatsApp live support chat.
+                  </p>
                 </div>
               </div>
             </div>
@@ -154,9 +174,14 @@ ${message}`;
                     <CheckCircle2 className="size-16 text-green-500 mx-auto" />
                     <h3 className="font-display text-2xl font-semibold">Thank You!</h3>
                     <p className="text-muted-foreground max-w-md mx-auto">
-                      Your message has been sent to our team. If WhatsApp didn't open automatically, feel free to message us directly at +91 9392318135.
+                      Your message has been sent to our team. If WhatsApp didn't open automatically,
+                      feel free to message us directly at +91 9392318135.
                     </p>
-                    <Button onClick={() => setSubmitted(false)} variant="outline" className="mt-4 rounded-full">
+                    <Button
+                      onClick={() => setSubmitted(false)}
+                      variant="outline"
+                      className="mt-4 rounded-full"
+                    >
                       Send Another Message
                     </Button>
                   </div>
@@ -220,7 +245,11 @@ ${message}`;
                       />
                     </div>
 
-                    <Button type="submit" size="lg" className="w-full rounded-full bg-primary hover:bg-primary/90 text-white font-semibold">
+                    <Button
+                      type="submit"
+                      size="lg"
+                      className="w-full rounded-full bg-primary hover:bg-primary/90 text-white font-semibold"
+                    >
                       <Send className="size-4 mr-2" /> Send Message
                     </Button>
                   </form>

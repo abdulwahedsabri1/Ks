@@ -11,7 +11,8 @@ export const Route = createFileRoute("/templates")({
       { title: "QR Menu Templates — MY Link QR" },
       {
         name: "description",
-        content: "Explore pre-built luxury digital menu templates for restaurants, cafes, bakeries, salons, and boutiques.",
+        content:
+          "Explore pre-built luxury digital menu templates for restaurants, cafes, bakeries, salons, and boutiques.",
       },
       { property: "og:title", content: "QR Menu Templates — MY Link QR" },
     ],
@@ -27,10 +28,12 @@ const templates = [
     name: "Luxury Bistro & Dining",
     category: "Restaurant",
     theme: "Emerald & Gold Dark",
-    description: "Rich dark aesthetic with gold accents, item tags, high-resolution food images, and category sticky nav.",
+    description:
+      "Rich dark aesthetic with gold accents, item tags, high-resolution food images, and category sticky nav.",
     demoSlug: "royalbiryani",
     items: "50+ items included",
-    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
+    image:
+      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
     popular: true,
   },
   {
@@ -38,10 +41,12 @@ const templates = [
     name: "Warm Artisan Cafe",
     category: "Cafe & Bistro",
     theme: "Warm Cream & Coffee",
-    description: "Minimalist cream design tailored for espresso bars, specialty coffees, and artisan breakfast spots.",
+    description:
+      "Minimalist cream design tailored for espresso bars, specialty coffees, and artisan breakfast spots.",
     demoSlug: "artisancafe",
     items: "35+ items included",
-    image: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=800&q=80",
+    image:
+      "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=800&q=80",
     popular: false,
   },
   {
@@ -49,10 +54,12 @@ const templates = [
     name: "Pastry & Gourmet Bakery",
     category: "Bakery",
     theme: "Pastel Pink & Warm Cocoa",
-    description: "Vibrant showcase with photo cards, allergen tags, and instant WhatsApp custom cake order buttons.",
+    description:
+      "Vibrant showcase with photo cards, allergen tags, and instant WhatsApp custom cake order buttons.",
     demoSlug: "sweettreats",
     items: "40+ items included",
-    image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80",
+    image:
+      "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80",
     popular: true,
   },
   {
@@ -60,10 +67,12 @@ const templates = [
     name: "Velvet Beauty & Spa",
     category: "Salon & Spa",
     theme: "Rose Gold & Silk",
-    description: "Elegant service menu detailing hair, skin, and spa packages with duration and appointment inquiry links.",
+    description:
+      "Elegant service menu detailing hair, skin, and spa packages with duration and appointment inquiry links.",
     demoSlug: "glamoursalon",
     items: "25+ services included",
-    image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80",
+    image:
+      "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80",
     popular: false,
   },
   {
@@ -71,10 +80,12 @@ const templates = [
     name: "Minimalist Boutique Catalog",
     category: "Boutique",
     theme: "Monochrome Sleek",
-    description: "Modern lookbook style catalog for clothing stores, footwear, and handmade craft galleries.",
+    description:
+      "Modern lookbook style catalog for clothing stores, footwear, and handmade craft galleries.",
     demoSlug: "urbantreads",
     items: "30+ items included",
-    image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
+    image:
+      "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
     popular: false,
   },
 ];
@@ -82,9 +93,8 @@ const templates = [
 function TemplatesPage() {
   const [selectedCat, setSelectedCat] = useState("All");
 
-  const filteredTemplates = selectedCat === "All"
-    ? templates
-    : templates.filter((t) => t.category === selectedCat);
+  const filteredTemplates =
+    selectedCat === "All" ? templates : templates.filter((t) => t.category === selectedCat);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -102,7 +112,8 @@ function TemplatesPage() {
               Choose a template & <span className="italic text-primary">launch in minutes</span>
             </h1>
             <p className="text-lg text-muted-foreground">
-              Every template is 100% customizable, mobile-optimized, and comes with dynamic QR code support.
+              Every template is 100% customizable, mobile-optimized, and comes with dynamic QR code
+              support.
             </p>
           </div>
 
@@ -150,10 +161,14 @@ function TemplatesPage() {
                   <div className="p-7">
                     <div className="flex items-center justify-between text-xs text-primary font-bold uppercase tracking-wider mb-2">
                       <span>{tpl.category}</span>
-                      <span className="text-muted-foreground font-normal lowercase">{tpl.items}</span>
+                      <span className="text-muted-foreground font-normal lowercase">
+                        {tpl.items}
+                      </span>
                     </div>
 
-                    <h3 className="font-display text-2xl font-semibold mb-3 text-foreground">{tpl.name}</h3>
+                    <h3 className="font-display text-2xl font-semibold mb-3 text-foreground">
+                      {tpl.name}
+                    </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed mb-6">
                       {tpl.description}
                     </p>
@@ -177,7 +192,11 @@ function TemplatesPage() {
                       <Eye className="size-3.5 mr-1.5" /> Preview Demo
                     </Link>
                   </Button>
-                  <Button asChild size="sm" className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground">
+                  <Button
+                    asChild
+                    size="sm"
+                    className="rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
                     <Link to="/auth">
                       Use Template <ArrowRight className="size-3.5 ml-1.5" />
                     </Link>
@@ -196,9 +215,14 @@ function TemplatesPage() {
                 Need a custom template for your brand?
               </h2>
               <p className="text-white/70 text-lg mb-8">
-                Our design team can craft a bespoke template tailored to your exact brand colors and domain.
+                Our design team can craft a bespoke template tailored to your exact brand colors and
+                domain.
               </p>
-              <Button asChild size="lg" className="rounded-full bg-primary hover:bg-primary/90 text-white px-8">
+              <Button
+                asChild
+                size="lg"
+                className="rounded-full bg-primary hover:bg-primary/90 text-white px-8"
+              >
                 <Link to="/contact">Request Custom Template</Link>
               </Button>
             </div>

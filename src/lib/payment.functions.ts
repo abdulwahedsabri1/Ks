@@ -46,19 +46,21 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
 
 export const verifyRazorpayPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data: {
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
-    plan_name: string;
-  }) => {
-    return {
-      razorpay_order_id: data.razorpay_order_id,
-      razorpay_payment_id: data.razorpay_payment_id,
-      razorpay_signature: data.razorpay_signature,
-      plan_name: data.plan_name,
-    };
-  })
+  .validator(
+    (data: {
+      razorpay_order_id: string;
+      razorpay_payment_id: string;
+      razorpay_signature: string;
+      plan_name: string;
+    }) => {
+      return {
+        razorpay_order_id: data.razorpay_order_id,
+        razorpay_payment_id: data.razorpay_payment_id,
+        razorpay_signature: data.razorpay_signature,
+        plan_name: data.plan_name,
+      };
+    },
+  )
   .handler(async ({ data, context }) => {
     const keySecret = process.env["RAZORPAY_KEY_SECRET"];
 
@@ -67,10 +69,7 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
     }
 
     const body = data.razorpay_order_id + "|" + data.razorpay_payment_id;
-    const expectedSignature = crypto
-      .createHmac("sha256", keySecret)
-      .update(body)
-      .digest("hex");
+    const expectedSignature = crypto.createHmac("sha256", keySecret).update(body).digest("hex");
 
     if (expectedSignature !== data.razorpay_signature) {
       throw new Error("Invalid payment signature");
@@ -78,7 +77,7 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
 
     // Load admin client dynamically for server function
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    
+
     // Find a shop owned by the user
     const { data: shops, error: shopError } = await supabaseAdmin
       .from("shops")
@@ -101,11 +100,11 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
     }
 
     const pName = data.plan_name.toLowerCase();
-    
+
     let amount = 0;
-    if (pName === 'basic') amount = 99;
-    else if (pName === 'pro') amount = 299;
-    else if (pName === 'premium') amount = 499;
+    if (pName === "basic") amount = 249;
+    else if (pName === "pro") amount = 499;
+    else if (pName === "premium") amount = 999;
 
     let newExpiry = new Date();
     if (shop.plan_expires_at) {
@@ -114,12 +113,9 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
         newExpiry = currentExpiry;
       }
     }
-    
-    if (pName === 'basic') {
-      newExpiry.setDate(newExpiry.getDate() + 7);
-    } else {
-      newExpiry.setMonth(newExpiry.getMonth() + 1);
-    }
+
+    // All paid plans are now monthly
+    newExpiry.setMonth(newExpiry.getMonth() + 1);
 
     const now = new Date().toISOString();
 
@@ -127,10 +123,15 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
       .from("shops")
       .update({
         plan: pName,
+        status: "active",
         payment_status: "paid",
         plan_started_at: now,
         plan_expires_at: newExpiry.toISOString(),
+        next_billing_date: newExpiry.toISOString(),
+        billing_cycle: "monthly",
         amount_paid: amount,
+        auto_renew: true,
+        grace_period_days: 7,
       })
       .eq("id", shop.id);
 
@@ -139,23 +140,21 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
       throw new Error("Could not update shop subscription");
     }
 
-    const { error: historyError } = await supabaseAdmin
-      .from("payment_history")
-      .insert({
-        shop_id: shop.id,
-        invoice_id: "INV-" + data.razorpay_payment_id.substring(4), // removing 'pay_' usually
-        amount: amount,
-        plan: pName,
-        billing_cycle: pName === 'basic' ? "weekly" : "monthly",
-        payment_status: "paid",
-        payment_method: "razorpay",
-        transaction_id: data.razorpay_payment_id,
-        payment_date: now,
-        notes: `Order ID: ${data.razorpay_order_id}`,
-      });
-      
+    const { error: historyError } = await supabaseAdmin.from("payment_history").insert({
+      shop_id: shop.id,
+      invoice_id: "INV-" + data.razorpay_payment_id.substring(4), // removing 'pay_' usually
+      amount: amount,
+      plan: pName,
+      billing_cycle: "monthly",
+      payment_status: "paid",
+      payment_method: "razorpay",
+      transaction_id: data.razorpay_payment_id,
+      payment_date: now,
+      notes: `Order ID: ${data.razorpay_order_id}`,
+    });
+
     if (historyError) {
-       console.error("Payment history error:", historyError);
+      console.error("Payment history error:", historyError);
     }
 
     return { success: true, shop_id: shop.id };

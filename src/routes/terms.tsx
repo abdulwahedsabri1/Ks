@@ -9,7 +9,8 @@ export const Route = createFileRoute("/terms")({
       { title: "Terms of Service — MY Link QR" },
       {
         name: "description",
-        content: "Terms of Service and merchant agreement rules for using MY Link QR digital menu platform.",
+        content:
+          "Terms of Service and merchant agreement rules for using MY Link QR digital menu platform.",
       },
       { property: "og:title", content: "Terms of Service — MY Link QR" },
     ],
@@ -37,37 +38,59 @@ function TermsPage() {
 
           <div className="bg-card rounded-3xl p-8 sm:p-12 border border-border shadow-xl space-y-8 text-sm text-muted-foreground leading-relaxed">
             <section>
-              <h2 className="font-display text-xl font-semibold text-foreground mb-3">1. Acceptance of Terms</h2>
+              <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+                1. Acceptance of Terms
+              </h2>
               <p>
-                By signing up for or using MY Link QR ("Service"), you agree to be bound by these Terms of Service. If you are registering on behalf of a business, restaurant, or shop, you represent that you have authority to bind that entity.
+                By signing up for or using MY Link QR ("Service"), you agree to be bound by these
+                Terms of Service. If you are registering on behalf of a business, restaurant, or
+                shop, you represent that you have authority to bind that entity.
               </p>
             </section>
 
             <section>
-              <h2 className="font-display text-xl font-semibold text-foreground mb-3">2. Merchant Account & Content</h2>
+              <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+                2. Merchant Account & Content
+              </h2>
               <p>
-                You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You retain 100% ownership of all images, text, and pricing details uploaded to your QR menu. You agree not to upload fraudulent, deceptive, or illegal content.
+                You are responsible for maintaining the confidentiality of your account credentials
+                and for all activities that occur under your account. You retain 100% ownership of
+                all images, text, and pricing details uploaded to your QR menu. You agree not to
+                upload fraudulent, deceptive, or illegal content.
               </p>
             </section>
 
             <section>
-              <h2 className="font-display text-xl font-semibold text-foreground mb-3">3. Service Availability & QR Links</h2>
+              <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+                3. Service Availability & QR Links
+              </h2>
               <p>
-                MY Link QR strives to maintain a 99.9% uptime for hosted QR menu URLs. Printed QR codes created through our platform remain dynamic; however, routing is dependent on active merchant account standing.
+                MY Link QR strives to maintain a 99.9% uptime for hosted QR menu URLs. Printed QR
+                codes created through our platform remain dynamic; however, routing is dependent on
+                active merchant account standing.
               </p>
             </section>
 
             <section>
-              <h2 className="font-display text-xl font-semibold text-foreground mb-3">4. Billing & Subscriptions</h2>
+              <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+                4. Billing & Subscriptions
+              </h2>
               <p>
-                Subscription plans (Basic, Pro, Premium) are billed according to selected billing cycles. Upgrades or plan changes take effect immediately. Subscriptions may be cancelled at any time through your dashboard or by contacting support.
+                Subscription plans (Basic, Pro, Premium) are billed according to selected billing
+                cycles. Upgrades or plan changes take effect immediately. Subscriptions may be
+                cancelled at any time through your dashboard or by contacting support.
               </p>
             </section>
 
             <section>
-              <h2 className="font-display text-xl font-semibold text-foreground mb-3">5. Termination & Support</h2>
+              <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+                5. Termination & Support
+              </h2>
               <p>
-                We reserve the right to suspend or terminate accounts that violate law or abuse system resources. For questions regarding terms, contact support at <span className="font-semibold text-foreground">support@mylinkqr.com</span> or WhatsApp <span className="font-semibold text-foreground">+91 9392318135</span>.
+                We reserve the right to suspend or terminate accounts that violate law or abuse
+                system resources. For questions regarding terms, contact support at{" "}
+                <span className="font-semibold text-foreground">support@mylinkqr.com</span> or
+                WhatsApp <span className="font-semibold text-foreground">+91 9392318135</span>.
               </p>
             </section>
           </div>

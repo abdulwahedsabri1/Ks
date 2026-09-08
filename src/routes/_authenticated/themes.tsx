@@ -163,7 +163,9 @@ function ThemesRoute() {
               <div
                 key={theme.id}
                 className={`group relative flex flex-col overflow-hidden rounded-2xl border transition-all ${
-                  isActive ? "border-primary ring-2 ring-primary/20 shadow-md" : "hover:border-primary/50"
+                  isActive
+                    ? "border-primary ring-2 ring-primary/20 shadow-md"
+                    : "hover:border-primary/50"
                 }`}
               >
                 {/* Visual Theme Card Header Preview */}
@@ -178,16 +180,24 @@ function ThemesRoute() {
                   </div>
 
                   {/* Sample Item Card Preview inside Theme Box */}
-                  <div className={`rounded-xl border ${cfg.border} ${theme.previewCard} p-3.5 shadow-sm`}>
+                  <div
+                    className={`rounded-xl border ${cfg.border} ${theme.previewCard} p-3.5 shadow-sm`}
+                  >
                     <div className="flex items-center justify-between gap-2">
                       <div>
-                        <p className={`font-semibold text-xs ${theme.previewText}`}>Signature Special</p>
-                        <p className="text-[10px] opacity-75 line-clamp-1">Fresh ingredients & sauce</p>
+                        <p className={`font-semibold text-xs ${theme.previewText}`}>
+                          Signature Special
+                        </p>
+                        <p className="text-[10px] opacity-75 line-clamp-1">
+                          Fresh ingredients & sauce
+                        </p>
                       </div>
                       <span className="font-bold text-xs opacity-90">₹240</span>
                     </div>
                     <div className="mt-3 flex items-center justify-between">
-                      <span className={`rounded-md px-2 py-1 text-[10px] font-bold ${theme.previewAccent}`}>
+                      <span
+                        className={`rounded-md px-2 py-1 text-[10px] font-bold ${theme.previewAccent}`}
+                      >
                         Add to order
                       </span>
                       <div className="flex gap-1">

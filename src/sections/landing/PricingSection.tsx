@@ -24,7 +24,10 @@ export function PricingSection() {
   };
 
   return (
-    <section id="pricing" className="bg-[#F5F0E7] py-24 md:py-32 text-[#100C09] relative overflow-hidden">
+    <section
+      id="pricing"
+      className="bg-[#F5F0E7] py-24 md:py-32 text-[#100C09] relative overflow-hidden"
+    >
       <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16 md:mb-20">
           <motion.div
@@ -53,7 +56,8 @@ export function PricingSection() {
             transition={{ delay: 0.1 }}
             className="text-base sm:text-lg text-[#3A2818]/70 leading-relaxed font-medium"
           >
-            No hidden fees. Upgrade or cancel anytime. Start with our basic plan or power up with Pro.
+            No hidden fees. Upgrade or cancel anytime. Start with our basic plan or power up with
+            Pro.
           </motion.p>
         </div>
 
@@ -84,7 +88,9 @@ export function PricingSection() {
                 </p>
 
                 <div className="flex items-baseline gap-1 mb-6 border-b border-black/10 pb-6">
-                  <span className="font-display text-4xl font-extrabold text-[#100C09]">{p.price}</span>
+                  <span className="font-display text-4xl font-extrabold text-[#100C09]">
+                    {p.price}
+                  </span>
                   <span className="text-[#3A2818]/70 text-xs font-medium">/period</span>
                 </div>
 

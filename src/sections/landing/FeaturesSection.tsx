@@ -191,7 +191,11 @@ export function FeaturesSection() {
   const x = useTransform(scrollYProgress, [0, 1], ["1%", "-84%"]);
 
   return (
-    <section ref={targetRef} id="features" className="relative h-[350vh] bg-[#FDFBF7] text-[#100C09]">
+    <section
+      ref={targetRef}
+      id="features"
+      className="relative h-[350vh] bg-[#FDFBF7] text-[#100C09]"
+    >
       <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
         {/* Ambient background glows */}
         <div className="absolute top-1/4 left-10 w-96 h-96 bg-[#F5A623]/10 rounded-full blur-[120px] pointer-events-none" />

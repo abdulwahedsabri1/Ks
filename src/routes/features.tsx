@@ -128,11 +128,13 @@ function FeaturesRoute() {
           </div>
 
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6">
-            Complete Features to <span className="text-gradient italic">Elevate Your Restaurant</span>
+            Complete Features to{" "}
+            <span className="text-gradient italic">Elevate Your Restaurant</span>
           </h1>
 
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8">
-            From instant AI menu creation to WhatsApp table orders and real-time analytics — everything you need to run a modern digital dining experience.
+            From instant AI menu creation to WhatsApp table orders and real-time analytics —
+            everything you need to run a modern digital dining experience.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
@@ -141,7 +143,12 @@ function FeaturesRoute() {
                 Start Free Trial <ArrowRight className="ml-2 size-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="rounded-full h-12 px-8 text-sm font-bold">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="rounded-full h-12 px-8 text-sm font-bold"
+            >
               <Link to="/demo">Watch Video Demo</Link>
             </Button>
           </div>
@@ -193,14 +200,22 @@ function FeaturesRoute() {
                 Ready to Upgrade Your Restaurant Menu?
               </h2>
               <p className="text-xs sm:text-sm text-muted-foreground max-w-xl mx-auto mb-8">
-                Join hundreds of restaurants, cafes, and bakeries using MY Link QR to boost sales and customer satisfaction.
+                Join hundreds of restaurants, cafes, and bakeries using MY Link QR to boost sales
+                and customer satisfaction.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-4">
                 <Button asChild size="lg" className="rounded-full h-12 px-8 font-bold">
                   <Link to="/auth">Create Your QR Menu Now</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="rounded-full h-12 px-8 font-bold">
-                  <Link to="/demo" hash="booking-form">Book Free Setup Meeting</Link>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="rounded-full h-12 px-8 font-bold"
+                >
+                  <Link to="/demo" hash="booking-form">
+                    Book Free Setup Meeting
+                  </Link>
                 </Button>
               </div>
             </div>

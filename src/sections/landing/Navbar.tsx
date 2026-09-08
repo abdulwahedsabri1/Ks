@@ -61,7 +61,8 @@ export function Navbar() {
               to="/demo"
               className="text-muted-foreground hover:text-primary transition-colors font-semibold flex items-center gap-1.5 py-1 px-2 rounded-lg bg-primary/5 border border-primary/20 shadow-sm"
             >
-              <span className="size-2 rounded-full bg-primary inline-block animate-pulse" /> Watch Demo
+              <span className="size-2 rounded-full bg-primary inline-block animate-pulse" /> Watch
+              Demo
             </Link>
             <Link
               to="/pricing"
@@ -134,7 +135,8 @@ export function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-lg font-semibold text-primary flex items-center gap-2"
               >
-                <span className="size-2 rounded-full bg-primary inline-block animate-pulse" /> Watch Demo
+                <span className="size-2 rounded-full bg-primary inline-block animate-pulse" /> Watch
+                Demo
               </Link>
               <Link
                 to="/pricing"

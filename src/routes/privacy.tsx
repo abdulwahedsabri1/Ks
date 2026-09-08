@@ -9,7 +9,8 @@ export const Route = createFileRoute("/privacy")({
       { title: "Privacy Policy — MY Link QR" },
       {
         name: "description",
-        content: "Detailed Privacy Policy explaining how MY Link QR collects, protects, and handles merchant data and menu analytics.",
+        content:
+          "Detailed Privacy Policy explaining how MY Link QR collects, protects, and handles merchant data and menu analytics.",
       },
       { property: "og:title", content: "Privacy Policy — MY Link QR" },
     ],
@@ -37,14 +38,21 @@ function PrivacyPage() {
 
           <div className="bg-card rounded-3xl p-8 sm:p-12 border border-border shadow-xl space-y-8 text-sm text-muted-foreground leading-relaxed">
             <section>
-              <h2 className="font-display text-xl font-semibold text-foreground mb-3">1. Information We Collect</h2>
+              <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+                1. Information We Collect
+              </h2>
               <p>
-                When you create an account with MY Link QR, we collect business registration details including your full name, business name, phone/WhatsApp number, email address, and store categories. When customers view your QR menu, anonymous analytics data (device type, scan count, and item views) are recorded to provide your dashboard metrics.
+                When you create an account with MY Link QR, we collect business registration details
+                including your full name, business name, phone/WhatsApp number, email address, and
+                store categories. When customers view your QR menu, anonymous analytics data (device
+                type, scan count, and item views) are recorded to provide your dashboard metrics.
               </p>
             </section>
 
             <section>
-              <h2 className="font-display text-xl font-semibold text-foreground mb-3">2. How We Use Your Information</h2>
+              <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+                2. How We Use Your Information
+              </h2>
               <ul className="list-disc pl-5 space-y-2">
                 <li>To host, render, and update your live QR code menu pages.</li>
                 <li>To route WhatsApp orders directly to your provided business phone number.</li>
@@ -54,23 +62,36 @@ function PrivacyPage() {
             </section>
 
             <section>
-              <h2 className="font-display text-xl font-semibold text-foreground mb-3">3. Data Sharing & Security</h2>
+              <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+                3. Data Sharing & Security
+              </h2>
               <p>
-                We do NOT sell, rent, or trade merchant or customer data to third-party advertisers. All account data and menu media files are encrypted in transit via SSL/TLS and stored on secure cloud database infrastructure.
+                We do NOT sell, rent, or trade merchant or customer data to third-party advertisers.
+                All account data and menu media files are encrypted in transit via SSL/TLS and
+                stored on secure cloud database infrastructure.
               </p>
             </section>
 
             <section>
-              <h2 className="font-display text-xl font-semibold text-foreground mb-3">4. Cookies & Local Storage</h2>
+              <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+                4. Cookies & Local Storage
+              </h2>
               <p>
-                We use essential browser cookies and local storage strictly to keep you authenticated in your dashboard and preserve temporary cart items when customers build an order.
+                We use essential browser cookies and local storage strictly to keep you
+                authenticated in your dashboard and preserve temporary cart items when customers
+                build an order.
               </p>
             </section>
 
             <section>
-              <h2 className="font-display text-xl font-semibold text-foreground mb-3">5. Contact Privacy Officer</h2>
+              <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+                5. Contact Privacy Officer
+              </h2>
               <p>
-                If you have any questions or wish to request data deletion, please contact us at <span className="font-semibold text-foreground">privacy@mylinkqr.com</span> or via WhatsApp support at <span className="font-semibold text-foreground">+91 9392318135</span>.
+                If you have any questions or wish to request data deletion, please contact us at{" "}
+                <span className="font-semibold text-foreground">privacy@mylinkqr.com</span> or via
+                WhatsApp support at{" "}
+                <span className="font-semibold text-foreground">+91 9392318135</span>.
               </p>
             </section>
           </div>

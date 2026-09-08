@@ -43,9 +43,21 @@ const PREVIEW_DEMOS = [
     accentBg: "bg-[#FFC45A] text-[#100C09]",
     coverUrl: "/hero_qr.jpg",
     items: [
-      { name: "Thalassery Chicken Biryani", price: "₹220", desc: "Aromatic Kaima rice biryani cooked with fried onions and spices" },
-      { name: "Karimeen Pollichathu", price: "₹350", desc: "Pearl spot fish marinated in masala grilled in banana leaf" },
-      { name: "Kerala Parotta with Beef Roast", price: "₹180", desc: "Flaky layered flatbread served with slow-cooked beef roast" },
+      {
+        name: "Thalassery Chicken Biryani",
+        price: "₹220",
+        desc: "Aromatic Kaima rice biryani cooked with fried onions and spices",
+      },
+      {
+        name: "Karimeen Pollichathu",
+        price: "₹350",
+        desc: "Pearl spot fish marinated in masala grilled in banana leaf",
+      },
+      {
+        name: "Kerala Parotta with Beef Roast",
+        price: "₹180",
+        desc: "Flaky layered flatbread served with slow-cooked beef roast",
+      },
     ],
   },
   {
@@ -57,9 +69,21 @@ const PREVIEW_DEMOS = [
     accentBg: "bg-[#D99A2B] text-white",
     coverUrl: "/mock/food1.png",
     items: [
-      { name: "Espresso Cappuccino", price: "₹140", desc: "Rich espresso topped with velvety steamed milk foam" },
-      { name: "Butter Croissant", price: "₹110", desc: "Freshly baked flaky butter croissant served warm" },
-      { name: "Tender Coconut Payasam", price: "₹90", desc: "Creamy traditional dessert with tender coconut pulp" },
+      {
+        name: "Espresso Cappuccino",
+        price: "₹140",
+        desc: "Rich espresso topped with velvety steamed milk foam",
+      },
+      {
+        name: "Butter Croissant",
+        price: "₹110",
+        desc: "Freshly baked flaky butter croissant served warm",
+      },
+      {
+        name: "Tender Coconut Payasam",
+        price: "₹90",
+        desc: "Creamy traditional dessert with tender coconut pulp",
+      },
     ],
   },
   {
@@ -71,8 +95,16 @@ const PREVIEW_DEMOS = [
     accentBg: "bg-[#F59E0B] text-[#062319]",
     coverUrl: "/mock/food3.png",
     items: [
-      { name: "Appam with Veg Stew", price: "₹130", desc: "Fluffy rice pancakes served with coconut milk vegetable stew" },
-      { name: "Chicken 65 (Kerala Style)", price: "₹180", desc: "Crispy fried chicken chunks with spicy curry leaf marinade" },
+      {
+        name: "Appam with Veg Stew",
+        price: "₹130",
+        desc: "Fluffy rice pancakes served with coconut milk vegetable stew",
+      },
+      {
+        name: "Chicken 65 (Kerala Style)",
+        price: "₹180",
+        desc: "Crispy fried chicken chunks with spicy curry leaf marinade",
+      },
       { name: "Sulaimani Tea", price: "₹30", desc: "Traditional spiced black lemon tea with mint" },
     ],
   },
@@ -85,9 +117,21 @@ const PREVIEW_DEMOS = [
     accentBg: "bg-[#06B6D4] text-[#0D0E15]",
     coverUrl: "/mock/retail1.png",
     items: [
-      { name: "Signature Mojito Cooler", price: "₹190", desc: "Refreshing crushed lime, fresh mint and soda cooler" },
-      { name: "Chilly Garlic Noodles", price: "₹140", desc: "Spicy noodles stir-fried with garlic, peppers and soy" },
-      { name: "Crispy Chicken Wings", price: "₹240", desc: "Glazed in spicy BBQ chili glaze served with dip" },
+      {
+        name: "Signature Mojito Cooler",
+        price: "₹190",
+        desc: "Refreshing crushed lime, fresh mint and soda cooler",
+      },
+      {
+        name: "Chilly Garlic Noodles",
+        price: "₹140",
+        desc: "Spicy noodles stir-fried with garlic, peppers and soy",
+      },
+      {
+        name: "Crispy Chicken Wings",
+        price: "₹240",
+        desc: "Glazed in spicy BBQ chili glaze served with dip",
+      },
     ],
   },
   {
@@ -99,9 +143,21 @@ const PREVIEW_DEMOS = [
     accentBg: "bg-[#E11D48] text-white",
     coverUrl: "/mock/salon2.png",
     items: [
-      { name: "Dark Chocolate Brownie", price: "₹150", desc: "Fudgy warm chocolate brownie with vanilla gelato" },
-      { name: "Rose Milkshake", price: "₹110", desc: "Chilled organic rose milk topped with basil seeds" },
-      { name: "Red Velvet Pastry", price: "₹130", desc: "Layered sponge cake with cream cheese frosting" },
+      {
+        name: "Dark Chocolate Brownie",
+        price: "₹150",
+        desc: "Fudgy warm chocolate brownie with vanilla gelato",
+      },
+      {
+        name: "Rose Milkshake",
+        price: "₹110",
+        desc: "Chilled organic rose milk topped with basil seeds",
+      },
+      {
+        name: "Red Velvet Pastry",
+        price: "₹130",
+        desc: "Layered sponge cake with cream cheese frosting",
+      },
     ],
   },
   {
@@ -113,9 +169,21 @@ const PREVIEW_DEMOS = [
     accentBg: "bg-[#100C09] text-white",
     coverUrl: "/mock/food4.png",
     items: [
-      { name: "Classic Cheese Burger", price: "₹199", desc: "Juicy grilled beef patty with cheddar, lettuce and special sauce" },
-      { name: "Loaded Fries Platter", price: "₹140", desc: "Crispy golden fries topped with melted cheese & jalapeños" },
-      { name: "Cold Brew Iced Coffee", price: "₹120", desc: "Smooth 16-hour steeped cold brew coffee" },
+      {
+        name: "Classic Cheese Burger",
+        price: "₹199",
+        desc: "Juicy grilled beef patty with cheddar, lettuce and special sauce",
+      },
+      {
+        name: "Loaded Fries Platter",
+        price: "₹140",
+        desc: "Crispy golden fries topped with melted cheese & jalapeños",
+      },
+      {
+        name: "Cold Brew Iced Coffee",
+        price: "₹120",
+        desc: "Smooth 16-hour steeped cold brew coffee",
+      },
     ],
   },
 ];
@@ -137,7 +205,8 @@ function PreviewsRoute() {
           </h1>
 
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8">
-            Browse live interactive mockups of digital QR menus across different themes, food categories, and business types.
+            Browse live interactive mockups of digital QR menus across different themes, food
+            categories, and business types.
           </p>
         </section>
 
@@ -152,7 +221,8 @@ function PreviewsRoute() {
             Explore Theme Designs & Preset Layouts
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground mb-10">
-            Select any theme below and book a 1-on-1 setup session to customize it for your business.
+            Select any theme below and book a 1-on-1 setup session to customize it for your
+            business.
           </p>
         </section>
 
@@ -208,7 +278,9 @@ function PreviewsRoute() {
                 <div className="p-5 flex items-center justify-between bg-card">
                   <div>
                     <p className="text-xs font-bold text-foreground">{demo.themeName}</p>
-                    <p className="text-[11px] text-muted-foreground">Book custom setup for this theme</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Book custom setup for this theme
+                    </p>
                   </div>
                   <Button asChild size="sm" className="rounded-full font-bold">
                     <Link to="/demo" hash="booking-form">
@@ -224,9 +296,12 @@ function PreviewsRoute() {
         {/* Bottom CTA */}
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-20 text-center max-w-3xl">
           <div className="rounded-3xl border border-border bg-card/60 p-8 sm:p-12 backdrop-blur-xl">
-            <h2 className="font-display text-3xl font-bold mb-3">Want a Custom Design for Your Brand?</h2>
+            <h2 className="font-display text-3xl font-bold mb-3">
+              Want a Custom Design for Your Brand?
+            </h2>
             <p className="text-xs sm:text-sm text-muted-foreground mb-6 max-w-lg mx-auto">
-              Our design team can craft a tailored QR menu with your custom logo, font choices, and brand guidelines.
+              Our design team can craft a tailored QR menu with your custom logo, font choices, and
+              brand guidelines.
             </p>
             <Button asChild size="lg" className="rounded-full font-bold h-12 px-8">
               <Link to="/demo" hash="booking-form">

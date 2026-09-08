@@ -31,16 +31,16 @@ function cleanJsonParse<T>(rawText: string): T {
 function cleanItemName(raw: string): string {
   let s = raw.trim();
 
-  // Remove leading non-alphanumeric characters, copyright symbols, bullet points, numbers like 3g. 
+  // Remove leading non-alphanumeric characters, copyright symbols, bullet points, numbers like 3g.
   s = s.replace(/^[^a-zA-Z0-9]+/, "");
   s = s.replace(/^[©®°™•\-*_.]+\s*/, "");
-  s = s.replace(/^[a-z0-9]{1,2}\.\s+/i, ""); 
+  s = s.replace(/^[a-z0-9]{1,2}\.\s+/i, "");
   s = s.replace(/^[e_]\s+/i, "");
 
   // Remove trailing leader dots, trailing noise like ccc..., co..., ---, etc.
-  s = s.replace(/[\s\.\-_]*e?c{2,}[a-z\.\-_]*$/i, "");
-  s = s.replace(/[\s\.\-_]*co\.$/i, "");
-  s = s.replace(/[\s\.\-_]+$/, "");
+  s = s.replace(/[\s._-]*e?c{2,}[a-z._-]*$/i, "");
+  s = s.replace(/[\s._-]*co\.$/i, "");
+  s = s.replace(/[\s._-]+$/, "");
   s = s.replace(/[-.]{2,}.*$/, "");
   s = s.replace(/\s+[a-z]{1,2}$/i, "");
 
@@ -54,12 +54,17 @@ function cleanItemName(raw: string): string {
 }
 
 function inferCategory(itemName: string, rawCategory: string): string {
-  let cat = rawCategory.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, " ").trim();
-  
+  const cat = rawCategory
+    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
   if (cat.length < 3 || cat.toLowerCase().includes("te") || cat.toLowerCase() === "menu") {
     const itemLower = itemName.toLowerCase();
     if (itemLower.includes("noodle")) {
-      return itemLower.includes("chicken") || itemLower.includes("egg") ? "Chicken Noodles" : "Veg Noodles";
+      return itemLower.includes("chicken") || itemLower.includes("egg")
+        ? "Chicken Noodles"
+        : "Veg Noodles";
     }
     if (itemLower.includes("fish") || itemLower.includes("prawn") || itemLower.includes("sea")) {
       return "Sea Foods";
@@ -76,41 +81,69 @@ function inferCategory(itemName: string, rawCategory: string): string {
 function generateItemDescription(name: string, category: string): string {
   const text = (name + " " + category).toLowerCase();
 
-  if (text.includes("65")) return "Crispy deep-fried chicken marinated in red chili, garlic and curry leaves";
-  if (text.includes("manchuria")) return "Crispy bites tossed in a flavorful tangy garlic and soya Manchurian sauce";
-  if (text.includes("majestic")) return "Tender strips fried and sautéed with green chilies, garlic and spices";
-  if (text.includes("chilly chicken") || text.includes("chilli chicken")) return "Spicy stir-fried chicken with bell peppers, onions and green chilies";
-  if (text.includes("ginger chicken")) return "Succulent chicken cooked in a rich ginger-infused savory gravy";
-  if (text.includes("schezwan")) return "Tossed in fiery Schezwan sauce with peppers and aromatic spices";
-  if (text.includes("lolly pops") || text.includes("lollipop")) return "Crispy fried chicken drumettes served with spicy dipping sauce";
-  if (text.includes("pepper chicken")) return "Sautéed chicken seasoned with freshly cracked black pepper and herbs";
-  if (text.includes("drum sticks")) return "Juicy chicken drumsticks fried to perfection with house spice rub";
-  if (text.includes("lemon chicken")) return "Tender chicken cooked with a tangy citrus lemon glaze and herbs";
+  if (text.includes("65"))
+    return "Crispy deep-fried chicken marinated in red chili, garlic and curry leaves";
+  if (text.includes("manchuria"))
+    return "Crispy bites tossed in a flavorful tangy garlic and soya Manchurian sauce";
+  if (text.includes("majestic"))
+    return "Tender strips fried and sautéed with green chilies, garlic and spices";
+  if (text.includes("chilly chicken") || text.includes("chilli chicken"))
+    return "Spicy stir-fried chicken with bell peppers, onions and green chilies";
+  if (text.includes("ginger chicken"))
+    return "Succulent chicken cooked in a rich ginger-infused savory gravy";
+  if (text.includes("schezwan"))
+    return "Tossed in fiery Schezwan sauce with peppers and aromatic spices";
+  if (text.includes("lolly pops") || text.includes("lollipop"))
+    return "Crispy fried chicken drumettes served with spicy dipping sauce";
+  if (text.includes("pepper chicken"))
+    return "Sautéed chicken seasoned with freshly cracked black pepper and herbs";
+  if (text.includes("drum sticks"))
+    return "Juicy chicken drumsticks fried to perfection with house spice rub";
+  if (text.includes("lemon chicken"))
+    return "Tender chicken cooked with a tangy citrus lemon glaze and herbs";
   if (text.includes("thai fry")) return "Crispy chicken tossed with Thai herbs, chilies and garlic";
 
-  if (text.includes("appolo fish") || text.includes("apollo fish")) return "Crispy fried boneless fish tossed in spicy yogurt garlic sauce";
-  if (text.includes("chilly fish") || text.includes("chilli fish")) return "Fried fish fillets tossed with capsicum, onion and chili sauce";
-  if (text.includes("fish manchuria")) return "Fish chunks coated and tossed in tangy soy garlic Manchurian gravy";
-  if (text.includes("prawns manchuria")) return "Fresh prawns sautéed in tangy garlic soy Manchurian sauce";
-  if (text.includes("chilly prawns")) return "Pan-seared prawns tossed with spicy chili sauce and bell peppers";
-  if (text.includes("loose fry prawns")) return "Crispy golden fried prawns seasoned with garlic, pepper and herbs";
-  if (text.includes("fish curry")) return "Traditional fish curry simmered in coconut milk and aromatic spices";
-  if (text.includes("prawns curry")) return "Fresh prawns cooked in a flavorful spiced onion and tomato gravy";
+  if (text.includes("appolo fish") || text.includes("apollo fish"))
+    return "Crispy fried boneless fish tossed in spicy yogurt garlic sauce";
+  if (text.includes("chilly fish") || text.includes("chilli fish"))
+    return "Fried fish fillets tossed with capsicum, onion and chili sauce";
+  if (text.includes("fish manchuria"))
+    return "Fish chunks coated and tossed in tangy soy garlic Manchurian gravy";
+  if (text.includes("prawns manchuria"))
+    return "Fresh prawns sautéed in tangy garlic soy Manchurian sauce";
+  if (text.includes("chilly prawns"))
+    return "Pan-seared prawns tossed with spicy chili sauce and bell peppers";
+  if (text.includes("loose fry prawns"))
+    return "Crispy golden fried prawns seasoned with garlic, pepper and herbs";
+  if (text.includes("fish curry"))
+    return "Traditional fish curry simmered in coconut milk and aromatic spices";
+  if (text.includes("prawns curry"))
+    return "Fresh prawns cooked in a flavorful spiced onion and tomato gravy";
 
-  if (text.includes("soft noodles")) return "Delicious soft noodles stir-fried with fresh veggies and light soy sauce";
-  if (text.includes("hakka noodles")) return "Classic Indo-Chinese Hakka noodles tossed with vegetables and herbs";
-  if (text.includes("garlic noodles")) return "Flavorful noodles tossed with minced garlic, chili flakes and herbs";
+  if (text.includes("soft noodles"))
+    return "Delicious soft noodles stir-fried with fresh veggies and light soy sauce";
+  if (text.includes("hakka noodles"))
+    return "Classic Indo-Chinese Hakka noodles tossed with vegetables and herbs";
+  if (text.includes("garlic noodles"))
+    return "Flavorful noodles tossed with minced garlic, chili flakes and herbs";
 
-  if (text.includes("biryani")) return "Aromatic basmati rice cooked with fragrant spices and tender marinade";
+  if (text.includes("biryani"))
+    return "Aromatic basmati rice cooked with fragrant spices and tender marinade";
   if (text.includes("parotta")) return "Flaky, layered South Indian flatbread cooked on hot tawa";
   if (text.includes("appam")) return "Soft, fluffy rice pancake with crispy lacy edges";
-  if (text.includes("payasam")) return "Rich traditional sweet pudding cooked with milk and cardamom";
+  if (text.includes("payasam"))
+    return "Rich traditional sweet pudding cooked with milk and cardamom";
 
   return `Freshly prepared ${name.toLowerCase()} crafted with authentic spices and fresh local ingredients`;
 }
 
-function parseOcrMenuText(text: string): { name: string; description: string; price: number; category: string }[] {
-  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+function parseOcrMenuText(
+  text: string,
+): { name: string; description: string; price: number; category: string }[] {
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
   const items: { name: string; description: string; price: number; category: string }[] = [];
   let currentCategory = "General";
 
@@ -150,42 +183,104 @@ function parseOcrMenuText(text: string): { name: string; description: string; pr
 
 function buildFallbackMenu(prompt: string): GeneratedMenu {
   const p = prompt.toLowerCase();
-  if (p.includes("kerala") || p.includes("south indian") || p.includes("malabar") || p.includes("restaurant")) {
+  if (
+    p.includes("kerala") ||
+    p.includes("south indian") ||
+    p.includes("malabar") ||
+    p.includes("restaurant")
+  ) {
     return {
       categories: [
         {
           name: "Kerala Breakfast & Tiffins",
           items: [
-            { name: "Appam with Vegetable Stew", description: "Fluffy rice pancakes served with aromatic coconut milk stew", price: 120 },
-            { name: "Idiyappam with Egg Curry", description: "Steamed string hoppers paired with spicy Kerala egg roast", price: 140 },
-            { name: "Puttu and Kadala Curry", description: "Steamed rice cake filled with coconut, served with black chickpea curry", price: 110 },
-            { name: "Kerala Parotta with Beef Roast", description: "Flaky layered flatbread served with slow-cooked spicy beef roast", price: 180 },
+            {
+              name: "Appam with Vegetable Stew",
+              description: "Fluffy rice pancakes served with aromatic coconut milk stew",
+              price: 120,
+            },
+            {
+              name: "Idiyappam with Egg Curry",
+              description: "Steamed string hoppers paired with spicy Kerala egg roast",
+              price: 140,
+            },
+            {
+              name: "Puttu and Kadala Curry",
+              description:
+                "Steamed rice cake filled with coconut, served with black chickpea curry",
+              price: 110,
+            },
+            {
+              name: "Kerala Parotta with Beef Roast",
+              description: "Flaky layered flatbread served with slow-cooked spicy beef roast",
+              price: 180,
+            },
           ],
         },
         {
           name: "Traditional Mains & Biryani",
           items: [
-            { name: "Thalassery Chicken Biryani", description: "Authentic Kaima rice biryani with fried onions and spices", price: 220 },
-            { name: "Kerala Fish Curry Meal", description: "Traditional red fish curry cooked with kudampuli and coconut milk", price: 240 },
-            { name: "Kuttanadan Duck Roast", description: "Rich and fiery roasted duck seasoned with authentic spices", price: 280 },
-            { name: "Chicken Varutharutha Curry", description: "Chicken cooked in roasted coconut gravy", price: 210 },
+            {
+              name: "Thalassery Chicken Biryani",
+              description: "Authentic Kaima rice biryani with fried onions and spices",
+              price: 220,
+            },
+            {
+              name: "Kerala Fish Curry Meal",
+              description: "Traditional red fish curry cooked with kudampuli and coconut milk",
+              price: 240,
+            },
+            {
+              name: "Kuttanadan Duck Roast",
+              description: "Rich and fiery roasted duck seasoned with authentic spices",
+              price: 280,
+            },
+            {
+              name: "Chicken Varutharutha Curry",
+              description: "Chicken cooked in roasted coconut gravy",
+              price: 210,
+            },
           ],
         },
         {
           name: "Seafood & Starters",
           items: [
-            { name: "Karimeen Pollichathu", description: "Pearl spot fish marinated in masala and grilled in banana leaf", price: 350 },
-            { name: "Nadan Prawn Fry", description: "Pan-fried fresh prawns tossed with garlic, curry leaves and pepper", price: 290 },
-            { name: "Chicken 65 (Kerala Style)", description: "Crispy fried chicken chunks with spicy chili curry leaf marinade", price: 190 },
+            {
+              name: "Karimeen Pollichathu",
+              description: "Pearl spot fish marinated in masala and grilled in banana leaf",
+              price: 350,
+            },
+            {
+              name: "Nadan Prawn Fry",
+              description: "Pan-fried fresh prawns tossed with garlic, curry leaves and pepper",
+              price: 290,
+            },
+            {
+              name: "Chicken 65 (Kerala Style)",
+              description: "Crispy fried chicken chunks with spicy chili curry leaf marinade",
+              price: 190,
+            },
           ],
         },
         {
           name: "Desserts & Beverages",
           items: [
-            { name: "Elaneer Payasam", description: "Creamy dessert made with tender coconut pulp and milk", price: 90 },
-            { name: "Palada Pradhaman", description: "Rich rice ada payasam cooked in condensed milk and cardamom", price: 80 },
+            {
+              name: "Elaneer Payasam",
+              description: "Creamy dessert made with tender coconut pulp and milk",
+              price: 90,
+            },
+            {
+              name: "Palada Pradhaman",
+              description: "Rich rice ada payasam cooked in condensed milk and cardamom",
+              price: 80,
+            },
             { name: "Sulaimani Tea", description: "Traditional spiced black lemon tea", price: 30 },
-            { name: "Fresh Mint Lime Cooler", description: "Refreshing crushed mint and lime cooler", price: 50 },
+            {
+              name: "Fresh Mint Lime Cooler",
+              description: "Refreshing crushed mint and lime cooler",
+              price: 50,
+            },
           ],
         },
       ],
@@ -197,24 +292,56 @@ function buildFallbackMenu(prompt: string): GeneratedMenu {
       {
         name: "Chef's Specials",
         items: [
-          { name: `${prompt} Signature Special`, description: "House special prepared with fresh local ingredients", price: 250 },
-          { name: "Deluxe Combo Platter", description: "Chef selected assortment served with house dips", price: 320 },
-          { name: "Gourmet Starter", description: "Crispy fried bites seasoned with aromatic herbs", price: 190 },
+          {
+            name: `${prompt} Signature Special`,
+            description: "House special prepared with fresh local ingredients",
+            price: 250,
+          },
+          {
+            name: "Deluxe Combo Platter",
+            description: "Chef selected assortment served with house dips",
+            price: 320,
+          },
+          {
+            name: "Gourmet Starter",
+            description: "Crispy fried bites seasoned with aromatic herbs",
+            price: 190,
+          },
         ],
       },
       {
         name: "Popular Mains",
         items: [
-          { name: "Classic House Meal", description: "Full hearty meal served with fresh sides and salad", price: 220 },
-          { name: "Spiced Grill Bowl", description: "Grilled proteins served over fragrant seasoned rice", price: 240 },
-          { name: "Creamy Herb Delight", description: "Rich aromatic sauce served with freshly baked bread", price: 210 },
+          {
+            name: "Classic House Meal",
+            description: "Full hearty meal served with fresh sides and salad",
+            price: 220,
+          },
+          {
+            name: "Spiced Grill Bowl",
+            description: "Grilled proteins served over fragrant seasoned rice",
+            price: 240,
+          },
+          {
+            name: "Creamy Herb Delight",
+            description: "Rich aromatic sauce served with freshly baked bread",
+            price: 210,
+          },
         ],
       },
       {
         name: "Refreshments & Desserts",
         items: [
-          { name: "Special House Cooler", description: "Chilled fruit and mint infused refreshing drink", price: 80 },
-          { name: "Artisanal Dessert", description: "Sweet indulgence crafted fresh daily", price: 130 },
+          {
+            name: "Special House Cooler",
+            description: "Chilled fruit and mint infused refreshing drink",
+            price: 80,
+          },
+          {
+            name: "Artisanal Dessert",
+            description: "Sweet indulgence crafted fresh daily",
+            price: 130,
+          },
         ],
       },
     ],
@@ -355,7 +482,9 @@ export const scanMenuPhoto = createServerFn({ method: "POST" })
     // 1. High-Precision Optical Character Recognition (Tesseract OCR)
     try {
       const match = data.image.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
-      const base64Data = match ? match[2]! : data.image.replace(/^data:image\/[a-zA-Z+]+;base64,/, "");
+      const base64Data = match
+        ? match[2]!
+        : data.image.replace(/^data:image\/[a-zA-Z+]+;base64,/, "");
       const imageBuffer = Buffer.from(base64Data, "base64");
 
       const Tesseract = await import("tesseract.js");
@@ -377,7 +506,9 @@ export const scanMenuPhoto = createServerFn({ method: "POST" })
     try {
       const match = data.image.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
       const mimeType = match ? match[1] : "image/jpeg";
-      const base64Data = match ? match[2] : data.image.replace(/^data:image\/[a-zA-Z+]+;base64,/, "");
+      const base64Data = match
+        ? match[2]
+        : data.image.replace(/^data:image\/[a-zA-Z+]+;base64,/, "");
 
       const geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,

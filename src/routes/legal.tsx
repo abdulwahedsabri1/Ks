@@ -9,7 +9,8 @@ export const Route = createFileRoute("/legal")({
       { title: "Legal Overview — MY Link QR" },
       {
         name: "description",
-        content: "Overview of legal policies, terms of service, merchant agreements, and compliance standards for MY Link QR.",
+        content:
+          "Overview of legal policies, terms of service, merchant agreements, and compliance standards for MY Link QR.",
       },
       { property: "og:title", content: "Legal Overview — MY Link QR" },
     ],
@@ -44,9 +45,14 @@ function LegalPage() {
                 <h2 className="text-foreground">Terms of Service</h2>
               </div>
               <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                Our Terms of Service define the agreement between MY Link QR and registered business owners using our digital menu creation platform, QR hosting, and WhatsApp ordering tools.
+                Our Terms of Service define the agreement between MY Link QR and registered business
+                owners using our digital menu creation platform, QR hosting, and WhatsApp ordering
+                tools.
               </p>
-              <Link to="/terms" className="text-xs font-bold uppercase tracking-wider text-primary hover:underline">
+              <Link
+                to="/terms"
+                className="text-xs font-bold uppercase tracking-wider text-primary hover:underline"
+              >
                 Read Full Terms of Service →
               </Link>
             </div>
@@ -57,9 +63,14 @@ function LegalPage() {
                 <h2 className="text-foreground">Privacy Policy</h2>
               </div>
               <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                We take data privacy seriously. Learn how we collect, process, and protect your store data, menu items, and analytics metrics without selling your personal information.
+                We take data privacy seriously. Learn how we collect, process, and protect your
+                store data, menu items, and analytics metrics without selling your personal
+                information.
               </p>
-              <Link to="/privacy" className="text-xs font-bold uppercase tracking-wider text-primary hover:underline">
+              <Link
+                to="/privacy"
+                className="text-xs font-bold uppercase tracking-wider text-primary hover:underline"
+              >
                 Read Full Privacy Policy →
               </Link>
             </div>
@@ -70,8 +81,14 @@ function LegalPage() {
                 <h2 className="text-foreground">Merchant Rights & Responsibilities</h2>
               </div>
               <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-2 leading-relaxed">
-                <li>Merchants retain 100% ownership of their uploaded photos, menu item names, and brand assets.</li>
-                <li>Merchants are responsible for accurate pricing, allergen information, and fulfillment of WhatsApp orders.</li>
+                <li>
+                  Merchants retain 100% ownership of their uploaded photos, menu item names, and
+                  brand assets.
+                </li>
+                <li>
+                  Merchants are responsible for accurate pricing, allergen information, and
+                  fulfillment of WhatsApp orders.
+                </li>
                 <li>MY Link QR provides 99.9% uptime SLA for hosted QR links and dynamic menus.</li>
               </ul>
             </div>

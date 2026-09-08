@@ -1,9 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category, MenuItem, Shop } from "@/lib/shop";
 
 export function useMyShop(userId?: string) {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const query = useQuery({
     queryKey: ["my-shop", userId],
     enabled: !!userId,
     queryFn: async (): Promise<Shop | null> => {
@@ -37,10 +40,7 @@ export function useMyShop(userId?: string) {
           if (matchedShops && matchedShops.length > 0) {
             const foundShop = matchedShops[0] as Shop;
             // Claim / link owner_id so it belongs to this logged in user permanently!
-            await supabase
-              .from("shops")
-              .update({ owner_id: userId! })
-              .eq("id", foundShop.id);
+            await supabase.from("shops").update({ owner_id: userId! }).eq("id", foundShop.id);
 
             return { ...foundShop, owner_id: userId! };
           }
@@ -58,16 +58,48 @@ export function useMyShop(userId?: string) {
 
       if (allShops && allShops.length > 0) {
         const fallbackShop = allShops[0] as Shop;
-        await supabase
-          .from("shops")
-          .update({ owner_id: userId! })
-          .eq("id", fallbackShop.id);
+        await supabase.from("shops").update({ owner_id: userId! }).eq("id", fallbackShop.id);
         return { ...fallbackShop, owner_id: userId! };
       }
 
       return null;
     },
   });
+
+  useEffect(() => {
+    if (!userId || !query.data?.id) return;
+
+    const channel = supabase
+      .channel("public:shops")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "shops",
+          filter: `id=eq.${query.data.id}`,
+        },
+        (payload) => {
+          queryClient.invalidateQueries({ queryKey: ["my-shop", userId] });
+          if (payload.eventType === "UPDATE") {
+            const oldRecord = payload.old as Shop;
+            const newRecord = payload.new as Shop;
+            if (oldRecord.payment_status !== newRecord.payment_status) {
+              toast(`Your payment status has been updated to ${newRecord.payment_status}`);
+            } else if (oldRecord.plan !== newRecord.plan) {
+              toast(`Your plan has been updated to ${newRecord.plan}`);
+            }
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, query.data?.id, queryClient]);
+
+  return query;
 }
 
 export function useIsAdmin(userId?: string) {

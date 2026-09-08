@@ -32,8 +32,8 @@ function PricingPage() {
         to: "/checkout",
         search: {
           plan: p.name,
-          price: p.id === "pro" ? 299 : p.id === "premium" ? 499 : 99,
-          period: p.id === "basic" ? "/7 days" : "/mo",
+          price: p.id === "pro" ? 499 : p.id === "premium" ? 999 : 249,
+          period: "/mo",
         },
       });
     }
@@ -55,7 +55,8 @@ function PricingPage() {
           </h1>
 
           <p className="text-base sm:text-lg text-[#3A2818]/70 max-w-2xl mx-auto leading-relaxed font-medium">
-            No hidden fees. Upgrade or cancel anytime. Start with our free trial, basic plan or power up with Pro and Premium.
+            No hidden fees. Upgrade or cancel anytime. Start with our free trial, basic plan or
+            power up with Pro and Premium.
           </p>
         </section>
 
@@ -84,7 +85,9 @@ function PricingPage() {
                   </p>
 
                   <div className="flex items-baseline gap-1 mb-6 border-b border-black/10 pb-6">
-                    <span className="font-display text-4xl font-extrabold text-[#100C09]">{p.price}</span>
+                    <span className="font-display text-4xl font-extrabold text-[#100C09]">
+                      {p.price}
+                    </span>
                     <span className="text-[#3A2818]/70 text-xs font-medium">/period</span>
                   </div>
 

@@ -98,7 +98,8 @@ function DemoWatchRoute() {
             </h1>
 
             <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-              Explore how customers order effortlessly from their mobile phones and how restaurant owners manage menus, AI tools, and scan analytics in real-time.
+              Explore how customers order effortlessly from their mobile phones and how restaurant
+              owners manage menus, AI tools, and scan analytics in real-time.
             </p>
           </div>
         </section>
@@ -142,7 +143,9 @@ function DemoWatchRoute() {
                       <div className="bg-card/90 px-4 py-3 border-b border-border flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
-                          <span className="text-xs font-bold text-foreground">Customer QR Ordering Experience</span>
+                          <span className="text-xs font-bold text-foreground">
+                            Customer QR Ordering Experience
+                          </span>
                         </div>
                         <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-emerald-500/10 text-emerald-500 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
                           Mobile View
@@ -168,7 +171,9 @@ function DemoWatchRoute() {
                       <div className="bg-card/90 px-4 py-3 border-b border-border flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="size-3 rounded-full bg-amber-500 inline-block animate-pulse" />
-                          <span className="text-xs font-bold text-foreground">Restaurant Order Management & Dashboard</span>
+                          <span className="text-xs font-bold text-foreground">
+                            Restaurant Order Management & Dashboard
+                          </span>
                         </div>
                         <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-amber-500/10 text-amber-500 px-2.5 py-0.5 rounded-full border border-amber-500/20">
                           Owner & Staff View
@@ -207,21 +212,31 @@ function DemoWatchRoute() {
                     </div>
                     <h3 className="font-bold text-xl mb-2">Customer Experience</h3>
                     <p className="text-xs text-muted-foreground leading-relaxed mb-6">
-                      Watch how diner guests scan your table QR code, browse interactive categorized menus with dish photos, and place instant orders directly via WhatsApp.
+                      Watch how diner guests scan your table QR code, browse interactive categorized
+                      menus with dish photos, and place instant orders directly via WhatsApp.
                     </p>
 
                     <ul className="space-y-3 text-xs">
                       <li className="flex items-start gap-2.5">
                         <CheckCircle2 className="size-4 text-emerald-500 shrink-0 mt-0.5" />
-                        <span><strong>Zero App Downloads</strong> — Works instantly on any iOS & Android browser.</span>
+                        <span>
+                          <strong>Zero App Downloads</strong> — Works instantly on any iOS & Android
+                          browser.
+                        </span>
                       </li>
                       <li className="flex items-start gap-2.5">
                         <CheckCircle2 className="size-4 text-emerald-500 shrink-0 mt-0.5" />
-                        <span><strong>Live Dish Photos</strong> — High-res food imagery to boost appetite and order values.</span>
+                        <span>
+                          <strong>Live Dish Photos</strong> — High-res food imagery to boost
+                          appetite and order values.
+                        </span>
                       </li>
                       <li className="flex items-start gap-2.5">
                         <CheckCircle2 className="size-4 text-emerald-500 shrink-0 mt-0.5" />
-                        <span><strong>Direct WhatsApp Orders</strong> — Carts arrive at staff phone with table number & itemized details.</span>
+                        <span>
+                          <strong>Direct WhatsApp Orders</strong> — Carts arrive at staff phone with
+                          table number & itemized details.
+                        </span>
                       </li>
                     </ul>
                   </motion.div>
@@ -237,21 +252,31 @@ function DemoWatchRoute() {
                     </div>
                     <h3 className="font-bold text-xl mb-2">Owner Dashboard & AI</h3>
                     <p className="text-xs text-muted-foreground leading-relaxed mb-6">
-                      See how restaurant owners manage categories, use AI menu generation & photo OCR scanning, track scan analytics, and download print-ready QR codes.
+                      See how restaurant owners manage categories, use AI menu generation & photo
+                      OCR scanning, track scan analytics, and download print-ready QR codes.
                     </p>
 
                     <ul className="space-y-3 text-xs">
                       <li className="flex items-start gap-2.5">
                         <CheckCircle2 className="size-4 text-amber-500 shrink-0 mt-0.5" />
-                        <span><strong>AI Menu Scanner</strong> — Import photo menus or generate 20+ items in 10 seconds.</span>
+                        <span>
+                          <strong>AI Menu Scanner</strong> — Import photo menus or generate 20+
+                          items in 10 seconds.
+                        </span>
                       </li>
                       <li className="flex items-start gap-2.5">
                         <CheckCircle2 className="size-4 text-amber-500 shrink-0 mt-0.5" />
-                        <span><strong>6 Custom Themes</strong> — Change your public QR design instantly anytime.</span>
+                        <span>
+                          <strong>6 Custom Themes</strong> — Change your public QR design instantly
+                          anytime.
+                        </span>
                       </li>
                       <li className="flex items-start gap-2.5">
                         <CheckCircle2 className="size-4 text-amber-500 shrink-0 mt-0.5" />
-                        <span><strong>Printable Stand Designs</strong> — High-res SVG & PNG QR codes for tables.</span>
+                        <span>
+                          <strong>Printable Stand Designs</strong> — High-res SVG & PNG QR codes for
+                          tables.
+                        </span>
                       </li>
                     </ul>
                   </motion.div>
@@ -274,7 +299,10 @@ function DemoWatchRoute() {
         </section>
 
         {/* Meeting Booking & Consultation Form Section */}
-        <section id="booking-form" className="container mx-auto px-4 sm:px-6 lg:px-8 mt-20 md:mt-28">
+        <section
+          id="booking-form"
+          className="container mx-auto px-4 sm:px-6 lg:px-8 mt-20 md:mt-28"
+        >
           <div className="max-w-4xl mx-auto rounded-3xl border border-border bg-card/80 p-6 sm:p-10 shadow-2xl backdrop-blur-xl relative overflow-hidden">
             {/* Background Glow */}
             <div className="absolute -right-20 -top-20 size-72 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
@@ -289,7 +317,8 @@ function DemoWatchRoute() {
                   Book a Meeting for Your Restaurant
                 </h2>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Fill in your restaurant details below and our specialist team will contact you on WhatsApp to set up your digital QR menu, print table stands, and guide your staff.
+                  Fill in your restaurant details below and our specialist team will contact you on
+                  WhatsApp to set up your digital QR menu, print table stands, and guide your staff.
                 </p>
 
                 <div className="pt-2 space-y-3 text-xs text-muted-foreground">
@@ -346,7 +375,9 @@ function DemoWatchRoute() {
                           type="tel"
                           placeholder="e.g. 9392318135"
                           value={bookingForm.phone}
-                          onChange={(e) => setBookingForm({ ...bookingForm, phone: e.target.value })}
+                          onChange={(e) =>
+                            setBookingForm({ ...bookingForm, phone: e.target.value })
+                          }
                           className="pl-9 text-xs h-10"
                         />
                       </div>
@@ -361,7 +392,9 @@ function DemoWatchRoute() {
                       id="b-biz"
                       placeholder="e.g. Paradise Biryani & Cafe"
                       value={bookingForm.businessName}
-                      onChange={(e) => setBookingForm({ ...bookingForm, businessName: e.target.value })}
+                      onChange={(e) =>
+                        setBookingForm({ ...bookingForm, businessName: e.target.value })
+                      }
                       className="text-xs h-10"
                     />
                   </div>
@@ -376,7 +409,9 @@ function DemoWatchRoute() {
                         id="b-addr"
                         placeholder="e.g. MG Road, Kochi, Kerala"
                         value={bookingForm.address}
-                        onChange={(e) => setBookingForm({ ...bookingForm, address: e.target.value })}
+                        onChange={(e) =>
+                          setBookingForm({ ...bookingForm, address: e.target.value })
+                        }
                         className="pl-9 text-xs h-10"
                       />
                     </div>

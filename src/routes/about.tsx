@@ -10,7 +10,8 @@ export const Route = createFileRoute("/about")({
       { title: "About Us — MY Link QR" },
       {
         name: "description",
-        content: "Learn about MY Link QR mission, values, and how we empower local businesses across India to build digital storefronts.",
+        content:
+          "Learn about MY Link QR mission, values, and how we empower local businesses across India to build digital storefronts.",
       },
       { property: "og:title", content: "About Us — MY Link QR" },
     ],
@@ -29,22 +30,26 @@ const values = [
   {
     icon: Zap,
     title: "Instant Simplicity",
-    description: "Technology should never be complicated. We build software so intuitive that any store owner can launch in minutes without hiring developers.",
+    description:
+      "Technology should never be complicated. We build software so intuitive that any store owner can launch in minutes without hiring developers.",
   },
   {
     icon: ShieldCheck,
     title: "Reliability & Speed",
-    description: "Your QR menu is the front door to your business. We invest heavily in lightning-fast CDN infrastructure so menus open instantly on any phone.",
+    description:
+      "Your QR menu is the front door to your business. We invest heavily in lightning-fast CDN infrastructure so menus open instantly on any phone.",
   },
   {
     icon: Users,
     title: "Customer-First Growth",
-    description: "We are committed to helping local merchants, restaurants, bakeries, and shops compete in the modern mobile economy.",
+    description:
+      "We are committed to helping local merchants, restaurants, bakeries, and shops compete in the modern mobile economy.",
   },
   {
     icon: Award,
     title: "Uncompromising Elegance",
-    description: "Beautiful design drives sales. Our themes are crafted with luxury aesthetics to make your brand look world-class.",
+    description:
+      "Beautiful design drives sales. Our themes are crafted with luxury aesthetics to make your brand look world-class.",
   },
 ];
 
@@ -62,10 +67,13 @@ function AboutPage() {
               Our Story & Mission
             </span>
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold mb-6 leading-tight">
-              Empowering local businesses with <span className="italic text-primary">digital experiences</span>
+              Empowering local businesses with{" "}
+              <span className="italic text-primary">digital experiences</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-              MY Link QR was founded to bridge the gap between physical retail spaces and modern mobile customers. We make QR menus, digital catalogs, and instant WhatsApp ordering effortless.
+              MY Link QR was founded to bridge the gap between physical retail spaces and modern
+              mobile customers. We make QR menus, digital catalogs, and instant WhatsApp ordering
+              effortless.
             </p>
           </div>
         </div>
@@ -98,10 +106,13 @@ function AboutPage() {
                 Reinventing how customers interact with physical spaces.
               </h2>
               <p className="text-muted-foreground text-base leading-relaxed mb-4">
-                Traditional paper menus and printed price cards are static, expensive to reprint, and easily damaged.
+                Traditional paper menus and printed price cards are static, expensive to reprint,
+                and easily damaged.
               </p>
               <p className="text-muted-foreground text-base leading-relaxed">
-                With MY Link QR, merchants gain full dynamic control. Update prices in real-time, showcase high-res dish photos, collect instant WhatsApp orders, and analyze customer behavior—all from one clean dashboard.
+                With MY Link QR, merchants gain full dynamic control. Update prices in real-time,
+                showcase high-res dish photos, collect instant WhatsApp orders, and analyze customer
+                behavior—all from one clean dashboard.
               </p>
             </div>
 
@@ -111,7 +122,8 @@ function AboutPage() {
                 <span>MY Link QR Vision</span>
               </div>
               <p className="text-muted-foreground leading-relaxed italic border-l-4 border-primary pl-4 py-1">
-                "Our goal is to give every restaurant, cafe, salon, and boutique owner the digital tools of a global enterprise with the simplicity of a mobile app."
+                "Our goal is to give every restaurant, cafe, salon, and boutique owner the digital
+                tools of a global enterprise with the simplicity of a mobile app."
               </p>
             </div>
           </div>
@@ -121,7 +133,9 @@ function AboutPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 mb-24">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="font-display text-3xl sm:text-4xl font-semibold mb-4">What Drives Us</h2>
-            <p className="text-muted-foreground">The core principles behind our design, engineering, and support.</p>
+            <p className="text-muted-foreground">
+              The core principles behind our design, engineering, and support.
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -133,7 +147,9 @@ function AboutPage() {
                 <div className="size-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6">
                   <v.icon className="size-6" />
                 </div>
-                <h3 className="font-display text-xl font-semibold mb-3 text-foreground">{v.title}</h3>
+                <h3 className="font-display text-xl font-semibold mb-3 text-foreground">
+                  {v.title}
+                </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{v.description}</p>
               </div>
             ))}
@@ -149,7 +165,11 @@ function AboutPage() {
             <p className="text-primary-foreground/80 text-lg mb-8 max-w-2xl mx-auto">
               Start building your QR menu in less than 5 minutes.
             </p>
-            <Button asChild size="lg" className="rounded-full bg-white text-gray-900 hover:bg-white/90 px-8">
+            <Button
+              asChild
+              size="lg"
+              className="rounded-full bg-white text-gray-900 hover:bg-white/90 px-8"
+            >
               <Link to="/auth">
                 Get Started Free <ArrowRight className="size-4 ml-2" />
               </Link>

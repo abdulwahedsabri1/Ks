@@ -14,6 +14,7 @@ import {
   QrCode,
   UtensilsCrossed,
   Lock,
+  Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -33,6 +34,8 @@ import {
   subscriptionStateLabel,
   daysRemaining,
   PAYMENT_STATUSES,
+  shopGoogleReviewLink,
+  PLANS,
 } from "@/lib/shop";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -59,6 +62,13 @@ function DashboardPage() {
 
   const views = (events ?? []).filter((e) => e.event_type === "view").length;
   const scans = (events ?? []).filter((e) => e.event_type === "scan").length;
+
+  const currentPlanIndex = PLANS.findIndex((p) => p.id === (shop?.plan ?? "trial"));
+  const nextPlan =
+    currentPlanIndex >= 0 && currentPlanIndex < PLANS.length - 1
+      ? PLANS[currentPlanIndex + 1]
+      : null;
+  const currentPlan = currentPlanIndex >= 0 ? PLANS[currentPlanIndex] : null;
 
   return (
     <DashboardShell title="Dashboard" description="Overview of your shop." isAdmin={isAdmin}>
@@ -117,7 +127,9 @@ function DashboardPage() {
           <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <h2 className="font-display text-base sm:text-lg font-bold truncate">{shop.name}</h2>
+                <h2 className="font-display text-base sm:text-lg font-bold truncate">
+                  {shop.name}
+                </h2>
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">{shop.niche}</p>
               </div>
               <span
@@ -148,8 +160,6 @@ function DashboardPage() {
                     </span>
                   ) : shop.payment_status === "pending" ? (
                     <span className="text-yellow-600">Pending</span>
-                  ) : shop.payment_status === "overdue" ? (
-                    <span className="text-destructive">Overdue</span>
                   ) : shop.plan === "trial" ? (
                     <span className="text-muted-foreground">Free Trial</span>
                   ) : shop.plan === "basic" ? (
@@ -164,6 +174,17 @@ function DashboardPage() {
                 value={<span className="capitalize">{shop.billing_cycle ?? "monthly"}</span>}
               />
               <Meta label="Expiry" value={formatDate(shop.plan_expires_at)} />
+              <Meta
+                label="Auto Renew"
+                value={
+                  shop.auto_renew !== false ? (
+                    <span className="text-emerald-600">Enabled</span>
+                  ) : (
+                    <span className="text-muted-foreground">Disabled</span>
+                  )
+                }
+              />
+              <Meta label="Grace Period" value={`${shop.grace_period_days ?? 7} days`} />
             </div>
 
             {/* Progress Bar - Days Remaining */}
@@ -200,17 +221,72 @@ function DashboardPage() {
 
             <ul className="mt-4 flex flex-wrap gap-1.5 text-xs text-muted-foreground">
               {[
-                { label: `${Number.isFinite(planOf(shop.plan).items) ? planOf(shop.plan).items : "Unlimited"} items`, locked: false },
-                { label: planOf(shop.plan).ai ? "AI tools" : "AI locked", locked: !planOf(shop.plan).ai },
-                { label: planOf(shop.plan).ordering ? "WhatsApp ordering" : "Ordering locked", locked: !planOf(shop.plan).ordering },
-                { label: planOf(shop.plan).analytics ? "Full analytics" : "Basic views", locked: !planOf(shop.plan).analytics },
+                {
+                  label: `${Number.isFinite(planOf(shop.plan).items) ? planOf(shop.plan).items : "Unlimited"} items`,
+                  locked: false,
+                },
+                {
+                  label: planOf(shop.plan).ai ? "AI tools" : "AI locked",
+                  locked: !planOf(shop.plan).ai,
+                },
+                {
+                  label: planOf(shop.plan).ordering ? "WhatsApp ordering" : "Ordering locked",
+                  locked: !planOf(shop.plan).ordering,
+                },
+                {
+                  label: planOf(shop.plan).analytics ? "Full analytics" : "Basic views",
+                  locked: !planOf(shop.plan).analytics,
+                },
               ].map((f) => (
-                <li key={f.label} className={`rounded-full border px-2.5 py-0.5 text-[11px] ${f.locked ? "border-red-500/20 text-red-500/80 bg-red-500/5" : "bg-muted/30"}`}>
+                <li
+                  key={f.label}
+                  className={`rounded-full border px-2.5 py-0.5 text-[11px] ${f.locked ? "border-red-500/20 text-red-500/80 bg-red-500/5" : "bg-muted/30"}`}
+                >
                   {f.locked && <Lock className="inline-block size-3 mr-1 mb-0.5" />}
                   {f.label}
                 </li>
               ))}
             </ul>
+
+            {nextPlan && (
+              <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <p className="text-sm font-medium text-primary mb-1">
+                  Upgrade to {nextPlan.name} for {nextPlan.price}
+                </p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Unlock powerful features to grow your business:
+                </p>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs mb-5">
+                  {nextPlan.features
+                    .filter((f) => !f.startsWith("Everything in"))
+                    .map((f) => (
+                      <li key={f} className="flex items-center text-muted-foreground">
+                        <CheckCircle2 className="mr-2 size-3 text-primary" />
+                        {f}
+                      </li>
+                    ))}
+                </ul>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    asChild
+                    size="sm"
+                    className="h-8 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    <Link to="/pricing">Upgrade to {nextPlan.name}</Link>
+                  </Button>
+                  {currentPlan && currentPlan.id !== "trial" && (
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs border-primary/20 text-primary hover:bg-primary/10"
+                    >
+                      <Link to="/pricing">Renew {currentPlan.name}</Link>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="mt-5 pt-4 border-t border-border flex flex-col sm:flex-row gap-2.5 sm:items-center sm:justify-between">
               <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
@@ -222,13 +298,35 @@ function DashboardPage() {
                 <Button asChild size="sm" className="h-9 text-xs">
                   <Link to="/menu">Edit Menu</Link>
                 </Button>
-                <Button asChild variant="outline" size="sm" className="h-9 text-xs col-span-2 sm:col-span-1">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="h-9 text-xs col-span-2 sm:col-span-1"
+                >
                   <Link to="/qr">Get QR Code</Link>
                 </Button>
+                {shopGoogleReviewLink(shop) && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="h-9 text-xs col-span-2 sm:col-span-1 border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
+                  >
+                    <a href={shopGoogleReviewLink(shop)} target="_blank" rel="noreferrer">
+                      <Star className="size-3.5 mr-1 fill-amber-400 text-amber-400" /> Google Review
+                    </a>
+                  </Button>
+                )}
               </div>
-              
+
               {shop.plan === "trial" && (
-                <Button asChild variant="default" size="sm" className="h-9 text-xs bg-emerald-500 hover:bg-emerald-600 text-white font-medium w-full sm:w-auto">
+                <Button
+                  asChild
+                  variant="default"
+                  size="sm"
+                  className="h-9 text-xs bg-emerald-500 hover:bg-emerald-600 text-white font-medium w-full sm:w-auto"
+                >
                   <Link to="/pricing">Unlock All Features</Link>
                 </Button>
               )}
@@ -307,7 +405,9 @@ function CreateShop({ userId }: { userId?: string | undefined }) {
       <p className="mt-1 text-xs sm:text-sm text-muted-foreground">This takes about 30 seconds.</p>
       <div className="mt-5 space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="shop-name" className="text-xs font-semibold">Shop name</Label>
+          <Label htmlFor="shop-name" className="text-xs font-semibold">
+            Shop name
+          </Label>
           <Input
             id="shop-name"
             value={name}
@@ -317,7 +417,9 @@ function CreateShop({ userId }: { userId?: string | undefined }) {
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="niche" className="text-xs font-semibold">Business type</Label>
+          <Label htmlFor="niche" className="text-xs font-semibold">
+            Business type
+          </Label>
           <select
             id="niche"
             value={niche}
@@ -332,7 +434,9 @@ function CreateShop({ userId }: { userId?: string | undefined }) {
           </select>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="wa" className="text-xs font-semibold">WhatsApp number (with country code)</Label>
+          <Label htmlFor="wa" className="text-xs font-semibold">
+            WhatsApp number (with country code)
+          </Label>
           <Input
             id="wa"
             value={whatsapp}

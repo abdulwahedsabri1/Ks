@@ -99,7 +99,9 @@ export function DashboardShell({
           <div className="flex flex-wrap items-center justify-between gap-2.5">
             <div className="min-w-0 flex-1">
               <h1 className="font-display text-lg font-bold sm:text-2xl truncate">{title}</h1>
-              {description && <p className="text-xs sm:text-sm text-muted-foreground truncate">{description}</p>}
+              {description && (
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">{description}</p>
+              )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {actions}
@@ -148,7 +150,9 @@ export function DashboardShell({
               <div className="rounded-full bg-yellow-500/10 p-4">
                 <Clock className="size-8 sm:size-10 text-yellow-500" />
               </div>
-              <h2 className="mt-5 font-display text-xl sm:text-2xl font-bold">Application Under Review</h2>
+              <h2 className="mt-5 font-display text-xl sm:text-2xl font-bold">
+                Application Under Review
+              </h2>
               <p className="mx-auto mt-2 max-w-md text-xs sm:text-sm text-muted-foreground leading-relaxed">
                 Thank you for creating your business with MY Link QR! Your application has been
                 received and is currently being reviewed by our team.
