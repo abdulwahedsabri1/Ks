@@ -642,7 +642,10 @@ export function buildWhatsAppOrder(
     const unit = l.item.discount_price ?? l.item.price;
     return `• ${l.item.name} x${l.qty} — ${money(unit * l.qty, shop.currency)}`;
   });
-  const subtotal = lines.reduce((sum, l) => sum + (l.item.discount_price ?? l.item.price) * l.qty, 0);
+  const subtotal = lines.reduce(
+    (sum, l) => sum + (l.item.discount_price ?? l.item.price) * l.qty,
+    0,
+  );
 
   let discountAmount = 0;
   if (details?.coupon && (!details.coupon.min_order || subtotal >= details.coupon.min_order)) {
@@ -670,8 +673,9 @@ export function buildWhatsAppOrder(
     `Total: ${money(total, shop.currency)}`,
   ];
 
-  const upiId = (shop.features as any)?.upi_id;
-  const upiEnabled = (shop.features as any)?.upi_enabled;
+  const upiId = (shop.features as Record<string, unknown> | null)?.["upi_id"] as string | undefined;
+  const upiEnabled = (shop.features as Record<string, unknown> | null)?.["upi_enabled"] as
+    boolean | undefined;
   if (upiEnabled && upiId) {
     textParts.push("");
     textParts.push("💳 Payment Method: UPI");

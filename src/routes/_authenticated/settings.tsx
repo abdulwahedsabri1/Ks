@@ -81,7 +81,7 @@ function SettingsPage() {
   const syncCoupons = async (newCoupons: Coupon[]) => {
     if (!shop) return;
     setForm((f) => ({ ...f, coupons: newCoupons }));
-    
+
     const currentFeatures = shop.features || {};
     const updatedFeatures = {
       ...currentFeatures,
@@ -92,7 +92,7 @@ function SettingsPage() {
       .from("shops")
       .update({ features: updatedFeatures })
       .eq("id", shop.id);
-      
+
     if (error) {
       toast.error("Failed to save coupon: " + error.message);
     } else {
@@ -136,10 +136,11 @@ function SettingsPage() {
       on_table: shopOnTableEnabled(shop),
       theme: shopTheme(shop),
       languages: shopLanguages(shop),
-      multi_language_enabled: (shop.features as any)?.multi_language_enabled !== false,
-      coupons: (shop.features as any)?.coupons || [],
-      upi_enabled: (shop.features as any)?.upi_enabled || false,
-      upi_id: (shop.features as any)?.upi_id || "",
+      multi_language_enabled:
+        (shop.features as Record<string, unknown> | null)?.["multi_language_enabled"] !== false,
+      coupons: ((shop.features as Record<string, unknown> | null)?.["coupons"] as Coupon[]) || [],
+      upi_enabled: Boolean((shop.features as Record<string, unknown> | null)?.["upi_enabled"]),
+      upi_id: ((shop.features as Record<string, unknown> | null)?.["upi_id"] as string) || "",
     });
   }, [shop]);
 
@@ -254,7 +255,12 @@ function SettingsPage() {
                 <p className="text-sm text-muted-foreground">
                   Unlock WhatsApp ordering in the Basic plan.
                 </p>
-                <Button asChild size="sm" variant="outline" className="h-8 border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10">
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="h-8 border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10"
+                >
                   <a href="/pricing">Upgrade</a>
                 </Button>
               </div>
@@ -343,25 +349,33 @@ function SettingsPage() {
                 <p className="text-sm text-muted-foreground mb-3">
                   Unlock UPI Payments integration in the Premium plan.
                 </p>
-                <Button asChild size="sm" variant="outline" className="h-8 border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10">
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="h-8 border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10"
+                >
                   <a href="/pricing">Upgrade</a>
                 </Button>
               </div>
-            ) : form.upi_enabled && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                <div className="space-y-2">
-                  <Label htmlFor="s-upi">UPI ID (Optional)</Label>
-                  <Input
-                    id="s-upi"
-                    placeholder="e.g. 9876543210@ybl"
-                    value={form.upi_id}
-                    onChange={(e) => setForm({ ...form, upi_id: e.target.value })}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    If you enter a UPI ID here, it will be automatically included in the WhatsApp order message to instruct your customers how to pay.
-                  </p>
+            ) : (
+              form.upi_enabled && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="space-y-2">
+                    <Label htmlFor="s-upi">UPI ID (Optional)</Label>
+                    <Input
+                      id="s-upi"
+                      placeholder="e.g. 9876543210@ybl"
+                      value={form.upi_id}
+                      onChange={(e) => setForm({ ...form, upi_id: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      If you enter a UPI ID here, it will be automatically included in the WhatsApp
+                      order message to instruct your customers how to pay.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )
             )}
           </div>
 
@@ -375,125 +389,153 @@ function SettingsPage() {
                 />
               )}
             </div>
-            
+
             {!feat.multi_language ? (
               <div className="rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/5 p-4">
                 <p className="text-sm text-muted-foreground mb-3">
                   Unlock multiple languages support in the Basic plan.
                 </p>
-                <Button asChild size="sm" variant="outline" className="h-8 border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10">
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="h-8 border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10"
+                >
                   <a href="/pricing">Upgrade</a>
                 </Button>
               </div>
-            ) : form.multi_language_enabled && (
-              <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                <Label>Select Supported Languages</Label>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Your menu will automatically include a language switcher with the languages you select here.
-                </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {AVAILABLE_LANGUAGES.map((lang) => (
-                  <label
-                    key={lang.code}
-                    className="flex items-center gap-2 rounded-md border p-3 hover:bg-muted/50 cursor-pointer transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      className="rounded border-input text-primary focus:ring-primary size-4"
-                      checked={form.languages.includes(lang.code)}
-                      onChange={(e) => {
-                        const newLangs = e.target.checked
-                          ? [...form.languages, lang.code]
-                          : form.languages.filter((l) => l !== lang.code);
-                        setForm({ ...form, languages: newLangs.length ? newLangs : ["en"] });
-                      }}
-                      disabled={lang.code === "en"} // English is always supported
-                    />
-                    <span className="text-sm font-medium">{lang.name}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
+            ) : (
+              form.multi_language_enabled && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <Label>Select Supported Languages</Label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Your menu will automatically include a language switcher with the languages you
+                    select here.
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {AVAILABLE_LANGUAGES.map((lang) => (
+                      <label
+                        key={lang.code}
+                        className="flex items-center gap-2 rounded-md border p-3 hover:bg-muted/50 cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          className="rounded border-input text-primary focus:ring-primary size-4"
+                          checked={form.languages.includes(lang.code)}
+                          onChange={(e) => {
+                            const newLangs = e.target.checked
+                              ? [...form.languages, lang.code]
+                              : form.languages.filter((l) => l !== lang.code);
+                            setForm({ ...form, languages: newLangs.length ? newLangs : ["en"] });
+                          }}
+                          disabled={lang.code === "en"} // English is always supported
+                        />
+                        <span className="text-sm font-medium">{lang.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )
             )}
           </div>
 
           <div className="space-y-4 pt-4 border-t border-border">
             <h3 className="font-medium text-lg pb-2">Discount & Coupon Codes</h3>
-            
+
             {!feat.coupons ? (
               <div className="rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/5 p-4">
                 <p className="text-sm text-muted-foreground mb-3">
                   Unlock discount and coupon codes in the Premium plan.
                 </p>
-                <Button asChild size="sm" variant="outline" className="h-8 border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10">
+                <Button
+                  asChild
+                  size="sm"
+                  variant="outline"
+                  className="h-8 border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10"
+                >
                   <a href="/pricing">Upgrade</a>
                 </Button>
               </div>
             ) : (
-            <div className="space-y-4">
-              <div className="grid gap-3 sm:grid-cols-6 items-end">
-                <div className="sm:col-span-2">
-                  <Label className="text-xs">Coupon Code</Label>
-                  <Input 
-                    placeholder="e.g. SAVE20" 
-                    value={newCoupon.code}
-                    onChange={(e) => setNewCoupon({...newCoupon, code: e.target.value.toUpperCase()})}
-                  />
+              <div className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-6 items-end">
+                  <div className="sm:col-span-2">
+                    <Label className="text-xs">Coupon Code</Label>
+                    <Input
+                      placeholder="e.g. SAVE20"
+                      value={newCoupon.code}
+                      onChange={(e) =>
+                        setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Type</Label>
+                    <select
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={newCoupon.type}
+                      onChange={(e) =>
+                        setNewCoupon({ ...newCoupon, type: e.target.value as "percent" | "fixed" })
+                      }
+                    >
+                      <option value="percent">% Off</option>
+                      <option value="fixed">Flat Amount</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Value</Label>
+                    <Input
+                      type="number"
+                      placeholder="20"
+                      value={newCoupon.value}
+                      onChange={(e) => setNewCoupon({ ...newCoupon, value: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Expiry Date</Label>
+                    <Input
+                      type="date"
+                      value={newCoupon.expires_at}
+                      onChange={(e) => setNewCoupon({ ...newCoupon, expires_at: e.target.value })}
+                    />
+                  </div>
+                  <Button onClick={addCoupon} type="button" className="w-full">
+                    Add
+                  </Button>
                 </div>
-                <div>
-                  <Label className="text-xs">Type</Label>
-                  <select 
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={newCoupon.type}
-                    onChange={(e) => setNewCoupon({...newCoupon, type: e.target.value as "percent" | "fixed"})}
-                  >
-                    <option value="percent">% Off</option>
-                    <option value="fixed">Flat Amount</option>
-                  </select>
-                </div>
-                <div>
-                  <Label className="text-xs">Value</Label>
-                  <Input 
-                    type="number" 
-                    placeholder="20"
-                    value={newCoupon.value}
-                    onChange={(e) => setNewCoupon({...newCoupon, value: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">Expiry Date</Label>
-                  <Input 
-                    type="date" 
-                    value={newCoupon.expires_at}
-                    onChange={(e) => setNewCoupon({...newCoupon, expires_at: e.target.value})}
-                  />
-                </div>
-                <Button onClick={addCoupon} type="button" className="w-full">Add</Button>
-              </div>
 
-              {form.coupons.length > 0 && (
-                <div className="mt-4 border rounded-md divide-y">
-                  {form.coupons.map((c) => (
-                    <div key={c.code} className="flex items-center justify-between p-3 text-sm">
-                      <div>
-                        <span className="font-bold">{c.code}</span>
-                        <span className="text-muted-foreground ml-2">
-                          ({c.type === "percent" ? `${c.value}% off` : `Flat ${form.currency}${c.value} off`})
-                        </span>
-                        {c.expires_at ? (
-                          <span className="ml-3 text-xs bg-muted px-2 py-1 rounded">
-                            Expires: {new Date(c.expires_at).toLocaleDateString()}
+                {form.coupons.length > 0 && (
+                  <div className="mt-4 border rounded-md divide-y">
+                    {form.coupons.map((c) => (
+                      <div key={c.code} className="flex items-center justify-between p-3 text-sm">
+                        <div>
+                          <span className="font-bold">{c.code}</span>
+                          <span className="text-muted-foreground ml-2">
+                            (
+                            {c.type === "percent"
+                              ? `${c.value}% off`
+                              : `Flat ${form.currency}${c.value} off`}
+                            )
                           </span>
-                        ) : null}
+                          {c.expires_at ? (
+                            <span className="ml-3 text-xs bg-muted px-2 py-1 rounded">
+                              Expires: {new Date(c.expires_at).toLocaleDateString()}
+                            </span>
+                          ) : null}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeCoupon(c.code)}
+                          className="h-8 px-2 text-destructive"
+                        >
+                          Remove
+                        </Button>
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => removeCoupon(c.code)} className="h-8 px-2 text-destructive">
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

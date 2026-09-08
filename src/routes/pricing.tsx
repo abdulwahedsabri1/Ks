@@ -54,7 +54,13 @@ const COMPARE_ROWS: CompRow[] = [
   { feature: "PNG / SVG / PDF QR downloads", trial: false, basic: false, pro: true, premium: true },
   { feature: "Delivery options", trial: false, basic: false, pro: false, premium: true },
   { feature: "Coupon & discount codes", trial: false, basic: false, pro: false, premium: true },
-  { feature: "UPI Payments (GPay / PhonePe)", trial: false, basic: false, pro: false, premium: true },
+  {
+    feature: "UPI Payments (GPay / PhonePe)",
+    trial: false,
+    basic: false,
+    pro: false,
+    premium: true,
+  },
   { feature: "Custom themes", trial: false, basic: false, pro: false, premium: true },
   { feature: "Google Reviews integration", trial: false, basic: false, pro: false, premium: true },
   { feature: "Custom domain", trial: false, basic: false, pro: false, premium: true },
@@ -69,7 +75,12 @@ interface ZomatoRow {
 }
 
 const ZOMATO_ROWS: ZomatoRow[] = [
-  { feature: "Monthly cost to business", zomato: "₹5,000–25,000+", swiggy: "₹5,000–25,000+", mylink: "₹249–799/mo" },
+  {
+    feature: "Monthly cost to business",
+    zomato: "₹5,000–25,000+",
+    swiggy: "₹5,000–25,000+",
+    mylink: "₹249–799/mo",
+  },
   { feature: "Commission per order", zomato: "18–30%", swiggy: "18–30%", mylink: "0% (Zero!)" },
   { feature: "Your own branded menu", zomato: false, swiggy: false, mylink: true },
   { feature: "Direct WhatsApp ordering", zomato: false, swiggy: false, mylink: true },
@@ -80,14 +91,21 @@ const ZOMATO_ROWS: ZomatoRow[] = [
   { feature: "Setup in minutes", zomato: false, swiggy: false, mylink: true },
   { feature: "Offline QR menu (no internet required)", zomato: false, swiggy: false, mylink: true },
   { feature: "Custom coupon codes", zomato: false, swiggy: false, mylink: true },
-  { feature: "Real-time menu updates", zomato: "Slow/manual", swiggy: "Slow/manual", mylink: "Instant" },
+  {
+    feature: "Real-time menu updates",
+    zomato: "Slow/manual",
+    swiggy: "Slow/manual",
+    mylink: "Instant",
+  },
 ];
 
 function Cell({ value, highlight }: { value: CellValue; highlight?: boolean }) {
   if (value === true) {
     return (
       <div className={`flex justify-center ${highlight ? "text-[#F5A623]" : "text-emerald-600"}`}>
-        <div className={`size-5 rounded-full flex items-center justify-center ${highlight ? "bg-[#F5A623]/10" : "bg-emerald-100"}`}>
+        <div
+          className={`size-5 rounded-full flex items-center justify-center ${highlight ? "bg-[#F5A623]/10" : "bg-emerald-100"}`}
+        >
           <Check className="size-3" />
         </div>
       </div>
@@ -101,7 +119,9 @@ function Cell({ value, highlight }: { value: CellValue; highlight?: boolean }) {
     );
   }
   return (
-    <div className={`text-center text-xs font-semibold ${highlight ? "text-[#D99A2B]" : "text-[#3A2818]/70"}`}>
+    <div
+      className={`text-center text-xs font-semibold ${highlight ? "text-[#D99A2B]" : "text-[#3A2818]/70"}`}
+    >
       {value}
     </div>
   );
@@ -111,7 +131,9 @@ function ZCell({ value, highlight }: { value: CellValue; highlight?: boolean }) 
   if (value === true) {
     return (
       <div className={`flex justify-center ${highlight ? "text-[#F5A623]" : "text-[#3A2818]/50"}`}>
-        <div className={`size-5 rounded-full flex items-center justify-center ${highlight ? "bg-[#F5A623]/15" : "bg-black/5"}`}>
+        <div
+          className={`size-5 rounded-full flex items-center justify-center ${highlight ? "bg-[#F5A623]/15" : "bg-black/5"}`}
+        >
           <Check className="size-3" />
         </div>
       </div>
@@ -127,7 +149,9 @@ function ZCell({ value, highlight }: { value: CellValue; highlight?: boolean }) 
     );
   }
   return (
-    <div className={`text-center text-xs font-semibold ${highlight ? "text-[#D99A2B] font-bold" : "text-red-500"}`}>
+    <div
+      className={`text-center text-xs font-semibold ${highlight ? "text-[#D99A2B] font-bold" : "text-red-500"}`}
+    >
       {value}
     </div>
   );
@@ -167,7 +191,9 @@ function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModalProps) 
     setLoading(true);
     try {
       // Check if user is logged in
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Please log in first to purchase a plan.");
         setLoading(false);
@@ -236,7 +262,9 @@ function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModalProps) 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
+      onClick={(e) => {
+        if (e.target === overlayRef.current) onClose();
+      }}
     >
       <motion.div
         className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden"
@@ -253,7 +281,9 @@ function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModalProps) 
           >
             <X className="size-4" />
           </button>
-          <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-1">Upgrading to</p>
+          <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-1">
+            Upgrading to
+          </p>
           <h2 className="text-2xl font-bold text-white">{plan.name} Plan</h2>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-4xl font-extrabold text-[#F5A623]">₹{price}</span>
@@ -263,7 +293,9 @@ function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModalProps) 
 
         {/* Features summary */}
         <div className="p-6 border-b border-black/5">
-          <p className="text-xs font-semibold text-[#3A2818]/60 uppercase tracking-wider mb-3">What you get</p>
+          <p className="text-xs font-semibold text-[#3A2818]/60 uppercase tracking-wider mb-3">
+            What you get
+          </p>
           <ul className="space-y-2">
             {plan.features.slice(0, 5).map((f) => (
               <li key={f} className="flex items-center gap-2 text-sm text-[#3A2818]/80">
@@ -274,7 +306,9 @@ function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModalProps) 
               </li>
             ))}
             {plan.features.length > 5 && (
-              <li className="text-xs text-[#3A2818]/50 pl-6">+ {plan.features.length - 5} more features</li>
+              <li className="text-xs text-[#3A2818]/50 pl-6">
+                + {plan.features.length - 5} more features
+              </li>
             )}
           </ul>
         </div>
@@ -310,10 +344,15 @@ function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModalProps) 
 
           {/* Razorpay logo / accepted methods */}
           <div className="rounded-xl border border-black/5 bg-[#F5F0E7]/60 p-3 text-center">
-            <p className="text-[10px] text-[#3A2818]/40 font-medium mb-2">Accepted Payment Methods</p>
+            <p className="text-[10px] text-[#3A2818]/40 font-medium mb-2">
+              Accepted Payment Methods
+            </p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               {["UPI", "GPay", "PhonePe", "Cards", "Net Banking", "Wallets"].map((m) => (
-                <span key={m} className="text-[10px] font-bold bg-white border border-black/10 px-2 py-0.5 rounded-full text-[#3A2818]/70">
+                <span
+                  key={m}
+                  className="text-[10px] font-bold bg-white border border-black/10 px-2 py-0.5 rounded-full text-[#3A2818]/70"
+                >
                   {m}
                 </span>
               ))}
@@ -344,8 +383,7 @@ function PricingPage() {
     navigate({ to: "/dashboard" });
   };
 
-  const priceOf = (id: string) =>
-    id === "pro" ? 499 : id === "premium" ? 799 : 249;
+  const priceOf = (id: string) => (id === "pro" ? 499 : id === "premium" ? 799 : 249);
 
   return (
     <div className="min-h-screen bg-[#F5F0E7] text-[#100C09] font-sans selection:bg-[#F5A623]/30">
@@ -463,10 +501,18 @@ function PricingPage() {
                 className={`grid grid-cols-5 border-b border-black/5 ${i % 2 === 0 ? "bg-white" : "bg-[#F5F0E7]/40"} hover:bg-[#F5A623]/5 transition-colors`}
               >
                 <div className="p-3.5 text-xs font-medium text-[#3A2818]/80">{row.feature}</div>
-                <div className="p-3.5 flex items-center justify-center"><Cell value={row.trial} /></div>
-                <div className="p-3.5 flex items-center justify-center"><Cell value={row.basic} /></div>
-                <div className="p-3.5 flex items-center justify-center"><Cell value={row.pro} /></div>
-                <div className="p-3.5 flex items-center justify-center"><Cell value={row.premium} highlight /></div>
+                <div className="p-3.5 flex items-center justify-center">
+                  <Cell value={row.trial} />
+                </div>
+                <div className="p-3.5 flex items-center justify-center">
+                  <Cell value={row.basic} />
+                </div>
+                <div className="p-3.5 flex items-center justify-center">
+                  <Cell value={row.pro} />
+                </div>
+                <div className="p-3.5 flex items-center justify-center">
+                  <Cell value={row.premium} highlight />
+                </div>
               </div>
             ))}
 
@@ -501,7 +547,8 @@ function PricingPage() {
               <span className="text-orange-500">Swiggy</span>
             </h2>
             <p className="text-[#3A2818]/60 text-sm font-medium max-w-xl mx-auto">
-              Stop losing 18–30% commission on every order. Own your customers, your menu, and your revenue — for less than ₹30 a day.
+              Stop losing 18–30% commission on every order. Own your customers, your menu, and your
+              revenue — for less than ₹30 a day.
             </p>
           </div>
 
@@ -525,15 +572,22 @@ function PricingPage() {
                 className={`grid grid-cols-4 border-b border-black/5 ${i % 2 === 0 ? "bg-white" : "bg-[#F5F0E7]/40"}`}
               >
                 <div className="p-3.5 text-xs font-medium text-[#3A2818]/80">{row.feature}</div>
-                <div className="p-3.5 flex items-center justify-center"><ZCell value={row.zomato} /></div>
-                <div className="p-3.5 flex items-center justify-center"><ZCell value={row.swiggy} /></div>
-                <div className="p-3.5 flex items-center justify-center bg-[#F5A623]/5"><ZCell value={row.mylink} highlight /></div>
+                <div className="p-3.5 flex items-center justify-center">
+                  <ZCell value={row.zomato} />
+                </div>
+                <div className="p-3.5 flex items-center justify-center">
+                  <ZCell value={row.swiggy} />
+                </div>
+                <div className="p-3.5 flex items-center justify-center bg-[#F5A623]/5">
+                  <ZCell value={row.mylink} highlight />
+                </div>
               </div>
             ))}
 
             <div className="p-6 bg-[#100C09] text-center">
               <p className="text-white/50 text-xs mb-4">
-                Join hundreds of restaurants, cafes &amp; shops who switched to MY Link QR and stopped paying commission.
+                Join hundreds of restaurants, cafes &amp; shops who switched to MY Link QR and
+                stopped paying commission.
               </p>
               <button
                 onClick={() => navigate({ to: "/auth" })}

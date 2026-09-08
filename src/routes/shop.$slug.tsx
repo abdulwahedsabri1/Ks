@@ -105,7 +105,7 @@ function PublicMenu() {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [specialInstructions, setSpecialInstructions] = useState("");
-  
+
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponError, setCouponError] = useState("");
@@ -118,8 +118,13 @@ function PublicMenu() {
   const isOnTable = shopOnTableEnabled(shop);
 
   const languages = shopLanguages(shop);
-  const isMultiLanguageEnabled = features.multi_language && (shop.features as any)?.multi_language_enabled !== false;
-  const showTranslate = isMultiLanguageEnabled && languages.length > 0 && !(languages.length === 1 && languages[0] === "en");
+  const isMultiLanguageEnabled =
+    features.multi_language &&
+    (shop.features as Record<string, unknown> | null)?.["multi_language_enabled"] !== false;
+  const showTranslate =
+    isMultiLanguageEnabled &&
+    languages.length > 0 &&
+    !(languages.length === 1 && languages[0] === "en");
 
   const defaultOrderType = isDelivery
     ? "delivery"
@@ -208,17 +213,17 @@ function PublicMenu() {
     (window as any).googleTranslateElementInit = () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       new (window as any).google.translate.TranslateElement(
-        { 
-          pageLanguage: 'en', 
-          includedLanguages: languages.join(','), 
+        {
+          pageLanguage: "en",
+          includedLanguages: languages.join(","),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          layout: (window as any).google.translate.TranslateElement.InlineLayout.SIMPLE 
+          layout: (window as any).google.translate.TranslateElement.InlineLayout.SIMPLE,
         },
-        'google_translate_element'
+        "google_translate_element",
       );
     };
 
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
     script.async = true;
     document.body.appendChild(script);
@@ -239,7 +244,7 @@ function PublicMenu() {
         .filter((l) => l.item && l.qty > 0),
     [cart, items],
   );
-  
+
   const subtotal = lines.reduce((s, l) => s + (l.item.discount_price ?? l.item.price) * l.qty, 0);
 
   let discountAmount = 0;
@@ -287,7 +292,7 @@ function PublicMenu() {
           <div id="google_translate_element"></div>
         </div>
       )}
-      
+
       {/* Banner */}
       <header className="relative isolate h-56 w-full overflow-hidden sm:h-72">
         {shop.cover_url ? (
@@ -751,89 +756,138 @@ function PublicMenu() {
                 </div>
 
                 {features.coupons && (
-                  <div className={`space-y-3 mb-6 p-4 rounded-xl border ${theme.border} bg-black/5`}>
+                  <div
+                    className={`space-y-3 mb-6 p-4 rounded-xl border ${theme.border} bg-black/5`}
+                  >
                     <Label className={theme.textMuted}>Discount Code</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Enter code"
-                      value={couponCode}
-                      onChange={(e) => {
-                        setCouponCode(e.target.value.toUpperCase());
-                        setCouponError("");
-                      }}
-                      className={`bg-transparent ${theme.border} ${theme.text}`}
-                      disabled={!!appliedCoupon}
-                    />
-                    {!appliedCoupon ? (
-                      <Button 
-                        variant="secondary" 
-                        onClick={() => {
-                          const shopCoupons = (shop.features as any)?.coupons as Coupon[] || [];
-                          const found = shopCoupons.find(c => c.code === couponCode);
-                          if (!found) {
-                            setCouponError("Invalid coupon code");
-                            return;
-                          }
-                          if (found.min_order && subtotal < found.min_order) {
-                            setCouponError(`Minimum order amount is ${money(found.min_order, shop.currency)}`);
-                            return;
-                          }
-                          if (found.expires_at && new Date(found.expires_at).getTime() < Date.now()) {
-                            setCouponError("This coupon has expired");
-                            return;
-                          }
-                          setAppliedCoupon(found);
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter code"
+                        value={couponCode}
+                        onChange={(e) => {
+                          setCouponCode(e.target.value.toUpperCase());
                           setCouponError("");
                         }}
-                      >
-                        Apply
-                      </Button>
-                    ) : (
-                      <Button 
-                        variant="destructive" 
-                        onClick={() => {
-                          setAppliedCoupon(null);
-                          setCouponCode("");
-                        }}
-                      >
-                        Remove
-                      </Button>
+                        className={`bg-transparent ${theme.border} ${theme.text}`}
+                        disabled={!!appliedCoupon}
+                      />
+                      {!appliedCoupon ? (
+                        <Button
+                          variant="secondary"
+                          onClick={() => {
+                            const shopCoupons =
+                              ((shop.features as Record<string, unknown> | null)?.[
+                                "coupons"
+                              ] as Coupon[]) || [];
+                            const found = shopCoupons.find((c) => c.code === couponCode);
+                            if (!found) {
+                              setCouponError("Invalid coupon code");
+                              return;
+                            }
+                            if (found.min_order && subtotal < found.min_order) {
+                              setCouponError(
+                                `Minimum order amount is ${money(found.min_order, shop.currency)}`,
+                              );
+                              return;
+                            }
+                            if (
+                              found.expires_at &&
+                              new Date(found.expires_at).getTime() < Date.now()
+                            ) {
+                              setCouponError("This coupon has expired");
+                              return;
+                            }
+                            setAppliedCoupon(found);
+                            setCouponError("");
+                          }}
+                        >
+                          Apply
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="destructive"
+                          onClick={() => {
+                            setAppliedCoupon(null);
+                            setCouponCode("");
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                    {couponError && (
+                      <p className="text-xs text-red-500 font-medium">{couponError}</p>
                     )}
-                  </div>
-                  {couponError && <p className="text-xs text-red-500 font-medium">{couponError}</p>}
-                  {appliedCoupon && discountAmount > 0 && (
-                    <p className="text-sm font-medium text-green-500">
-                      Coupon applied: -{money(discountAmount, shop.currency)}
-                    </p>
-                  )}
+                    {appliedCoupon && discountAmount > 0 && (
+                      <p className="text-sm font-medium text-green-500">
+                        Coupon applied: -{money(discountAmount, shop.currency)}
+                      </p>
+                    )}
                   </div>
                 )}
 
-                {features.upi && (shop.features as any)?.upi_enabled && (shop.features as any)?.upi_id && (
-                  <div className={`space-y-2 mb-6 p-4 rounded-xl border border-green-500/30 bg-green-500/10`}>
-                    <div className="flex items-center gap-2">
-                      <div className="size-6 rounded-full bg-green-500 flex items-center justify-center text-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                {features.upi &&
+                  Boolean((shop.features as Record<string, unknown> | null)?.["upi_enabled"]) &&
+                  Boolean((shop.features as Record<string, unknown> | null)?.["upi_id"]) && (
+                    <div
+                      className={`space-y-2 mb-6 p-4 rounded-xl border border-green-500/30 bg-green-500/10`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="size-6 rounded-full bg-green-500 flex items-center justify-center text-white">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </div>
+                        <Label className="text-green-700 font-bold dark:text-green-400">
+                          UPI Payment Accepted
+                        </Label>
                       </div>
-                      <Label className="text-green-700 font-bold dark:text-green-400">UPI Payment Accepted</Label>
+                      <p className="text-xs text-green-700/80 dark:text-green-400/80 font-medium">
+                        Pay securely now using the buttons below, or wait for instructions via
+                        WhatsApp.
+                      </p>
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 bg-white border-green-200 text-green-800 hover:bg-green-50 shadow-sm"
+                        >
+                          <a
+                            href={`upi://pay?pa=${(shop.features as Record<string, unknown> | null)?.["upi_id"]}&pn=${encodeURIComponent(shop.name)}&am=${total.toFixed(2)}&cu=INR&tr=QR${Date.now()}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            GPay
+                          </a>
+                        </Button>
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 bg-white border-green-200 text-green-800 hover:bg-green-50 shadow-sm"
+                        >
+                          <a
+                            href={`phonepe://pay?pa=${(shop.features as Record<string, unknown> | null)?.["upi_id"]}&pn=${encodeURIComponent(shop.name)}&am=${total.toFixed(2)}&cu=INR&tr=QR${Date.now()}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            PhonePe
+                          </a>
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-xs text-green-700/80 dark:text-green-400/80 font-medium">
-                      Pay securely now using the buttons below, or wait for instructions via WhatsApp.
-                    </p>
-                    <div className="flex gap-2 pt-2">
-                      <Button asChild variant="outline" size="sm" className="flex-1 bg-white border-green-200 text-green-800 hover:bg-green-50 shadow-sm">
-                        <a href={`upi://pay?pa=${(shop.features as any)?.upi_id}&pn=${encodeURIComponent(shop.name)}&am=${total.toFixed(2)}&cu=INR&tr=QR${Date.now()}`} target="_blank" rel="noreferrer">
-                          GPay
-                        </a>
-                      </Button>
-                      <Button asChild variant="outline" size="sm" className="flex-1 bg-white border-green-200 text-green-800 hover:bg-green-50 shadow-sm">
-                        <a href={`phonepe://pay?pa=${(shop.features as any)?.upi_id}&pn=${encodeURIComponent(shop.name)}&am=${total.toFixed(2)}&cu=INR&tr=QR${Date.now()}`} target="_blank" rel="noreferrer">
-                          PhonePe
-                        </a>
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                  )}
 
                 <div className="pt-2">
                   <Button
