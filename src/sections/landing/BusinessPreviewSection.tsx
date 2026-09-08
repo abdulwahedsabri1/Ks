@@ -91,7 +91,7 @@ const BUSINESS_TYPES = [
         },
         {
           name: "Sunglasses",
-          price: "₹999",
+          price: "₹799",
           image: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400&q=80",
           cat: "Accessories",
         },

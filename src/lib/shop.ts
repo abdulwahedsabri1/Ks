@@ -285,6 +285,8 @@ export const PLANS: {
       "Opening hours display",
       "Up to 50 menu items",
       "Basic view counter",
+      "Multiple languages support",
+      "WhatsApp ordering & cart",
     ],
   },
   {
@@ -294,7 +296,6 @@ export const PLANS: {
     tagline: "For growing shops",
     features: [
       "Everything in Basic",
-      "WhatsApp ordering & cart",
       "On-Table dining",
       "Take-away orders",
       "Unlimited menu items",
@@ -306,7 +307,7 @@ export const PLANS: {
   {
     id: "premium",
     name: "Premium",
-    price: "\u20b9999/mo",
+    price: "\u20b9799/mo",
     tagline: "The complete business toolkit",
     highlight: true,
     features: [
@@ -316,11 +317,13 @@ export const PLANS: {
       "Google Reviews integration",
       "Custom domain",
       "Priority support",
+      "Coupon codes",
+      "UPI Payments",
     ],
   },
 ];
 
-export const PLAN_PRICE: Record<string, number> = { trial: 0, basic: 249, pro: 499, premium: 999 };
+export const PLAN_PRICE: Record<string, number> = { trial: 0, basic: 249, pro: 499, premium: 799 };
 
 export type PlanFeatures = {
   items: number;
@@ -339,6 +342,9 @@ export type PlanFeatures = {
   logo_cover: boolean;
   social_link: boolean;
   opening_hours: boolean;
+  multi_language: boolean;
+  coupons: boolean;
+  upi: boolean;
 };
 
 export const PLAN_FEATURES: Record<string, PlanFeatures> = {
@@ -359,6 +365,9 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     logo_cover: false,
     social_link: false,
     opening_hours: false,
+    multi_language: false,
+    coupons: false,
+    upi: false,
   },
   basic: {
     items: 50,
@@ -377,6 +386,9 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     logo_cover: true,
     social_link: true,
     opening_hours: true,
+    multi_language: true,
+    coupons: false,
+    upi: false,
   },
   pro: {
     items: Infinity,
@@ -395,6 +407,9 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     logo_cover: true,
     social_link: true,
     opening_hours: true,
+    multi_language: true,
+    coupons: false,
+    upi: false,
   },
   premium: {
     items: Infinity,
@@ -413,6 +428,9 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     logo_cover: true,
     social_link: true,
     opening_hours: true,
+    multi_language: true,
+    coupons: true,
+    upi: true,
   },
 };
 
@@ -430,7 +448,10 @@ export type FeatureKey =
   | "google_reviews"
   | "logo_cover"
   | "social_link"
-  | "opening_hours";
+  | "opening_hours"
+  | "multi_language"
+  | "coupons"
+  | "upi";
 
 export const FEATURE_LABELS: Record<FeatureKey, string> = {
   logo_cover: "Business logo & cover photo",
@@ -447,6 +468,9 @@ export const FEATURE_LABELS: Record<FeatureKey, string> = {
   delivery: "Delivery options",
   themes: "Custom themes",
   google_reviews: "Google Reviews integration",
+  multi_language: "Multiple languages support",
+  coupons: "Discount & Coupon codes",
+  upi: "UPI payments",
 };
 
 export const FEATURE_KEYS = Object.keys(FEATURE_LABELS) as FeatureKey[];

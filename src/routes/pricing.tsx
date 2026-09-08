@@ -32,7 +32,7 @@ function PricingPage() {
         to: "/checkout",
         search: {
           plan: p.name,
-          price: p.id === "pro" ? 499 : p.id === "premium" ? 999 : 249,
+          price: p.id === "pro" ? 499 : p.id === "premium" ? 799 : 249,
           period: "/mo",
         },
       });

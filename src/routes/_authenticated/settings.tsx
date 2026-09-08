@@ -245,12 +245,28 @@ function SettingsPage() {
               ))}
             </select>
           </div>
-          <Text
-            id="s-wa"
-            label="WhatsApp number"
-            value={form.whatsapp}
-            onChange={(v) => setForm({ ...form, whatsapp: v })}
-          />
+          {!feat.ordering ? (
+            <div className="rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/5 p-4 mt-2">
+              <Label className="text-muted-foreground line-through opacity-70">
+                WhatsApp number
+              </Label>
+              <div className="mt-1 flex items-center justify-between gap-4">
+                <p className="text-sm text-muted-foreground">
+                  Unlock WhatsApp ordering in the Basic plan.
+                </p>
+                <Button asChild size="sm" variant="outline" className="h-8 border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10">
+                  <a href="/pricing">Upgrade</a>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Text
+              id="s-wa"
+              label="WhatsApp number"
+              value={form.whatsapp}
+              onChange={(v) => setForm({ ...form, whatsapp: v })}
+            />
+          )}
           <Text
             id="s-phone"
             label="Phone"
@@ -314,13 +330,24 @@ function SettingsPage() {
           <div className="space-y-4 pt-4 border-t border-border">
             <div className="flex items-center justify-between pb-2">
               <h3 className="font-medium text-lg">Payment Settings</h3>
-              <Switch
-                checked={form.upi_enabled}
-                onCheckedChange={(v) => setForm({ ...form, upi_enabled: v })}
-              />
+              {feat.upi && (
+                <Switch
+                  checked={form.upi_enabled}
+                  onCheckedChange={(v) => setForm({ ...form, upi_enabled: v })}
+                />
+              )}
             </div>
-            
-            {form.upi_enabled && (
+
+            {!feat.upi ? (
+              <div className="rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/5 p-4">
+                <p className="text-sm text-muted-foreground mb-3">
+                  Unlock UPI Payments integration in the Premium plan.
+                </p>
+                <Button asChild size="sm" variant="outline" className="h-8 border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10">
+                  <a href="/pricing">Upgrade</a>
+                </Button>
+              </div>
+            ) : form.upi_enabled && (
               <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                 <div className="space-y-2">
                   <Label htmlFor="s-upi">UPI ID (Optional)</Label>
@@ -341,13 +368,24 @@ function SettingsPage() {
           <div className="space-y-4 pt-4 border-t border-border">
             <div className="flex items-center justify-between pb-2">
               <h3 className="font-medium text-lg">Multi-Language Menu</h3>
-              <Switch
-                checked={form.multi_language_enabled}
-                onCheckedChange={(v) => setForm({ ...form, multi_language_enabled: v })}
-              />
+              {feat.multi_language && (
+                <Switch
+                  checked={form.multi_language_enabled}
+                  onCheckedChange={(v) => setForm({ ...form, multi_language_enabled: v })}
+                />
+              )}
             </div>
             
-            {form.multi_language_enabled && (
+            {!feat.multi_language ? (
+              <div className="rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/5 p-4">
+                <p className="text-sm text-muted-foreground mb-3">
+                  Unlock multiple languages support in the Basic plan.
+                </p>
+                <Button asChild size="sm" variant="outline" className="h-8 border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10">
+                  <a href="/pricing">Upgrade</a>
+                </Button>
+              </div>
+            ) : form.multi_language_enabled && (
               <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
                 <Label>Select Supported Languages</Label>
                 <p className="text-xs text-muted-foreground mb-3">
@@ -381,6 +419,17 @@ function SettingsPage() {
 
           <div className="space-y-4 pt-4 border-t border-border">
             <h3 className="font-medium text-lg pb-2">Discount & Coupon Codes</h3>
+            
+            {!feat.coupons ? (
+              <div className="rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/5 p-4">
+                <p className="text-sm text-muted-foreground mb-3">
+                  Unlock discount and coupon codes in the Premium plan.
+                </p>
+                <Button asChild size="sm" variant="outline" className="h-8 border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10">
+                  <a href="/pricing">Upgrade</a>
+                </Button>
+              </div>
+            ) : (
             <div className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-6 items-end">
                 <div className="sm:col-span-2">
@@ -445,6 +494,7 @@ function SettingsPage() {
                 </div>
               )}
             </div>
+            )}
           </div>
 
           <div className="space-y-4 pt-4 border-t border-border">
@@ -638,7 +688,7 @@ function SettingsPage() {
                   Take Away
                   {!feat.take_away && (
                     <span className="text-[10px] bg-[#F5A623]/15 text-[#D99A2B] px-2 py-0.5 rounded-full">
-                      Basic Plan
+                      Pro Plan
                     </span>
                   )}
                 </Label>
@@ -660,7 +710,7 @@ function SettingsPage() {
                   On-Table Dining
                   {!feat.on_table && (
                     <span className="text-[10px] bg-[#F5A623]/15 text-[#D99A2B] px-2 py-0.5 rounded-full">
-                      Basic Plan
+                      Pro Plan
                     </span>
                   )}
                 </Label>

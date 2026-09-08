@@ -34,6 +34,7 @@ import {
   shopTakeawayEnabled,
   shopOnTableEnabled,
   shopTheme,
+  shopFeatures,
   shopLanguages,
   THEME_CONFIG,
   type CartLine,
@@ -96,7 +97,7 @@ function PublicMenu() {
   const shop = data.shop as unknown as Shop;
   const items = data.items as unknown as MenuItem[];
   const categories = data.categories;
-  const features = planOf(shop.plan);
+  const features = shopFeatures(shop);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [active, setActive] = useState<string>("all");
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -117,8 +118,7 @@ function PublicMenu() {
   const isOnTable = shopOnTableEnabled(shop);
 
   const languages = shopLanguages(shop);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const isMultiLanguageEnabled = (shop.features as any)?.multi_language_enabled !== false;
+  const isMultiLanguageEnabled = features.multi_language && (shop.features as any)?.multi_language_enabled !== false;
   const showTranslate = isMultiLanguageEnabled && languages.length > 0 && !(languages.length === 1 && languages[0] === "en");
 
   const defaultOrderType = isDelivery
@@ -506,8 +506,8 @@ function PublicMenu() {
         <div
           className={`border-t ${theme.border} mt-10 pt-6 pb-4 text-center text-xs ${theme.textMuted}`}
         >
-          Powered by{" "}
-          <Link to="/" className={`${theme.accentText} font-display font-medium hover:underline`}>
+          <span className="text-gray-400">Powered by</span>{" "}
+          <Link to="/" className={`text-amber-500 font-display font-medium hover:underline`}>
             MY Link QR
           </Link>
         </div>
@@ -750,8 +750,9 @@ function PublicMenu() {
                   </div>
                 </div>
 
-                <div className={`space-y-3 mb-6 p-4 rounded-xl border ${theme.border} bg-black/5`}>
-                  <Label className={theme.textMuted}>Discount Code</Label>
+                {features.coupons && (
+                  <div className={`space-y-3 mb-6 p-4 rounded-xl border ${theme.border} bg-black/5`}>
+                    <Label className={theme.textMuted}>Discount Code</Label>
                   <div className="flex gap-2">
                     <Input
                       placeholder="Enter code"
@@ -805,9 +806,10 @@ function PublicMenu() {
                       Coupon applied: -{money(discountAmount, shop.currency)}
                     </p>
                   )}
-                </div>
+                  </div>
+                )}
 
-                {(shop.features as any)?.upi_enabled && (shop.features as any)?.upi_id && (
+                {features.upi && (shop.features as any)?.upi_enabled && (shop.features as any)?.upi_id && (
                   <div className={`space-y-2 mb-6 p-4 rounded-xl border border-green-500/30 bg-green-500/10`}>
                     <div className="flex items-center gap-2">
                       <div className="size-6 rounded-full bg-green-500 flex items-center justify-center text-white">
