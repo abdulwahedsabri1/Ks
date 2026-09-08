@@ -647,7 +647,8 @@ export function buildWhatsAppOrder(
   ];
 
   const upiId = (shop.features as any)?.upi_id;
-  if (upiId) {
+  const upiEnabled = (shop.features as any)?.upi_enabled;
+  if (upiEnabled && upiId) {
     textParts.push("");
     textParts.push("💳 Payment Method: UPI");
     textParts.push(`Please pay ${money(total, shop.currency)} to the following UPI ID: ${upiId}`);

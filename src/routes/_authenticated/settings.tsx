@@ -65,6 +65,7 @@ function SettingsPage() {
     languages: ["en"],
     multi_language_enabled: true,
     coupons: [] as Coupon[],
+    upi_enabled: false,
     upi_id: "",
   });
   const [saving, setSaving] = useState(false);
@@ -137,6 +138,7 @@ function SettingsPage() {
       languages: shopLanguages(shop),
       multi_language_enabled: (shop.features as any)?.multi_language_enabled !== false,
       coupons: (shop.features as any)?.coupons || [],
+      upi_enabled: (shop.features as any)?.upi_enabled || false,
       upi_id: (shop.features as any)?.upi_id || "",
     });
   }, [shop]);
@@ -158,6 +160,7 @@ function SettingsPage() {
       languages: form.languages,
       multi_language_enabled: form.multi_language_enabled,
       coupons: form.coupons,
+      upi_enabled: form.upi_enabled,
       upi_id: form.upi_id.trim() || undefined,
     };
 
@@ -309,21 +312,30 @@ function SettingsPage() {
           />
 
           <div className="space-y-4 pt-4 border-t border-border">
-            <h3 className="font-medium text-lg pb-2">Payment Settings</h3>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="s-upi">UPI ID (Optional)</Label>
-                <Input
-                  id="s-upi"
-                  placeholder="e.g. 9876543210@ybl"
-                  value={form.upi_id}
-                  onChange={(e) => setForm({ ...form, upi_id: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  If you enter a UPI ID here, it will be automatically included in the WhatsApp order message to instruct your customers how to pay.
-                </p>
-              </div>
+            <div className="flex items-center justify-between pb-2">
+              <h3 className="font-medium text-lg">Payment Settings</h3>
+              <Switch
+                checked={form.upi_enabled}
+                onCheckedChange={(v) => setForm({ ...form, upi_enabled: v })}
+              />
             </div>
+            
+            {form.upi_enabled && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="space-y-2">
+                  <Label htmlFor="s-upi">UPI ID (Optional)</Label>
+                  <Input
+                    id="s-upi"
+                    placeholder="e.g. 9876543210@ybl"
+                    value={form.upi_id}
+                    onChange={(e) => setForm({ ...form, upi_id: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    If you enter a UPI ID here, it will be automatically included in the WhatsApp order message to instruct your customers how to pay.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4 pt-4 border-t border-border">

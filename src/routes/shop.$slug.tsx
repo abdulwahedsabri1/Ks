@@ -807,7 +807,7 @@ function PublicMenu() {
                   )}
                 </div>
 
-                {(shop.features as any)?.upi_id && (
+                {(shop.features as any)?.upi_enabled && (shop.features as any)?.upi_id && (
                   <div className={`space-y-2 mb-6 p-4 rounded-xl border border-green-500/30 bg-green-500/10`}>
                     <div className="flex items-center gap-2">
                       <div className="size-6 rounded-full bg-green-500 flex items-center justify-center text-white">
@@ -820,12 +820,12 @@ function PublicMenu() {
                     </p>
                     <div className="flex gap-2 pt-2">
                       <Button asChild variant="outline" size="sm" className="flex-1 bg-white border-green-200 text-green-800 hover:bg-green-50 shadow-sm">
-                        <a href={`upi://pay?pa=${(shop.features as any)?.upi_id}&pn=${encodeURIComponent(shop.name)}&am=${total}&cu=INR`} target="_blank" rel="noreferrer">
+                        <a href={`upi://pay?pa=${(shop.features as any)?.upi_id}&pn=${encodeURIComponent(shop.name)}&am=${total.toFixed(2)}&cu=INR&tr=QR${Date.now()}`} target="_blank" rel="noreferrer">
                           GPay
                         </a>
                       </Button>
                       <Button asChild variant="outline" size="sm" className="flex-1 bg-white border-green-200 text-green-800 hover:bg-green-50 shadow-sm">
-                        <a href={`phonepe://pay?pa=${(shop.features as any)?.upi_id}&pn=${encodeURIComponent(shop.name)}&am=${total}&cu=INR`} target="_blank" rel="noreferrer">
+                        <a href={`phonepe://pay?pa=${(shop.features as any)?.upi_id}&pn=${encodeURIComponent(shop.name)}&am=${total.toFixed(2)}&cu=INR&tr=QR${Date.now()}`} target="_blank" rel="noreferrer">
                           PhonePe
                         </a>
                       </Button>
