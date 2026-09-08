@@ -51,16 +51,14 @@ const loginSchema = z.object({
 
 const signupSchema = z
   .object({
-    fullName: z.string().trim().min(2, "Full name must be at least 2 characters"),
+    fullName: z.string().trim().min(1, "Please enter your name"),
     businessName: z.string().trim().min(2, "Business name must be at least 2 characters"),
     businessCategory: z.string().min(1, "Please select a business category"),
     email: z.string().trim().email("Enter a valid email address").max(255),
     password: z
       .string()
-      .min(8, "Password must be at least 8 characters")
-      .max(72)
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number"),
+      .min(6, "Password must be at least 6 characters")
+      .max(72),
     confirmPassword: z.string(),
   })
   .refine((d) => d.password === d.confirmPassword, {
@@ -907,7 +905,7 @@ function AuthPage() {
                     value={signupPassword}
                     onChange={setSignupPassword}
                     showStrength
-                    placeholder="Min. 8 characters"
+                    placeholder="Min. 6 characters"
                   />
 
                   {/* Confirm Password */}
