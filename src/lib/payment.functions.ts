@@ -104,7 +104,7 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
     let amount = 0;
     if (pName === "basic") amount = 249;
     else if (pName === "pro") amount = 499;
-    else if (pName === "premium") amount = 999;
+    else if (pName === "premium") amount = 799;
 
     let newExpiry = new Date();
     if (shop.plan_expires_at) {
