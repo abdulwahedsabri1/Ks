@@ -8,12 +8,8 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
     return { amount: data.amount, receipt: data.receipt };
   })
   .handler(async ({ data }) => {
-    const keyId = process.env["RAZORPAY_KEY_ID"];
-    const keySecret = process.env["RAZORPAY_KEY_SECRET"];
-
-    if (!keyId || !keySecret) {
-      throw new Error("Razorpay credentials are not configured in server environment.");
-    }
+    const keyId = process.env["RAZORPAY_KEY_ID"] || "rzp_live_Ta4juTNtUmcLxK";
+    const keySecret = process.env["RAZORPAY_KEY_SECRET"] || "M7UXpwv9dtrLHkz3sjfsPM6z";
 
     const authHeader = "Basic " + btoa(`${keyId}:${keySecret}`);
     const amountInPaise = Math.max(100, Math.round((Number(data.amount) || 1) * 100));
@@ -67,11 +63,7 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
     },
   )
   .handler(async ({ data, context }) => {
-    const keySecret = process.env["RAZORPAY_KEY_SECRET"];
-
-    if (!keySecret) {
-      throw new Error("Razorpay credentials are not set.");
-    }
+    const keySecret = process.env["RAZORPAY_KEY_SECRET"] || "M7UXpwv9dtrLHkz3sjfsPM6z";
 
     // Verify Signature if provided
     if (data.razorpay_signature && data.razorpay_signature !== "skip_verify") {

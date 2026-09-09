@@ -138,7 +138,7 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
         } catch {}
       }
 
-      const keyId = import.meta.env["VITE_RAZORPAY_KEY_ID"] || "rzp_live_TVO9HSbApv6aCm";
+      const keyId = import.meta.env["VITE_RAZORPAY_KEY_ID"] || "rzp_live_Ta4juTNtUmcLxK";
 
       // 1. Fast path: If Razorpay SDK is loaded, launch popup instantly
       if (window.Razorpay) {
