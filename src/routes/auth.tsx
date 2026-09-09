@@ -16,6 +16,7 @@ import {
   X,
   Sparkles,
   ShieldCheck,
+  Phone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -54,6 +55,11 @@ const signupSchema = z
     fullName: z.string().trim().min(1, "Please enter your name"),
     businessName: z.string().trim().min(2, "Business name must be at least 2 characters"),
     businessCategory: z.string().min(1, "Please select a business category"),
+    phoneNumber: z
+      .string()
+      .trim()
+      .min(10, "Phone number must be at least 10 digits")
+      .regex(/^[0-9+\s()-]{10,20}$/, "Please enter a valid phone number"),
     email: z.string().trim().email("Enter a valid email address").max(255),
     password: z.string().min(6, "Password must be at least 6 characters").max(72),
     confirmPassword: z.string(),
@@ -282,6 +288,154 @@ function ForgotPasswordModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ── Terms & Privacy Modal ───────────────────────────────────────────────────
+
+function TermsModal({
+  initialTab = "terms",
+  onClose,
+  onAccept,
+}: {
+  initialTab?: "terms" | "privacy";
+  onClose: () => void;
+  onAccept: () => void;
+}) {
+  const [activeTab, setActiveTab] = useState<"terms" | "privacy">(initialTab);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <motion.div
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={(e) => {
+        if (e.target === overlayRef.current) onClose();
+      }}
+    >
+      <motion.div
+        className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-white/10 bg-[#0f0d0a] shadow-2xl overflow-hidden"
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setActiveTab("terms")}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === "terms"
+                  ? "bg-[#F5A623] text-black shadow-lg"
+                  : "bg-white/5 text-white/60 hover:text-white"
+              }`}
+            >
+              Terms of Service
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("privacy")}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === "privacy"
+                  ? "bg-[#F5A623] text-black shadow-lg"
+                  : "bg-white/5 text-white/60 hover:text-white"
+              }`}
+            >
+              Privacy Policy
+            </button>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 text-sm text-white/70 leading-relaxed [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-[#F5A623]/40 [&::-webkit-scrollbar-thumb]:rounded-full">
+          {activeTab === "terms" ? (
+            <>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">1. Acceptance of Terms</h3>
+                <p>
+                  By creating an account on MY Link QR, you agree to these Terms of Service. If you are registering on behalf of a store, restaurant, or business entity, you represent that you have legal authority to bind that entity.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">2. Business & Contact Information</h3>
+                <p>
+                  You agree to provide accurate business details, including valid contact numbers and email addresses. You are responsible for maintaining account confidentiality and all activities under your account.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">3. Menu Content & Ownership</h3>
+                <p>
+                  You retain complete ownership of all uploaded content (item names, descriptions, images, prices). You warrant that uploaded items do not violate trademark or local trade regulations.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">4. Service Availability & Subscription</h3>
+                <p>
+                  MY Link QR provides dynamic digital menu QR codes. Free trial access enables full menu setup and preview. Subscriptions can be managed or canceled anytime from your store settings.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">1. Data We Collect</h3>
+                <p>
+                  We collect your full name, business name, phone number, and email address to set up your store workspace and provide seamless menu management services.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">2. How We Use Your Data</h3>
+                <p>
+                  Your information is used strictly to power your digital menu dashboard, display WhatsApp ordering links for your customers, and provide technical support. We never sell your personal data.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white mb-2">3. Security & Storage</h3>
+                <p>
+                  All database transactions are protected with 256-bit SSL encryption provided by Supabase. Your passwords and credentials are securely hashed and encrypted.
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between p-6 border-t border-white/10 bg-white/5">
+          <p className="text-xs text-white/40">
+            Click Accept to agree to the terms and launch your digital store.
+          </p>
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="bg-white/5 border-white/10 text-white hover:bg-white/10 font-medium"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={onAccept}
+              className="bg-[#F5A623] hover:bg-[#e09615] text-black font-bold shadow-[0_0_15px_rgba(245,166,35,0.3)] flex items-center gap-2"
+            >
+              <span>Accept & Launch Store</span>
+              <ArrowRight className="size-4" />
+            </Button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ── Password Field ────────────────────────────────────────────────────────────
 
 function PasswordField({
@@ -384,12 +538,22 @@ function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [businessCategory, setBusinessCategory] = useState(NICHES[0]!);
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsModalTab, setTermsModalTab] = useState<"terms" | "privacy">("terms");
+
+  function handleAcceptTermsAndLaunch() {
+    setTermsAccepted(true);
+    setShowTermsModal(false);
+    toast.success("Terms accepted!");
+    void handleSignup(undefined, true);
+  }
 
   async function handleGoogleLogin() {
     setGoogleLoading(true);
@@ -487,13 +651,14 @@ function AuthPage() {
 
   // ── Signup ───────────────────────────────────────────────────────────────
 
-  async function handleSignup(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSignup(e?: React.FormEvent, overrideTerms = false) {
+    e?.preventDefault();
 
     const parsed = signupSchema.safeParse({
       fullName,
       businessName,
       businessCategory,
+      phoneNumber,
       email: signupEmail,
       password: signupPassword,
       confirmPassword,
@@ -514,7 +679,7 @@ function AuthPage() {
       return;
     }
 
-    if (!termsAccepted) {
+    if (!termsAccepted && !overrideTerms) {
       toast.error("Please accept the Terms of Service to continue.");
       return;
     }
@@ -533,6 +698,7 @@ function AuthPage() {
             business_name: parsed.data.businessName.trim(),
             business_category: parsed.data.businessCategory,
             niche: parsed.data.businessCategory,
+            phone: parsed.data.phoneNumber.trim(),
           },
         },
       });
@@ -556,6 +722,8 @@ function AuthPage() {
           name: parsed.data.businessName.trim(),
           slug: `${slugify(parsed.data.businessName.trim())}-${Math.random().toString(36).slice(2, 6)}`,
           niche: parsed.data.businessCategory,
+          phone: parsed.data.phoneNumber.trim(),
+          whatsapp: parsed.data.phoneNumber.trim(),
           status: "active",
           plan: "trial",
           plan_expires_at: expiresAt.toISOString(),
@@ -939,6 +1107,33 @@ function AuthPage() {
                     </div>
                   </div>
 
+                  {/* Phone Number */}
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-phone" className="text-white/70 text-sm font-medium">
+                      Phone Number / Mobile
+                    </Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-white/30" />
+                      <Input
+                        id="signup-phone"
+                        type="tel"
+                        placeholder="+91 98765 43210"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#F5A623]/50 focus:ring-[#F5A623]/20 h-11"
+                      />
+                      {phoneNumber && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          {phoneNumber.trim().length >= 10 ? (
+                            <CheckCircle2 className="size-4 text-emerald-400" />
+                          ) : (
+                            <AlertCircle className="size-4 text-amber-400" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Email */}
                   <div className="space-y-2">
                     <Label htmlFor="signup-email" className="text-white/70 text-sm font-medium">
@@ -1008,15 +1203,21 @@ function AuthPage() {
                   </div>
 
                   {/* Terms */}
-                  <div className="flex items-start gap-3">
+                  <div
+                    className="flex items-start gap-3 cursor-pointer group select-none"
+                    onClick={() => setTermsAccepted((t) => !t)}
+                  >
                     <button
                       type="button"
                       id="terms-checkbox"
-                      onClick={() => setTermsAccepted((t) => !t)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTermsAccepted((t) => !t);
+                      }}
                       className={`mt-0.5 w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-all ${
                         termsAccepted
                           ? "bg-[#F5A623] border-[#F5A623]"
-                          : "bg-transparent border-white/20 hover:border-white/40"
+                          : "bg-transparent border-white/20 hover:border-white/40 group-hover:border-white/50"
                       }`}
                       aria-checked={termsAccepted}
                       role="checkbox"
@@ -1030,18 +1231,31 @@ function AuthPage() {
                         </svg>
                       )}
                     </button>
-                    <label
-                      className="text-xs text-white/50 leading-relaxed cursor-pointer"
-                      onClick={() => setTermsAccepted((t) => !t)}
-                    >
+                    <label className="text-xs text-white/50 leading-relaxed cursor-pointer group-hover:text-white/70">
                       I agree to the{" "}
-                      <Link to="/terms" className="text-[#F5A623] hover:underline font-medium">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTermsModalTab("terms");
+                          setShowTermsModal(true);
+                        }}
+                        className="text-[#F5A623] hover:underline font-medium focus:outline-none"
+                      >
                         Terms of Service
-                      </Link>{" "}
+                      </button>{" "}
                       and{" "}
-                      <Link to="/privacy" className="text-[#F5A623] hover:underline font-medium">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTermsModalTab("privacy");
+                          setShowTermsModal(true);
+                        }}
+                        className="text-[#F5A623] hover:underline font-medium focus:outline-none"
+                      >
                         Privacy Policy
-                      </Link>
+                      </button>
                     </label>
                   </div>
 
@@ -1091,6 +1305,17 @@ function AuthPage() {
       {/* Forgot Password Modal */}
       <AnimatePresence>
         {showForgot && <ForgotPasswordModal onClose={() => setShowForgot(false)} />}
+      </AnimatePresence>
+
+      {/* Terms of Service & Privacy Modal */}
+      <AnimatePresence>
+        {showTermsModal && (
+          <TermsModal
+            initialTab={termsModalTab}
+            onClose={() => setShowTermsModal(false)}
+            onAccept={handleAcceptTermsAndLaunch}
+          />
+        )}
       </AnimatePresence>
     </>
   );

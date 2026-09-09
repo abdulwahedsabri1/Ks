@@ -433,20 +433,35 @@ function AdminPage() {
                       className="border-b border-white/5 last:border-0 transition hover:bg-white/[0.02]"
                     >
                       <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-white">{s.name}</p>
-                          <span className="rounded bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 text-[10px] font-mono font-bold text-emerald-400">
-                            {shopBusinessId(s)}
-                          </span>
+                        <div className="flex items-center gap-3">
+                          {s.logo_url ? (
+                            <img
+                              src={s.logo_url}
+                              alt={`${s.name} logo`}
+                              className="size-8 rounded-lg object-cover border border-white/10 shrink-0"
+                            />
+                          ) : (
+                            <div className="size-8 rounded-lg bg-white/10 flex items-center justify-center text-xs font-bold text-white shrink-0">
+                              {s.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-white">{s.name}</p>
+                              <span className="rounded bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 text-[10px] font-mono font-bold text-emerald-400">
+                                {shopBusinessId(s)}
+                              </span>
+                            </div>
+                            <a
+                              href={`/shop/${s.slug}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs text-emerald-400 hover:underline"
+                            >
+                              /shop/{s.slug}
+                            </a>
+                          </div>
                         </div>
-                        <a
-                          href={`/shop/${s.slug}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs text-emerald-400 hover:underline"
-                        >
-                          /shop/{s.slug}
-                        </a>
                       </td>
                       <td className="p-3 text-slate-300">{s.niche}</td>
                       <td className="p-3">

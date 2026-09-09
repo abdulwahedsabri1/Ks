@@ -69,7 +69,10 @@ export function shopDeliveryEnabled(shop?: Pick<Shop, "plan" | "features"> | nul
 
 export function shopTakeawayEnabled(shop?: Pick<Shop, "plan" | "features"> | null) {
   if (!shopFeatures(shop).take_away) return false;
-  return shop?.features?.["takeaway"] !== false;
+  const val1 = shop?.features?.["takeaway"];
+  const val2 = shop?.features?.["take_away"];
+  if (val1 === false || val2 === false) return false;
+  return true;
 }
 
 export function shopOnTableEnabled(shop?: Pick<Shop, "plan" | "features"> | null) {

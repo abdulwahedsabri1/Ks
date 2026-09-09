@@ -186,16 +186,36 @@ export function useAnalytics(shopId?: string, days = 30, resetAt?: string | null
   });
 }
 
-export async function uploadShopMedia(file: File, shopId: string) {
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const path = `${shopId}/${crypto.randomUUID()}.${ext}`;
-  const { error } = await supabase.storage.from("shop-media").upload(path, file, { upsert: true });
-  if (error) throw error;
-  const { data, error: signErr } = await supabase.storage
-    .from("shop-media")
-    .createSignedUrl(path, 60 * 60 * 24 * 3650);
-  if (signErr) throw signErr;
-  return data.signedUrl;
+export async function uploadShopMedia(file: File, shopId: string): Promise<string> {
+  const fileToDataUrl = (f: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (e) => reject(e);
+      reader.readAsDataURL(f);
+    });
+
+  try {
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `${shopId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("shop-media").upload(path, file, { upsert: true });
+    if (!error) {
+      const { data: publicData } = supabase.storage.from("shop-media").getPublicUrl(path);
+      if (publicData?.publicUrl) {
+        return publicData.publicUrl;
+      }
+      const { data: signedData } = await supabase.storage
+        .from("shop-media")
+        .createSignedUrl(path, 60 * 60 * 24 * 3650);
+      if (signedData?.signedUrl) {
+        return signedData.signedUrl;
+      }
+    }
+  } catch (err) {
+    console.warn("Storage upload failed, falling back to base64 data URL:", err);
+  }
+
+  return await fileToDataUrl(file);
 }
 
 export type StaffRow = {

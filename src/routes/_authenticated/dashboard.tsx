@@ -158,19 +158,42 @@ function DashboardPage() {
             </div>
           )}
 
-          <div className="rounded-2xl border bg-card p-4 sm:p-6 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <h2 className="font-display text-base sm:text-lg font-bold truncate">
-                  {shop.name}
-                </h2>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <p className="text-xs sm:text-sm text-muted-foreground truncate">{shop.niche}</p>
-                  <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-[11px] font-mono font-bold text-primary shrink-0">
-                    {shopBusinessId(shop)}
-                  </span>
-                </div>
+          <div className="relative overflow-hidden rounded-2xl border bg-card shadow-sm">
+            {shop.cover_url && (
+              <div className="h-28 w-full overflow-hidden border-b border-border/40">
+                <img
+                  src={shop.cover_url}
+                  alt={`${shop.name} cover`}
+                  className="size-full object-cover"
+                />
               </div>
+            )}
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                  {shop.logo_url ? (
+                    <img
+                      src={shop.logo_url}
+                      alt={`${shop.name} logo`}
+                      className="size-12 sm:size-14 rounded-xl object-cover border border-border shadow-sm shrink-0"
+                    />
+                  ) : (
+                    <div className="size-12 sm:size-14 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-lg shrink-0">
+                      {shop.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <h2 className="font-display text-base sm:text-lg font-bold truncate">
+                      {shop.name}
+                    </h2>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{shop.niche}</p>
+                      <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-[11px] font-mono font-bold text-primary shrink-0">
+                        {shopBusinessId(shop)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               <span
                 className={`rounded-full px-2.5 py-1 text-[11px] font-semibold shrink-0 ${
                   subscriptionState(shop) === "active"
@@ -432,6 +455,7 @@ function DashboardPage() {
                   <Link to="/pricing">Compare All Features</Link>
                 </Button>
               )}
+            </div>
             </div>
           </div>
         </div>

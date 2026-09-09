@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { UpiPaymentBox } from "@/components/UpiPaymentBox";
 import { supabase } from "@/integrations/supabase/client";
+import { updateShopSettings } from "@/lib/payment.functions";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin, useMyShop, uploadShopMedia } from "@/hooks/useShopData";
 import { DashboardShell } from "@/components/DashboardShell";
@@ -28,6 +29,12 @@ import {
   type ThemeId,
   type Coupon,
 } from "@/lib/shop";
+
+function safeStr(val: unknown): string {
+  if (typeof val === "string") return val.trim();
+  if (typeof val === "number") return String(val).trim();
+  return "";
+}
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -71,6 +78,8 @@ function SettingsPage() {
     upi_enabled: false,
     upi_id: "",
     upi_qr_url: "",
+    logo_url: "",
+    cover_url: "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -125,16 +134,16 @@ function SettingsPage() {
   useEffect(() => {
     if (!shop) return;
     setForm({
-      name: shop.name,
-      tagline: shop.tagline ?? "",
-      niche: shop.niche,
-      whatsapp: shop.whatsapp ?? "",
-      phone: shop.phone ?? "",
-      address: shop.address ?? "",
-      currency: shop.currency ?? "₹",
-      timing: shopTiming(shop) ?? "",
-      social_link: shopSocialLink(shop) ?? "",
-      google_review_link: shopGoogleReviewLink(shop) ?? "",
+      name: safeStr(shop.name),
+      tagline: safeStr(shop.tagline),
+      niche: safeStr(shop.niche) || NICHES[0]!,
+      whatsapp: safeStr(shop.whatsapp),
+      phone: safeStr(shop.phone),
+      address: safeStr(shop.address),
+      currency: safeStr(shop.currency) || "₹",
+      timing: safeStr(shopTiming(shop)),
+      social_link: safeStr(shopSocialLink(shop)),
+      google_review_link: safeStr(shopGoogleReviewLink(shop)),
       delivery: shopDeliveryEnabled(shop),
       takeaway: shopTakeawayEnabled(shop),
       on_table: shopOnTableEnabled(shop),
@@ -144,61 +153,87 @@ function SettingsPage() {
         (shop.features as Record<string, unknown> | null)?.["multi_language_enabled"] !== false,
       coupons: ((shop.features as Record<string, unknown> | null)?.["coupons"] as Coupon[]) || [],
       upi_enabled: Boolean((shop.features as Record<string, unknown> | null)?.["upi_enabled"]),
-      upi_id: ((shop.features as Record<string, unknown> | null)?.["upi_id"] as string) || "",
-      upi_qr_url: ((shop.features as Record<string, unknown> | null)?.["upi_qr_url"] as string) || "",
+      upi_id: safeStr((shop.features as Record<string, unknown> | null)?.["upi_id"]),
+      upi_qr_url: safeStr((shop.features as Record<string, unknown> | null)?.["upi_qr_url"]),
+      logo_url: safeStr(shop.logo_url),
+      cover_url: safeStr(shop.cover_url),
     });
   }, [shop]);
 
   async function save() {
-    if (!shop) return;
-    setSaving(true);
-
-    const currentFeatures = shop.features || {};
-    const updatedFeatures = {
-      ...currentFeatures,
-      timing: form.timing.trim() || undefined,
-      social_link: form.social_link.trim() || undefined,
-      google_review_link: form.google_review_link.trim() || undefined,
-      delivery: form.delivery,
-      takeaway: form.takeaway,
-      on_table: form.on_table,
-      theme: form.theme,
-      languages: form.languages,
-      multi_language_enabled: form.multi_language_enabled,
-      coupons: form.coupons,
-      upi_enabled: form.upi_enabled,
-      upi_id: form.upi_id.trim() || undefined,
-      upi_qr_url: form.upi_qr_url ? form.upi_qr_url.trim() : undefined,
-    };
-
-    // Clean up undefined properties from features before saving
-    Object.keys(updatedFeatures).forEach((key) => {
-      const k = key as keyof typeof updatedFeatures;
-      if (updatedFeatures[k] === undefined) {
-        delete updatedFeatures[k];
-      }
-    });
-
-    const { error } = await supabase
-      .from("shops")
-      .update({
-        name: form.name.trim(),
-        tagline: form.tagline.trim() || null,
-        niche: form.niche,
-        whatsapp: form.whatsapp.trim() || null,
-        phone: form.phone.trim() || null,
-        address: form.address.trim() || null,
-        currency: form.currency || "₹",
-        features: updatedFeatures,
-      })
-      .eq("id", shop.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
+    if (!shop) {
+      toast.error("No shop found to update.");
       return;
     }
-    toast.success("Settings saved");
-    qc.invalidateQueries({ queryKey: ["my-shop"] });
+    setSaving(true);
+    try {
+      const currentFeatures = shop.features || {};
+      const updatedFeatures = {
+        ...currentFeatures,
+        timing: safeStr(form.timing) || undefined,
+        social_link: safeStr(form.social_link) || undefined,
+        google_review_link: safeStr(form.google_review_link) || undefined,
+        delivery: form.delivery,
+        takeaway: form.takeaway,
+        take_away: form.takeaway,
+        on_table: form.on_table,
+        theme: form.theme,
+        languages: form.languages,
+        multi_language_enabled: form.multi_language_enabled,
+        coupons: form.coupons,
+        upi_enabled: form.upi_enabled,
+        upi_id: safeStr(form.upi_id) || undefined,
+        upi_qr_url: safeStr(form.upi_qr_url) || undefined,
+      };
+
+      // Clean up undefined properties from features before saving
+      Object.keys(updatedFeatures).forEach((key) => {
+        const k = key as keyof typeof updatedFeatures;
+        if (updatedFeatures[k] === undefined) {
+          delete updatedFeatures[k];
+        }
+      });
+
+      const updates = {
+        name: safeStr(form.name) || shop.name,
+        tagline: safeStr(form.tagline) || null,
+        niche: safeStr(form.niche) || shop.niche,
+        whatsapp: safeStr(form.whatsapp) || null,
+        phone: safeStr(form.phone) || null,
+        address: safeStr(form.address) || null,
+        currency: safeStr(form.currency) || "₹",
+        logo_url: safeStr(form.logo_url) || null,
+        cover_url: safeStr(form.cover_url) || null,
+        features: updatedFeatures,
+      };
+
+      try {
+        await updateShopSettings({
+          data: {
+            shop_id: shop.id,
+            updates,
+          },
+        });
+      } catch (serverErr) {
+        console.warn("Server update fallback to client update:", serverErr);
+        const { error } = await supabase
+          .from("shops")
+          .update({
+            ...updates,
+            ...(user?.id ? { owner_id: user.id } : {}),
+          })
+          .eq("id", shop.id);
+        if (error) throw error;
+      }
+
+      toast.success("✨ Settings saved & synced across website!");
+      await qc.invalidateQueries();
+    } catch (err) {
+      console.error("Failed to save shop settings:", err);
+      toast.error("Failed to save settings: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function upload(kind: "logo_url" | "cover_url" | "upi_qr_url", file?: File) {
@@ -216,13 +251,28 @@ function SettingsPage() {
         toast.success("UPI QR Code image updated");
       } else {
         const patch = kind === "logo_url" ? { logo_url: url } : { cover_url: url };
+        setForm((f) => ({ ...f, [kind]: url }));
         const { error } = await supabase.from("shops").update(patch).eq("id", shop.id);
         if (error) throw error;
-        toast.success("Image updated");
+        toast.success(kind === "logo_url" ? "Shop logo uploaded & synced!" : "Cover banner uploaded & synced!");
       }
-      qc.invalidateQueries({ queryKey: ["my-shop"] });
+      await qc.invalidateQueries();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
+    }
+  }
+
+  async function removeMedia(kind: "logo_url" | "cover_url") {
+    if (!shop) return;
+    try {
+      setForm((f) => ({ ...f, [kind]: "" }));
+      const patch = kind === "logo_url" ? { logo_url: null } : { cover_url: null };
+      const { error } = await supabase.from("shops").update(patch).eq("id", shop.id);
+      if (error) throw error;
+      toast.success(kind === "logo_url" ? "Logo removed" : "Cover banner removed");
+      await qc.invalidateQueries();
+    } catch {
+      toast.error("Failed to remove image");
     }
   }
 
@@ -826,29 +876,92 @@ function SettingsPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 pt-4 border-t">
-            <div className="space-y-2">
-              <Label htmlFor="s-logo">Logo</Label>
-              <Input
-                id="s-logo"
-                type="file"
-                accept="image/*"
-                onChange={(e) => upload("logo_url", e.target.files?.[0])}
-              />
+          <div className="grid gap-6 sm:grid-cols-2 pt-4 border-t">
+            {/* Logo Section */}
+            <div className="space-y-3">
+              <Label htmlFor="s-logo" className="font-semibold text-sm">Shop Logo</Label>
+              <div className="flex items-center gap-4 p-3 rounded-xl border bg-muted/30">
+                <div className="size-16 rounded-xl border overflow-hidden bg-background shrink-0 flex items-center justify-center shadow-sm relative">
+                  {form.logo_url ? (
+                    <img
+                      src={form.logo_url}
+                      alt="Logo preview"
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground opacity-50 font-medium">No Logo</span>
+                  )}
+                </div>
+                <div className="space-y-2 flex-1 min-w-0">
+                  <Input
+                    id="s-logo"
+                    type="file"
+                    accept="image/*"
+                    className="text-xs h-9 cursor-pointer"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void upload("logo_url", f);
+                    }}
+                  />
+                  {form.logo_url && (
+                    <button
+                      type="button"
+                      onClick={() => removeMedia("logo_url")}
+                      className="text-xs text-red-500 hover:underline font-medium block"
+                    >
+                      Remove logo
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="s-cover">Cover image</Label>
-              <Input
-                id="s-cover"
-                type="file"
-                accept="image/*"
-                onChange={(e) => upload("cover_url", e.target.files?.[0])}
-              />
+
+            {/* Cover Banner Section */}
+            <div className="space-y-3">
+              <Label htmlFor="s-cover" className="font-semibold text-sm">Cover Banner Image</Label>
+              <div className="space-y-3 p-3 rounded-xl border bg-muted/30">
+                <div className="h-16 w-full rounded-lg border overflow-hidden bg-background flex items-center justify-center shadow-sm relative">
+                  {form.cover_url ? (
+                    <img
+                      src={form.cover_url}
+                      alt="Cover banner preview"
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground opacity-50 font-medium">No Cover Banner</span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <Input
+                    id="s-cover"
+                    type="file"
+                    accept="image/*"
+                    className="text-xs h-9 cursor-pointer flex-1"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void upload("cover_url", f);
+                    }}
+                  />
+                  {form.cover_url && (
+                    <button
+                      type="button"
+                      onClick={() => removeMedia("cover_url")}
+                      className="text-xs text-red-500 hover:underline font-medium shrink-0"
+                    >
+                      Remove banner
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
-          <Button onClick={save} disabled={saving}>
-            Save changes
+          <Button
+            onClick={save}
+            disabled={saving}
+            className="bg-[#F5A623] hover:bg-[#e09615] text-black font-bold text-sm px-6 h-10 shadow-md transition-all"
+          >
+            {saving ? "Saving changes…" : "Save changes"}
           </Button>
           <p className="text-xs text-muted-foreground">Public link: /shop/{shop.slug}</p>
         </div>
