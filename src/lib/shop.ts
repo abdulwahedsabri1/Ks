@@ -24,6 +24,7 @@ export type Shop = {
   slug: string;
   name: string;
   niche: string;
+  business_id?: string | null;
   tagline: string | null;
   description: string | null;
   logo_url: string | null;
@@ -258,18 +259,30 @@ export const NICHES = [
   "Electronics Store",
 ];
 
-export const PLANS: {
-  id: Plan;
+export type PlanItem = {
+  id: string;
   name: string;
   price: string;
+  priceNumber?: number;
   tagline: string;
   features: string[];
   highlight?: boolean;
-}[] = [
+  isCustom?: boolean;
+};
+
+export function parsePriceNumber(priceStr?: string | number | null): number {
+  if (typeof priceStr === "number") return priceStr;
+  if (!priceStr) return 0;
+  const digits = String(priceStr).replace(/[^0-9]/g, "");
+  return digits ? parseInt(digits, 10) : 0;
+}
+
+export const PLANS: PlanItem[] = [
   {
     id: "trial",
     name: "Trial",
     price: "Free",
+    priceNumber: 0,
     tagline: "7-day limited trial",
     features: ["1 QR code", "Up to 5 menu items", "Up to 2 categories", "Mobile menu page"],
   },
@@ -277,6 +290,7 @@ export const PLANS: {
     id: "basic",
     name: "Basic",
     price: "\u20b9249/mo",
+    priceNumber: 249,
     tagline: "Get your first QR menu live",
     features: [
       "Digital QR menu page",
@@ -292,6 +306,7 @@ export const PLANS: {
     id: "pro",
     name: "Pro",
     price: "\u20b9499/mo",
+    priceNumber: 499,
     tagline: "For growing shops",
     features: [
       "Everything in Basic",
@@ -308,6 +323,7 @@ export const PLANS: {
     id: "premium",
     name: "Premium",
     price: "\u20b9799/mo",
+    priceNumber: 799,
     tagline: "The complete business toolkit",
     highlight: true,
     features: [
@@ -476,7 +492,12 @@ export const FEATURE_LABELS: Record<FeatureKey, string> = {
 export const FEATURE_KEYS = Object.keys(FEATURE_LABELS) as FeatureKey[];
 
 export function planOf(plan?: string | null): PlanFeatures {
-  return PLAN_FEATURES[plan ?? "trial"] ?? PLAN_FEATURES["trial"]!;
+  if (!plan) return PLAN_FEATURES["trial"]!;
+  const normalized = plan.toLowerCase().trim();
+  if (normalized.includes("basic")) return PLAN_FEATURES["basic"]!;
+  if (normalized.includes("pro")) return PLAN_FEATURES["pro"]!;
+  if (normalized.includes("premium")) return PLAN_FEATURES["premium"]!;
+  return PLAN_FEATURES[normalized] ?? PLAN_FEATURES["trial"]!;
 }
 
 /** Plan defaults merged with any per-shop feature switches set by an admin. */
@@ -485,8 +506,13 @@ export function shopFeatures(shop?: Pick<Shop, "plan" | "features"> | null): Pla
   const overrides = shop?.features ?? {};
   const merged: PlanFeatures = { ...base };
   for (const key of FEATURE_KEYS) {
-    const value = overrides[key];
-    if (typeof value === "boolean") merged[key] = value;
+    // Features included in the base plan are unconditionally unlocked
+    if (base[key] === true) {
+      merged[key] = true;
+    } else {
+      const value = overrides[key];
+      if (typeof value === "boolean") merged[key] = value;
+    }
   }
   return merged;
 }
@@ -517,6 +543,48 @@ export function daysRemaining(shop?: Pick<Shop, "plan_expires_at"> | null): numb
   if (!shop?.plan_expires_at) return Infinity;
   const diff = new Date(shop.plan_expires_at).getTime() - Date.now();
   return Math.max(0, Math.ceil(diff / 86400000));
+}
+
+export function planTotalDays(
+  shop?: Pick<Shop, "plan_started_at" | "plan_expires_at" | "created_at" | "plan"> | null,
+): number {
+  if (!shop?.plan_expires_at) return shop?.plan === "trial" ? 7 : 30;
+  const startMs = shop.plan_started_at
+    ? new Date(shop.plan_started_at).getTime()
+    : shop.created_at
+      ? new Date(shop.created_at).getTime()
+      : Date.now();
+  const expiryMs = new Date(shop.plan_expires_at).getTime();
+  const diffDays = Math.ceil((expiryMs - startMs) / 86400000);
+  return diffDays > 0 ? diffDays : shop?.plan === "trial" ? 7 : 30;
+}
+
+export function planProgressPercent(
+  shop?: Pick<Shop, "plan_started_at" | "plan_expires_at" | "created_at" | "plan"> | null,
+): number {
+  const remaining = daysRemaining(shop);
+  if (remaining === Infinity) return 100;
+  const total = planTotalDays(shop);
+  return Math.min(100, Math.max(0, Math.round((remaining / total) * 100)));
+}
+
+export function analyticsLastResetDate(shop?: Pick<Shop, "created_at" | "features"> | null): string {
+  if (!shop) return new Date().toISOString();
+  const resetAt = (shop.features as Record<string, unknown> | null)?.["analytics_reset_at"] as string | undefined;
+  if (resetAt && !isNaN(new Date(resetAt).getTime())) {
+    return resetAt;
+  }
+  return shop.created_at || new Date().toISOString();
+}
+
+export function analyticsRemainingDays(shop?: Pick<Shop, "created_at" | "features"> | null): number {
+  const lastReset = new Date(analyticsLastResetDate(shop)).getTime();
+  const now = Date.now();
+  const elapsedMs = Math.max(0, now - lastReset);
+  const cycleMs = 30 * 86400000;
+  const currentCycleElapsedMs = elapsedMs % cycleMs;
+  const daysLeft = Math.ceil((cycleMs - currentCycleElapsedMs) / 86400000);
+  return Math.max(1, Math.min(30, daysLeft));
 }
 
 export function subscriptionState(
@@ -558,9 +626,31 @@ export function paymentStatusColor(status?: string | null) {
   return found?.color ?? "slate";
 }
 
-export function planAmount(plan: string, cycle: string): number {
+export function planAmount(plan: string, cycle: string, customPlans?: PlanItem[]): number {
+  if (customPlans && customPlans.length > 0) {
+    const found = customPlans.find((p) => p.id.toLowerCase() === plan.toLowerCase());
+    if (found) return found.priceNumber ?? parsePriceNumber(found.price);
+  }
+  if (typeof window !== "undefined") {
+    try {
+      const local = localStorage.getItem("mylink_custom_plans");
+      if (local) {
+        const parsed = JSON.parse(local) as PlanItem[];
+        const found = parsed.find((p) => p.id.toLowerCase() === plan.toLowerCase());
+        if (found) return found.priceNumber ?? parsePriceNumber(found.price);
+      }
+    } catch {}
+  }
   if (cycle === "yearly") return PLAN_PRICE_YEARLY[plan] ?? 0;
   return PLAN_PRICE[plan] ?? 0;
+}
+
+export function shopBusinessId(shop?: Pick<Shop, "id" | "slug" | "business_id"> | null): string {
+  if (!shop) return "BIZ-0000";
+  if (shop.business_id) return shop.business_id;
+  const prefix = (shop.slug || "BIZ").replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 6);
+  const suffix = (shop.id || "0000").replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase();
+  return `BIZ-${prefix}-${suffix}`;
 }
 
 /** Public, share-safe URL for a shop menu (editor previews require a login). */

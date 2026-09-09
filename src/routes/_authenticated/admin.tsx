@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -32,9 +32,9 @@ import {
   Trash2,
   UserCheck,
   Users,
-  X,
   XCircle,
   Star,
+  RotateCcw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,6 +43,8 @@ import {
   useIsAdmin,
   useSubscriptionHistory,
   usePaymentHistory,
+  useCustomPlans,
+  savePlatformPlans,
 } from "@/hooks/useShopData";
 import { useAllReviews, useReviewStats } from "@/hooks/useReviews";
 import { Button } from "@/components/ui/button";
@@ -77,6 +79,10 @@ import {
   FEATURE_KEYS,
   type FeatureKey,
   planOf,
+  PLANS,
+  parsePriceNumber,
+  type PlanItem,
+  shopBusinessId,
 } from "@/lib/shop";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -107,6 +113,7 @@ function AdminPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: isAdmin, isLoading } = useIsAdmin(user?.id);
+  const { data: dynamicPlans = PLANS } = useCustomPlans();
   const [tab, setTab] = useState<Tab>("overview");
   const [q, setQ] = useState("");
   const [filterPlan, setFilterPlan] = useState("");
@@ -114,7 +121,9 @@ function AdminPage() {
   const [filterStatus, setFilterStatus] = useState("");
   const [managingShop, setManagingShop] = useState<Shop | null>(null);
   const [shopToDelete, setShopToDelete] = useState<Shop | null>(null);
+  const [shopToResetAnalytics, setShopToResetAnalytics] = useState<Shop | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isResettingAnalytics, setIsResettingAnalytics] = useState(false);
 
   const { data: shops } = useQuery({
     queryKey: ["admin-shops"],
@@ -208,6 +217,65 @@ function AdminPage() {
       toast.error(err.message || "Failed to delete shop.");
     } finally {
       setIsDeleting(false);
+    }
+  }
+
+  // Auto-purge analytics older than 30 days
+  useEffect(() => {
+    if (!isAdmin) return;
+    const purgeOldAnalytics = async () => {
+      try {
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
+        await supabase.from("analytics_events").delete().lt("created_at", thirtyDaysAgo);
+      } catch (err) {
+        console.error("Auto purge analytics error:", err);
+      }
+    };
+    purgeOldAnalytics();
+  }, [isAdmin]);
+
+  async function handleResetAnalytics(targetShop: Shop) {
+    setIsResettingAnalytics(true);
+    try {
+      const { error } = await supabase
+        .from("analytics_events")
+        .delete()
+        .eq("shop_id", targetShop.id);
+      if (error) throw error;
+
+      const resetTimestamp = new Date().toISOString();
+      const currentFeatures = (targetShop.features as Record<string, unknown> | null) ?? {};
+      const updatedFeatures = {
+        ...currentFeatures,
+        analytics_reset_at: resetTimestamp,
+      };
+
+      await supabase
+        .from("shops")
+        .update({ features: updatedFeatures })
+        .eq("id", targetShop.id);
+
+      await supabase.from("subscription_history").insert({
+        shop_id: targetShop.id,
+        action: "analytics_reset",
+        previous_value: "active_analytics",
+        new_value: "reset_to_zero",
+        performed_by: user?.id ?? null,
+        notes: "Analytics data reset by admin (cycle restarts from 30 days)",
+      });
+
+      toast.success(`Analytics reset for "${targetShop.name}".`);
+      refresh();
+      qc.invalidateQueries({ queryKey: ["analytics"] });
+      setShopToResetAnalytics(null);
+      if (managingShop?.id === targetShop.id) {
+        setManagingShop(null);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      toast.error(err.message || "Failed to reset analytics.");
+    } finally {
+      setIsResettingAnalytics(false);
     }
   }
 
@@ -312,10 +380,11 @@ function AdminPage() {
               className="rounded-md border border-white/10 bg-slate-900 px-3 py-2 text-xs text-slate-200"
             >
               <option value="">All Plans</option>
-              <option value="trial">Trial</option>
-              <option value="basic">Basic</option>
-              <option value="pro">Pro</option>
-              <option value="premium">Premium</option>
+              {dynamicPlans.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
             </select>
             <select
               value={filterPayment}
@@ -364,7 +433,12 @@ function AdminPage() {
                       className="border-b border-white/5 last:border-0 transition hover:bg-white/[0.02]"
                     >
                       <td className="p-3">
-                        <p className="font-medium text-white">{s.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-white">{s.name}</p>
+                          <span className="rounded bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 text-[10px] font-mono font-bold text-emerald-400">
+                            {shopBusinessId(s)}
+                          </span>
+                        </div>
                         <a
                           href={`/shop/${s.slug}`}
                           target="_blank"
@@ -399,6 +473,15 @@ function AdminPage() {
                             onClick={() => setManagingShop(s)}
                           >
                             Manage
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                            title="Reset Analytics"
+                            onClick={() => setShopToResetAnalytics(s)}
+                          >
+                            <RotateCcw className="size-3.5" />
                           </Button>
                           <Button
                             size="sm"
@@ -493,6 +576,52 @@ function AdminPage() {
         </Dialog>
       )}
 
+      {/* ─── RESET ANALYTICS CONFIRMATION DIALOG ─── */}
+      {shopToResetAnalytics && (
+        <Dialog open={!!shopToResetAnalytics} onOpenChange={() => setShopToResetAnalytics(null)}>
+          <DialogContent className="bg-slate-900 text-slate-100 border-white/10 sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-white flex items-center gap-2">
+                <RotateCcw className="size-5 text-amber-400" /> Reset Analytics Data
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 py-2 text-sm text-slate-300">
+              <p>
+                Are you sure you want to reset all analytics for{" "}
+                <strong className="text-white">{shopToResetAnalytics.name}</strong> (
+                <code className="text-emerald-400">/shop/{shopToResetAnalytics.slug}</code>)?
+              </p>
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-300 space-y-1">
+                <p className="font-semibold text-amber-200 flex items-center gap-1">
+                  <AlertTriangle className="size-4 text-amber-400" /> Confirm Analytics Reset
+                </p>
+                <p>
+                  This will clear all views, item clicks, and scan counts for this shop.
+                  Analytics automatically purge entries older than 30 days.
+                </p>
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                disabled={isResettingAnalytics}
+                className="border-white/20 bg-transparent text-white hover:bg-white/10"
+                onClick={() => setShopToResetAnalytics(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={isResettingAnalytics}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-semibold flex items-center gap-1.5"
+                onClick={() => handleResetAnalytics(shopToResetAnalytics)}
+              >
+                {isResettingAnalytics ? "Resetting..." : "Reset Analytics"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
       {/* ─── REVIEWS ────────────────────────────── */}
       {tab === "reviews" && <ReviewsPanel isAdmin={!!isAdmin} />}
     </AdminFrame>
@@ -572,6 +701,7 @@ function ManageShopModal({
     gracePeriod: localShop.grace_period_days ?? 7,
   });
   const qc = useQueryClient();
+  const { data: dynamicPlans = PLANS } = useCustomPlans();
 
   const { data: subHistory } = useSubscriptionHistory(shop.id);
   const { data: payHistory } = usePaymentHistory(shop.id);
@@ -627,22 +757,72 @@ function ManageShopModal({
     const patch: any = { payment_status: newStatus };
     if (newStatus === "paid") {
       patch.status = "active";
-      const cycle = shop.billing_cycle ?? "monthly";
+      const cycle = localShop.billing_cycle ?? "monthly";
       const now = new Date();
       const exp = cycle === "yearly" ? addMonths(now, 12) : addMonths(now, 1);
+      patch["plan_started_at"] = now.toISOString();
       patch["plan_expires_at"] = exp.toISOString();
       patch["next_billing_date"] = exp.toISOString();
-      patch["amount_paid"] = planAmount(shop.plan, cycle);
+      const amt = planAmount(localShop.plan, cycle, dynamicPlans);
+      patch["amount_paid"] = amt;
+
+      const ALL_FEATURES = {
+        logo_cover: true,
+        social_link: true,
+        opening_hours: true,
+        multi_language: true,
+        ai: true,
+        ordering: true,
+        analytics: true,
+        qr_downloads: true,
+        on_table: true,
+        take_away: true,
+        delivery: true,
+        themes: true,
+        google_reviews: true,
+        custom_domain: true,
+        priority_support: true,
+        coupons: true,
+        upi: true,
+      };
+      const unlockedFeatureMap: Record<string, Record<string, boolean>> = {
+        basic: { logo_cover: true, social_link: true, opening_hours: true, multi_language: true },
+        pro: { logo_cover: true, social_link: true, opening_hours: true, multi_language: true, ai: true, ordering: true, analytics: true, qr_downloads: true, on_table: true, take_away: true },
+        premium: ALL_FEATURES,
+      };
+      const unlocked = unlockedFeatureMap[localShop.plan.toLowerCase()] ?? ALL_FEATURES;
+      patch["features"] = { ...((localShop.features as Record<string, unknown> | null) ?? {}), ...unlocked };
 
       await supabase.from("payment_history").insert({
         shop_id: shop.id,
-        amount: planAmount(shop.plan, cycle),
-        plan: shop.plan,
+        amount: amt,
+        plan: localShop.plan,
         billing_cycle: cycle,
         payment_status: "paid",
         payment_date: now.toISOString(),
         due_date: exp.toISOString(),
       });
+
+      try {
+        const bizId = shopBusinessId(localShop);
+        await supabase.from("payments").insert({
+          business_name: localShop.name,
+          owner_name: `${localShop.slug} (${bizId})`,
+          plan_name: localShop.plan,
+          amount: amt,
+          mobile: localShop.phone || "-",
+          email: `${localShop.slug}@mylinkqr.com`,
+          business_address: localShop.niche || "Business",
+          status: "Approved",
+          screenshot_url: "",
+          whatsapp: localShop.phone || "-",
+          city: "Local",
+          state: "State",
+          category: localShop.niche || "General",
+        });
+      } catch (pErr) {
+        console.warn("Payments insert non-fatal error:", pErr);
+      }
     } else if (["unpaid", "pending"].includes(newStatus)) {
       patch.status = "suspended";
     }
@@ -653,12 +833,47 @@ function ManageShopModal({
       newStatus,
       notes || undefined,
     );
+    qc.invalidateQueries({ queryKey: ["admin-payments"] });
   }
 
   async function changePlan(newPlan: string) {
     const cycle = localShop.billing_cycle ?? "monthly";
+    const pObj = dynamicPlans.find((p) => p.id.toLowerCase() === newPlan.toLowerCase()) || PLANS.find((p) => p.id.toLowerCase() === newPlan.toLowerCase());
+    const amount = pObj ? (pObj.priceNumber ?? parsePriceNumber(pObj.price)) : planAmount(newPlan, cycle);
+
+    const ALL_FEATURES = {
+      logo_cover: true,
+      social_link: true,
+      opening_hours: true,
+      multi_language: true,
+      ai: true,
+      ordering: true,
+      analytics: true,
+      qr_downloads: true,
+      on_table: true,
+      take_away: true,
+      delivery: true,
+      themes: true,
+      google_reviews: true,
+      custom_domain: true,
+      priority_support: true,
+      coupons: true,
+      upi: true,
+    };
+
+    const unlockedFeatureMap: Record<string, Record<string, boolean>> = {
+      basic: { logo_cover: true, social_link: true, opening_hours: true, multi_language: true },
+      pro: { logo_cover: true, social_link: true, opening_hours: true, multi_language: true, ai: true, ordering: true, analytics: true, qr_downloads: true, on_table: true, take_away: true },
+      premium: ALL_FEATURES,
+    };
+
+    const targetKey = newPlan.toLowerCase();
+    const unlocked = unlockedFeatureMap[targetKey] ?? ALL_FEATURES;
+    const currentFeatures = (localShop.features as Record<string, unknown> | null) ?? {};
+    const updatedFeatures = { ...currentFeatures, ...unlocked };
+
     await updateShop(
-      { plan: newPlan, amount_paid: planAmount(newPlan, cycle) },
+      { plan: newPlan, amount_paid: amount, features: updatedFeatures },
       "plan_changed",
       localShop.plan,
       newPlan,
@@ -719,7 +934,12 @@ function ManageShopModal({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto bg-slate-900 text-slate-100 border-white/10 sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-white">Manage — {shop.name}</DialogTitle>
+          <DialogTitle className="text-white flex items-center justify-between gap-2">
+            <span>Manage — {shop.name}</span>
+            <span className="rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 px-2.5 py-0.5 text-xs font-mono font-bold">
+              ID: {shopBusinessId(shop)}
+            </span>
+          </DialogTitle>
         </DialogHeader>
 
         {/* Modal Tabs */}
@@ -775,8 +995,11 @@ function ManageShopModal({
                     ))}
                   </select>
                 </div>
+                <InfoField label="Business ID" value={shopBusinessId(shop)} />
                 <InfoField label="Owner ID" value={shop.owner_id.slice(0, 8) + "…"} />
-                <InfoField label="Created" value={formatDate(shop.created_at)} />
+                <InfoField label="Created Date" value={formatDate(shop.created_at)} />
+                <InfoField label="Plan Started" value={formatDate(shop.plan_started_at || shop.created_at)} />
+                <InfoField label="Plan Expires" value={formatDate(shop.plan_expires_at)} />
                 <InfoField label="Account Status" value={shop.status} />
                 <InfoField label="Subscription State" value={subscriptionStateLabel(subState)} />
                 <InfoField label="Shop ID" value={shop.id.slice(0, 8) + "…"} />
@@ -1107,15 +1330,16 @@ Dashboard: ${window.location.origin}/auth`;
                 <div className="space-y-1.5">
                   <Label className="text-slate-400 text-xs">Current Plan</Label>
                   <select
-                    value={shop.plan}
+                    value={localShop.plan}
                     onChange={(e) => changePlan(e.target.value)}
                     disabled={busy}
                     className="h-9 w-full rounded-md border border-white/10 bg-slate-800 px-3 text-sm text-white"
                   >
-                    <option value="trial">Trial</option>
-                    <option value="basic">Basic · ₹{PLAN_PRICE["basic"]}</option>
-                    <option value="pro">Pro · ₹{PLAN_PRICE["pro"]}</option>
-                    <option value="premium">Premium · ₹{PLAN_PRICE["premium"]}</option>
+                    {dynamicPlans.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} · {p.price}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="space-y-1.5">
@@ -1476,6 +1700,25 @@ Dashboard: ${window.location.origin}/auth`;
                   onClick={cancelSubscription}
                   disabled={busy}
                 />
+                <ActionBtn
+                  icon={RotateCcw}
+                  label="Reset Analytics"
+                  color="orange"
+                  onClick={async () => {
+                    setBusy(true);
+                    try {
+                      await supabase.from("analytics_events").delete().eq("shop_id", shop.id);
+                      await logAction("analytics_reset", "active_events", "cleared", "Analytics reset via Manage modal");
+                      toast.success(`Analytics reset for "${shop.name}".`);
+                      onRefresh();
+                    } catch (err: any) {
+                      toast.error(err instanceof Error ? err.message : "Failed to reset analytics");
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                  disabled={busy}
+                />
               </div>
 
               <div className="mt-4 pt-4 border-t border-white/10">
@@ -1792,27 +2035,203 @@ function AdminStat({
   );
 }
 
-// ─── Payment Management Table ────────────────────────────────────────────────
+// ─── Payment Management Table & Custom Plans Setting ──────────────────────────
 function PaymentManagement({ isAdmin }: { isAdmin?: boolean | undefined }) {
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const [activeSubTab, setActiveSubTab] = useState<"logs" | "plans">("plans");
   const [selectedProof, setSelectedProof] = useState<string | null>(null);
 
+  // Dynamic Custom Plans hook
+  const { data: plansData = PLANS } = useCustomPlans();
+  const [localPlans, setLocalPlans] = useState<PlanItem[]>([]);
+  const [isSavingPlans, setIsSavingPlans] = useState(false);
+
+  // Add Custom Plan Dialog state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newPlanName, setNewPlanName] = useState("");
+  const [newPlanPrice, setNewPlanPrice] = useState("");
+  const [newPlanTagline, setNewPlanTagline] = useState("");
+
+  useEffect(() => {
+    if (plansData && plansData.length > 0) {
+      setLocalPlans(plansData);
+    }
+  }, [plansData]);
+
   const {
-    data: payments,
+    data: payments = [],
     isLoading,
     error,
   } = useQuery({
     queryKey: ["admin-payments"],
-    enabled: isAdmin !== false,
+    enabled: !!isAdmin,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("payments")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const allLogItems: any[] = [];
+
+      // 1. Fetch from payments table
+      try {
+        const { data: manualPayments } = await supabase
+          .from("payments")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (manualPayments && manualPayments.length > 0) {
+          allLogItems.push(...manualPayments);
+        }
+      } catch (e) {
+        console.warn("Payments table fetch error:", e);
+      }
+
+      // 2. Fetch from payment_history table with shops info
+      try {
+        const { data: historyLogs } = await supabase
+          .from("payment_history")
+          .select("*, shops(name, slug, niche)")
+          .order("created_at", { ascending: false });
+
+        if (historyLogs && historyLogs.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          historyLogs.forEach((ph: any) => {
+            // Avoid duplicate if transaction ID matches
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (!allLogItems.some((m: any) => m.id === ph.id || (ph.transaction_id && m.transaction_id === ph.transaction_id))) {
+              const shopInfo = ph.shops;
+              allLogItems.push({
+                id: ph.id,
+                business_name: shopInfo?.name || "Shop #" + ph.shop_id.slice(0, 6),
+                owner_name: shopInfo?.slug || "Shop Owner",
+                plan_name: ph.plan,
+                amount: ph.amount,
+                mobile: "-",
+                email: shopInfo?.slug ? `${shopInfo.slug}@mylinkqr.com` : "Registered Owner",
+                business_address: shopInfo?.niche || "Restaurant",
+                created_at: ph.payment_date || ph.created_at,
+                screenshot_url: null,
+                status: ph.payment_status === "paid" ? "Approved" : ph.payment_status,
+                transaction_id: ph.transaction_id,
+              });
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Payment history fetch error:", e);
+      }
+
+      // 3. Fallback: Include all shops with payment_status = 'paid' or non-trial plans
+      try {
+        const { data: paidShops } = await supabase
+          .from("shops")
+          .select("*")
+          .eq("payment_status", "paid")
+          .order("updated_at", { ascending: false });
+
+        if (paidShops && paidShops.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          paidShops.forEach((s: any) => {
+            const shopIdStr = s.id;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const exists = allLogItems.some((m: any) => m.business_name === s.name || (m.id && m.id.includes(shopIdStr)));
+            if (!exists) {
+              const amt = s.amount_paid && Number(s.amount_paid) > 0 ? Number(s.amount_paid) : planAmount(s.plan, "monthly", plansData);
+              allLogItems.push({
+                id: "shop-pay-" + s.id,
+                business_name: s.name,
+                owner_name: s.slug || "Owner",
+                plan_name: s.plan,
+                amount: amt,
+                mobile: "-",
+                email: (s.slug || "shop") + "@mylinkqr.com",
+                business_address: s.niche || "Business",
+                created_at: s.plan_started_at || s.updated_at || s.created_at,
+                screenshot_url: null,
+                status: "Approved",
+                transaction_id: "SHOP-" + s.id.slice(0, 8),
+              });
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Paid shops fallback error:", e);
+      }
+
+      return allLogItems;
     },
   });
+
+  async function handleSavePlans(updatedList: PlanItem[]) {
+    setIsSavingPlans(true);
+    try {
+      await savePlatformPlans(updatedList, user?.id);
+      toast.success("Platform subscription plans & ₹ prices updated and synced real-time!");
+      qc.invalidateQueries({ queryKey: ["custom-plans"] });
+      qc.invalidateQueries({ queryKey: ["admin-shops"] });
+      qc.invalidateQueries({ queryKey: ["my-shop"] });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to save plan prices.");
+    } finally {
+      setIsSavingPlans(false);
+    }
+  }
+
+  function updateLocalPlanPrice(planId: string, newPriceStr: string) {
+    const num = parseInt(newPriceStr.replace(/[^0-9]/g, ""), 10) || 0;
+    const updated = localPlans.map((p) => {
+      if (p.id === planId) {
+        return {
+          ...p,
+          priceNumber: num,
+          price: num === 0 ? "Free" : `₹${num}/mo`,
+        };
+      }
+      return p;
+    });
+    setLocalPlans(updated);
+  }
+
+  function updateLocalPlanTagline(planId: string, tagline: string) {
+    const updated = localPlans.map((p) => (p.id === planId ? { ...p, tagline } : p));
+    setLocalPlans(updated);
+  }
+
+  function handleDeleteCustomPlan(planId: string) {
+    const updated = localPlans.filter((p) => p.id !== planId);
+    setLocalPlans(updated);
+    handleSavePlans(updated);
+  }
+
+  function handleCreateCustomPlan() {
+    if (!newPlanName.trim()) {
+      toast.error("Please enter a plan name.");
+      return;
+    }
+    const priceNum = parseInt(newPlanPrice.replace(/[^0-9]/g, ""), 10) || 0;
+    const id = newPlanName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+
+    const createdPlan: PlanItem = {
+      id,
+      name: newPlanName.trim(),
+      price: priceNum === 0 ? "Free" : `₹${priceNum}/mo`,
+      priceNumber: priceNum,
+      tagline: newPlanTagline.trim() || "Custom business subscription plan",
+      features: [
+        "Digital QR menu page",
+        "WhatsApp ordering & cart",
+        "Full analytics dashboard",
+        "AI menu generator",
+        "PNG / SVG / PDF QR downloads",
+      ],
+      isCustom: true,
+    };
+
+    const updated = [...localPlans, createdPlan];
+    setLocalPlans(updated);
+    handleSavePlans(updated);
+    setShowAddModal(false);
+    setNewPlanName("");
+    setNewPlanPrice("");
+    setNewPlanTagline("");
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function updatePaymentStatus(payment: any, status: string) {
@@ -1885,132 +2304,364 @@ function PaymentManagement({ isAdmin }: { isAdmin?: boolean | undefined }) {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-slate-400">
-        <Loader2 className="mx-auto size-6 animate-spin text-emerald-400 mb-2" />
-        Loading platform payments...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-center text-red-400">
-        <AlertTriangle className="mx-auto size-6 text-red-400 mb-2" />
-        Failed to load payments: {(error as Error).message}
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4">
-      <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
-        <table className="w-full text-sm text-slate-200">
-          <thead className="border-b border-white/10 text-left text-xs text-slate-400 uppercase tracking-wider">
-            <tr>
-              <th className="p-3">Business & Owner</th>
-              <th className="p-3">Plan</th>
-              <th className="p-3">Amount</th>
-              <th className="p-3">Contact Info</th>
-              <th className="p-3">Address</th>
-              <th className="p-3">Date</th>
-              <th className="p-3">Proof</th>
-              <th className="p-3">Status</th>
-              <th className="p-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {(payments ?? []).map((p: any) => (
-              <tr
-                key={p.id}
-                className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]"
-              >
-                <td className="p-3">
-                  <p className="font-bold text-white">{p.business_name}</p>
-                  <p className="text-xs text-slate-400">{p.owner_name}</p>
-                </td>
-                <td className="p-3">
-                  <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold capitalize text-emerald-300">
-                    {p.plan_name}
-                  </span>
-                </td>
-                <td className="p-3 font-bold text-white">₹{p.amount}</td>
-                <td className="p-3 text-xs text-slate-400">
-                  <p className="text-slate-300 font-mono">{p.mobile}</p>
-                  <p className="text-slate-400">{p.email}</p>
-                </td>
-                <td className="p-3 text-xs text-slate-400 max-w-[150px] truncate">
-                  {p.business_address || "N/A"}
-                </td>
-                <td className="p-3 text-slate-400 text-xs whitespace-nowrap">
-                  {new Date(p.created_at).toLocaleDateString()}
-                </td>
-                <td className="p-3">
-                  {p.screenshot_url ? (
-                    <button
-                      onClick={() => setSelectedProof(p.screenshot_url)}
-                      className="text-emerald-400 hover:underline text-xs flex items-center font-medium cursor-pointer"
-                    >
-                      <Eye className="w-3.5 h-3.5 mr-1" /> View Proof
-                    </button>
-                  ) : (
-                    <span className="text-xs text-slate-500">UPI Standard</span>
+    <div className="space-y-6">
+      {/* ── Sub Header / Sub Tabs ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/10 pb-4">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveSubTab("plans")}
+            className={cn(
+              "px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer",
+              activeSubTab === "plans"
+                ? "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                : "text-slate-400 hover:text-white hover:bg-white/5",
+            )}
+          >
+            <CreditCard className="size-4" /> Subscription Plans & Price Settings (₹)
+          </button>
+          <button
+            onClick={() => setActiveSubTab("logs")}
+            className={cn(
+              "px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer",
+              activeSubTab === "logs"
+                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                : "text-slate-400 hover:text-white hover:bg-white/5",
+            )}
+          >
+            <DollarSign className="size-4" /> Razorpay & Manual Payment Logs ({payments.length})
+          </button>
+        </div>
+
+        {activeSubTab === "plans" && (
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => setShowAddModal(true)}
+              className="bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs shadow-md"
+            >
+              + Add Custom Plan
+            </Button>
+            <Button
+              size="sm"
+              disabled={isSavingPlans}
+              onClick={() => handleSavePlans(localPlans)}
+              className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs shadow-md"
+            >
+              {isSavingPlans ? "Saving..." : "Save All Prices & Real-Time Sync"}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* ── 1. CUSTOM PLANS & RUPEES (₹) SETTINGS TAB ── */}
+      {activeSubTab === "plans" && (
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 sm:p-5">
+            <h3 className="font-display text-base sm:text-lg font-bold text-amber-300 flex items-center gap-2">
+              <RotateCcw className="size-5 text-amber-400" /> Platform Plans & Rupee (₹) Price Management
+            </h3>
+            <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+              Set custom plan prices in Rupees (₹), edit plan details, or add new subscription tiers.
+              Updates automatically synchronize in real-time across the <strong>User Dashboard</strong>, <strong>Website Pricing Page</strong>, and <strong>Razorpay Payment Gateway</strong>.
+            </p>
+          </div>
+
+          <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
+            {localPlans.map((p) => {
+              const currentPriceNum = p.priceNumber ?? parsePriceNumber(p.price);
+
+              return (
+                <div
+                  key={p.id}
+                  className={cn(
+                    "relative rounded-2xl border p-5 bg-slate-900/90 shadow-xl flex flex-col justify-between transition-all",
+                    p.highlight
+                      ? "border-amber-500/60 ring-1 ring-amber-500/30"
+                      : p.isCustom
+                        ? "border-emerald-500/50"
+                        : "border-white/10",
                   )}
-                </td>
-                <td className="p-3">
-                  <span
-                    className={cn(
-                      "rounded-full px-2.5 py-1 text-xs font-semibold",
-                      p.status === "Approved"
-                        ? "bg-emerald-500/15 text-emerald-400"
-                        : p.status === "Pending"
-                          ? "bg-yellow-500/15 text-yellow-400"
-                          : "bg-red-500/15 text-red-400",
-                    )}
-                  >
-                    {p.status}
-                  </span>
-                </td>
-                <td className="p-3 text-right">
-                  <div className="flex items-center justify-end gap-1.5">
-                    {p.status === "Pending" ? (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 bg-emerald-500/10 h-7 text-xs px-2.5 font-semibold"
-                          onClick={() => updatePaymentStatus(p, "Approved")}
-                        >
-                          <CheckCircle2 className="size-3 mr-1" /> Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-red-500/30 text-red-400 hover:bg-red-500/20 bg-red-500/10 h-7 text-xs px-2.5 font-semibold"
-                          onClick={() => updatePaymentStatus(p, "Rejected")}
-                        >
-                          <XCircle className="size-3 mr-1" /> Reject
-                        </Button>
-                      </>
-                    ) : (
-                      <span className="text-xs text-slate-500 italic">No actions</span>
+                >
+                  {p.highlight && (
+                    <span className="absolute -top-2.5 right-4 bg-amber-500 text-black text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full">
+                      Most Popular
+                    </span>
+                  )}
+                  {p.isCustom && (
+                    <span className="absolute -top-2.5 right-4 bg-emerald-500 text-black text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full">
+                      Custom Plan
+                    </span>
+                  )}
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                      <h4 className="font-display text-lg font-bold text-white">{p.name}</h4>
+                      <span className="text-xs text-slate-400 uppercase font-mono">{p.id}</span>
+                    </div>
+
+                    {/* Price Input in Rupees */}
+                    <div className="space-y-1.5">
+                      <Label className="text-slate-400 text-xs font-semibold">
+                        Plan Price in Rupees (₹ / month)
+                      </Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5 text-amber-400 font-bold text-sm">
+                          ₹
+                        </span>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={currentPriceNum}
+                          onChange={(e) => updateLocalPlanPrice(p.id, e.target.value)}
+                          className="h-10 pl-7 font-bold text-amber-300 bg-slate-950 border-white/15 text-sm"
+                          placeholder="249"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Tagline Input */}
+                    <div className="space-y-1.5">
+                      <Label className="text-slate-400 text-xs font-semibold">Tagline</Label>
+                      <Input
+                        value={p.tagline}
+                        onChange={(e) => updateLocalPlanTagline(p.id, e.target.value)}
+                        className="h-8 text-xs bg-slate-950 border-white/10 text-slate-200"
+                        placeholder="Plan description tagline"
+                      />
+                    </div>
+
+                    {/* Features list */}
+                    <div className="space-y-2">
+                      <Label className="text-slate-400 text-xs font-semibold">Features Included</Label>
+                      <ul className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                        {p.features.map((f, idx) => (
+                          <li key={idx} className="flex items-center gap-1.5 text-xs text-slate-300">
+                            <CheckCircle2 className="size-3 text-emerald-400 shrink-0" />
+                            <span className="truncate">{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-white/10 mt-4 flex items-center justify-between gap-2">
+                    <Button
+                      size="sm"
+                      disabled={isSavingPlans}
+                      onClick={() => handleSavePlans(localPlans)}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs flex-1 h-8"
+                    >
+                      Save ₹{currentPriceNum}
+                    </Button>
+
+                    {p.isCustom && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeleteCustomPlan(p.id)}
+                        className="border-red-500/30 text-red-400 hover:bg-red-500/10 h-8 px-2.5 text-xs"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
                     )}
                   </div>
-                </td>
-              </tr>
-            ))}
-            {(payments ?? []).length === 0 && (
-              <tr>
-                <td className="p-6 text-center text-slate-400" colSpan={9}>
-                  No payments recorded yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── 2. PAYMENTS LOG TAB ── */}
+      {activeSubTab === "logs" && (
+        <div className="space-y-4">
+          {isLoading ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-slate-400">
+              <Loader2 className="mx-auto size-6 animate-spin text-emerald-400 mb-2" />
+              Loading platform payments...
+            </div>
+          ) : error ? (
+            <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-center text-red-400">
+              <AlertTriangle className="mx-auto size-6 text-red-400 mb-2" />
+              Failed to load payments: {(error as Error).message}
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
+              <table className="w-full text-sm text-slate-200">
+                <thead className="border-b border-white/10 text-left text-xs text-slate-400 uppercase tracking-wider">
+                  <tr>
+                    <th className="p-3">Business & Owner</th>
+                    <th className="p-3">Plan</th>
+                    <th className="p-3">Amount</th>
+                    <th className="p-3">Contact Info</th>
+                    <th className="p-3">Address</th>
+                    <th className="p-3">Date</th>
+                    <th className="p-3">Proof</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {(payments ?? []).map((p: any) => (
+                    <tr
+                      key={p.id}
+                      className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]"
+                    >
+                      <td className="p-3">
+                        <p className="font-bold text-white">{p.business_name}</p>
+                        <p className="text-xs text-slate-400">{p.owner_name}</p>
+                      </td>
+                      <td className="p-3">
+                        <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold capitalize text-emerald-300">
+                          {p.plan_name}
+                        </span>
+                      </td>
+                      <td className="p-3 font-bold text-white">₹{p.amount}</td>
+                      <td className="p-3 text-xs text-slate-400">
+                        <p className="text-slate-300 font-mono">{p.mobile}</p>
+                        <p className="text-slate-400">{p.email}</p>
+                      </td>
+                      <td className="p-3 text-xs text-slate-400 max-w-[150px] truncate">
+                        {p.business_address || "N/A"}
+                      </td>
+                      <td className="p-3 text-slate-400 text-xs whitespace-nowrap">
+                        {new Date(p.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="p-3">
+                        {p.screenshot_url ? (
+                          <button
+                            onClick={() => setSelectedProof(p.screenshot_url)}
+                            className="text-emerald-400 hover:underline text-xs flex items-center font-medium cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5 mr-1" /> View Proof
+                          </button>
+                        ) : (
+                          <span className="text-xs text-slate-500">Razorpay / UPI</span>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        <span
+                          className={cn(
+                            "rounded-full px-2.5 py-1 text-xs font-semibold",
+                            p.status === "Approved"
+                              ? "bg-emerald-500/15 text-emerald-400"
+                              : p.status === "Pending"
+                                ? "bg-yellow-500/15 text-yellow-400"
+                                : "bg-red-500/15 text-red-400",
+                          )}
+                        >
+                          {p.status}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {p.status === "Pending" ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 bg-emerald-500/10 h-7 text-xs px-2.5 font-semibold"
+                                onClick={() => updatePaymentStatus(p, "Approved")}
+                              >
+                                <CheckCircle2 className="size-3 mr-1" /> Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-red-500/30 text-red-400 hover:bg-red-500/20 bg-red-500/10 h-7 text-xs px-2.5 font-semibold"
+                                onClick={() => updatePaymentStatus(p, "Rejected")}
+                              >
+                                <XCircle className="size-3 mr-1" /> Reject
+                              </Button>
+                            </>
+                          ) : (
+                            <span className="text-xs text-slate-500 italic">Completed</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {(payments ?? []).length === 0 && (
+                    <tr>
+                      <td className="p-6 text-center text-slate-400 font-medium" colSpan={9}>
+                        No payment logs recorded yet. Automated Razorpay orders, direct activations, and paid shop records will display here.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── ADD CUSTOM PLAN DIALOG ── */}
+      {showAddModal && (
+        <Dialog open onOpenChange={() => setShowAddModal(false)}>
+          <DialogContent className="bg-slate-900 border-white/10 text-white sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-white text-base font-bold flex items-center gap-2">
+                <CreditCard className="size-5 text-amber-400" /> Create Custom Subscription Plan
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Label className="text-slate-400 text-xs font-semibold">Plan Name</Label>
+                <Input
+                  value={newPlanName}
+                  onChange={(e) => setNewPlanName(e.target.value)}
+                  placeholder="e.g. VIP Business, Gold Tier"
+                  className="h-9 border-white/10 bg-slate-800 text-sm text-white"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-slate-400 text-xs font-semibold">Price in Rupees (₹ / month)</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-amber-400 font-bold text-sm">₹</span>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={newPlanPrice}
+                    onChange={(e) => setNewPlanPrice(e.target.value)}
+                    placeholder="999"
+                    className="h-9 pl-7 font-bold text-amber-300 bg-slate-800 border-white/10 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-slate-400 text-xs font-semibold">Tagline</Label>
+                <Input
+                  value={newPlanTagline}
+                  onChange={(e) => setNewPlanTagline(e.target.value)}
+                  placeholder="e.g. Complete VIP solution with 24/7 dedicated support"
+                  className="h-9 border-white/10 bg-slate-800 text-sm text-white"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                className="border-white/20 bg-transparent text-white hover:bg-white/10"
+                onClick={() => setShowAddModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateCustomPlan}
+                className="bg-amber-500 hover:bg-amber-600 text-black font-bold"
+              >
+                Create Custom Plan & Sync Real-Time
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Proof Dialog */}
       {selectedProof && (

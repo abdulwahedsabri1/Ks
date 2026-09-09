@@ -300,53 +300,100 @@ function MenuPage() {
 
   async function importScanned() {
     if (!shop || scanned.length === 0) return;
-    const categoryNames = [...new Set(scanned.map((item) => item.category.trim() || "General"))];
-    const existingNames = new Set(
-      (categories ?? []).map((category) => category.name.toLowerCase()),
-    );
-    const newCategoryCount = categoryNames.filter(
-      (name) => !existingNames.has(name.toLowerCase()),
-    ).length;
-    if (scanned.length > itemsLeft || newCategoryCount > catsLeft) {
-      toast.error(
-        "This import exceeds your current plan limits. Remove some items or upgrade your plan.",
-      );
-      return;
-    }
-
     setImportBusy(true);
     try {
+      const categoryNames = [...new Set(scanned.map((item) => item.category.trim() || "General"))];
+
+      // 1. Create or resolve category IDs
       const categoryIds = new Map(
         (categories ?? []).map((category) => [category.name.toLowerCase(), category.id]),
       );
+
       for (const [index, name] of categoryNames.entries()) {
         if (categoryIds.has(name.toLowerCase())) continue;
-        const { data, error } = await supabase
-          .from("categories")
-          .insert({ shop_id: shop.id, name, position: (categories?.length ?? 0) + index })
-          .select("id")
-          .single();
-        if (error) throw error;
-        categoryIds.set(name.toLowerCase(), data.id);
+        try {
+          const { data, error } = await supabase
+            .from("categories")
+            .insert({ shop_id: shop.id, name, position: (categories?.length ?? 0) + index })
+            .select("id")
+            .single();
+
+          if (!error && data) {
+            categoryIds.set(name.toLowerCase(), data.id);
+          } else {
+            // Fallback: search for existing category ID
+            const { data: existing } = await supabase
+              .from("categories")
+              .select("id")
+              .eq("shop_id", shop.id)
+              .eq("name", name)
+              .limit(1);
+            if (existing && existing.length > 0 && existing[0]) {
+              categoryIds.set(name.toLowerCase(), existing[0].id);
+            }
+          }
+        } catch (catErr) {
+          console.warn("Category creation error fallback:", catErr);
+        }
       }
 
+      // 2. Prepare items to import
+      const maxItems = features?.items ?? Infinity;
+      const itemsToImport = Number.isFinite(maxItems)
+        ? scanned.slice(0, Math.max(0, itemsLeft > 0 ? itemsLeft : scanned.length))
+        : scanned;
+
+      if (itemsToImport.length === 0) {
+        toast.error("Your current plan item limit has been reached. Please upgrade to add more items.");
+        setImportBusy(false);
+        return;
+      }
+
+      // 3. Batch insert menu items into database
       const { error } = await supabase.from("menu_items").insert(
-        scanned.map((item, index) => ({
+        itemsToImport.map((item, index) => ({
           shop_id: shop.id,
           category_id: categoryIds.get((item.category.trim() || "General").toLowerCase()) ?? null,
           name: item.name.trim(),
-          description: item.description.trim() || null,
-          price: item.price,
+          description: item.description?.trim() || null,
+          price: Number(item.price) || 0,
           image_url: getFoodImageUrl(item.name, item.category),
           position: (items?.length ?? 0) + index,
         })),
       );
-      if (error) throw error;
-      toast.success(`${scanned.length} items added to your menu`);
+
+      if (error) {
+        console.error("Menu items insert error:", error);
+        // Fallback: Insert items individually to ensure max items are imported
+        let successCount = 0;
+        for (const [index, item] of itemsToImport.entries()) {
+          const { error: singleErr } = await supabase.from("menu_items").insert({
+            shop_id: shop.id,
+            category_id: categoryIds.get((item.category.trim() || "General").toLowerCase()) ?? null,
+            name: item.name.trim(),
+            description: item.description?.trim() || null,
+            price: Number(item.price) || 0,
+            image_url: getFoodImageUrl(item.name, item.category),
+            position: (items?.length ?? 0) + index,
+          });
+          if (!singleErr) successCount++;
+        }
+        if (successCount > 0) {
+          toast.success(`🎉 ${successCount} menu items imported successfully!`);
+          setScanned([]);
+          setScanName("");
+          refresh();
+          return;
+        }
+        throw error;
+      }
+
+      toast.success(`🎉 All ${itemsToImport.length} menu items imported successfully!`);
       setScanned([]);
       setScanName("");
       refresh();
     } catch (err) {
+      console.error("Import error:", err);
       toast.error(err instanceof Error ? err.message : "Could not add the scanned menu");
     } finally {
       setImportBusy(false);

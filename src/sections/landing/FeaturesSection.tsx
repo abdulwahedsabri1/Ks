@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { Link } from "@tanstack/react-router";
 import {
   Smartphone,
   Store,
@@ -17,31 +18,65 @@ import {
   Download,
   CheckCircle,
   TrendingUp,
+  CreditCard,
+  Flame,
+  Star,
 } from "lucide-react";
 
 const features = [
   {
     number: "01",
-    title: "Instant Digital Presence",
+    title: "Instant UPI Payments & Direct QR Code",
     description:
-      "Launch your customized mobile-first experience in less than 5 minutes. Zero coding required.",
-    tag: "Fast Setup",
-    gradient: "from-amber-500/20 via-orange-500/10 to-transparent",
-    badgeColor: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-    icon: Zap,
+      "Accept customer payments directly to your bank account via GPay, PhonePe, Paytm or BHIM with zero middleman fees. 100% instant payouts.",
+    tag: "🔥 Most Profitable Feature",
+    badgeColor: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+    gradient: "from-emerald-500/25 via-teal-500/15 to-transparent",
+    icon: CreditCard,
+    highlight: true,
   },
   {
     number: "02",
-    title: "Beautiful Luxury Themes",
+    title: "Direct WhatsApp Ordering & Cart",
     description:
-      "Choose from our collection of premium, handcrafted luxury themes designed to elevate your brand image.",
-    tag: "Design System",
-    gradient: "from-purple-500/20 via-pink-500/10 to-transparent",
-    badgeColor: "bg-purple-500/10 text-purple-600 border-purple-500/20",
-    icon: Paintbrush,
+      "Allow guests to browse items, select table numbers or delivery options, and send itemized cart receipts directly to staff WhatsApp.",
+    tag: "Top 5 Feature ⭐",
+    badgeColor: "bg-green-500/15 text-green-700 border-green-500/30",
+    gradient: "from-green-500/20 via-emerald-500/10 to-transparent",
+    icon: MessageCircle,
   },
   {
     number: "03",
+    title: "Beautiful Luxury Themes",
+    description:
+      "Choose from our collection of premium, handcrafted luxury themes designed to elevate your brand image.",
+    tag: "Top 5 Feature ⭐",
+    badgeColor: "bg-purple-500/15 text-purple-700 border-purple-500/30",
+    gradient: "from-purple-500/20 via-pink-500/10 to-transparent",
+    icon: Paintbrush,
+  },
+  {
+    number: "04",
+    title: "AI Menu Generator & OCR Scanner",
+    description:
+      "Snap a photo of your paper menu or describe your restaurant in words — AI automatically builds your menu in 10 seconds.",
+    tag: "Top 5 Feature ⭐",
+    badgeColor: "bg-amber-500/15 text-amber-700 border-amber-500/30",
+    gradient: "from-amber-500/20 via-yellow-500/10 to-transparent",
+    icon: Wand2,
+  },
+  {
+    number: "05",
+    title: "Deep Real-Time Analytics",
+    description:
+      "Track QR scans, unique visitors, peak viewing hours, and top-selling menu items with live interactive graphs.",
+    tag: "Top 5 Feature ⭐",
+    badgeColor: "bg-cyan-500/15 text-cyan-700 border-cyan-500/30",
+    gradient: "from-cyan-500/20 via-teal-500/10 to-transparent",
+    icon: BarChart3,
+  },
+  {
+    number: "06",
     title: "Dynamic Smart QR Codes",
     description:
       "High-resolution branded QR codes. Update your menu or links anytime without reprinting physical cards.",
@@ -51,27 +86,7 @@ const features = [
     icon: QrCode,
   },
   {
-    number: "04",
-    title: "Deep Real-Time Analytics",
-    description:
-      "Track QR scans, unique visitors, peak viewing hours, and top-selling menu items with live charts.",
-    tag: "Data Driven",
-    gradient: "from-emerald-500/20 via-teal-500/10 to-transparent",
-    badgeColor: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-    icon: BarChart3,
-  },
-  {
-    number: "05",
-    title: "Direct WhatsApp Ordering",
-    description:
-      "Let customers select items, enter table numbers, and send formatted orders directly to your staff WhatsApp.",
-    tag: "Zero Commission",
-    gradient: "from-green-500/20 via-emerald-500/10 to-transparent",
-    badgeColor: "bg-green-500/10 text-green-600 border-green-500/20",
-    icon: MessageCircle,
-  },
-  {
-    number: "06",
+    number: "07",
     title: "Multi-Language Engine",
     description:
       "Auto-translate your menu into English, Hindi, Arabic, Malayalam, French, and Spanish instantly.",
@@ -81,7 +96,7 @@ const features = [
     icon: Globe2,
   },
   {
-    number: "07",
+    number: "08",
     title: "Sub-Second Ultra Fast Load",
     description:
       "Optimized lightweight mobile microsites load in under 400ms on 3G, 4G, and Wi-Fi networks.",
@@ -91,7 +106,7 @@ const features = [
     icon: Smartphone,
   },
   {
-    number: "08",
+    number: "09",
     title: "Tailored For Any Industry",
     description:
       "Pre-configured layouts for restaurants, cafes, bakeries, salons, spas, boutiques, clinics, and shops.",
@@ -99,16 +114,6 @@ const features = [
     gradient: "from-indigo-500/20 via-purple-500/10 to-transparent",
     badgeColor: "bg-indigo-500/10 text-indigo-600 border-indigo-500/20",
     icon: Store,
-  },
-  {
-    number: "09",
-    title: "Enterprise Data Protection",
-    description:
-      "SSL encryption, automated backups, and 99.9% uptime SLA guarantee for continuous store operation.",
-    tag: "Secure",
-    gradient: "from-rose-500/20 via-pink-500/10 to-transparent",
-    badgeColor: "bg-rose-500/10 text-rose-600 border-rose-500/20",
-    icon: ShieldCheck,
   },
   {
     number: "10",
@@ -122,46 +127,6 @@ const features = [
   },
   {
     number: "11",
-    title: "Camera Photo OCR Scanner",
-    description:
-      "Snap a photo of your existing paper menu and our OCR engine extracts item titles, prices & categories.",
-    tag: "AI Powered",
-    gradient: "from-fuchsia-500/20 via-pink-500/10 to-transparent",
-    badgeColor: "bg-fuchsia-500/10 text-fuchsia-600 border-fuchsia-500/20",
-    icon: Wand2,
-  },
-  {
-    number: "12",
-    title: "AI Menu Generator",
-    description:
-      "Describe your business in plain words and watch AI generate full menu categories & items in seconds.",
-    tag: "AI Powered",
-    gradient: "from-amber-500/20 via-yellow-500/10 to-transparent",
-    badgeColor: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-    icon: Wand2,
-  },
-  {
-    number: "13",
-    title: "Live Scan & Item Metrics",
-    description:
-      "Real-time metrics tracking total scans, customer views, and top-performing menu dishes.",
-    tag: "Insights",
-    gradient: "from-teal-500/20 via-emerald-500/10 to-transparent",
-    badgeColor: "bg-teal-500/10 text-teal-600 border-teal-500/20",
-    icon: TrendingUp,
-  },
-  {
-    number: "14",
-    title: "Tailored for Any Business",
-    description:
-      "Built specifically for restaurants, cafes, bakeries, salons, spa, boutiques, clinics, and local stores.",
-    tag: "All-in-One",
-    gradient: "from-sky-500/20 via-blue-500/10 to-transparent",
-    badgeColor: "bg-sky-500/10 text-sky-600 border-sky-500/20",
-    icon: CheckCircle,
-  },
-  {
-    number: "15",
     title: "Zero Hidden Fees",
     description:
       "Keep 100% of your earnings with zero per-order transaction fees or revenue commissions.",
@@ -171,7 +136,7 @@ const features = [
     icon: Coins,
   },
   {
-    number: "16",
+    number: "12",
     title: "24/7 Priority Support",
     description:
       "Direct WhatsApp & phone assistance to guide setup, menu uploads, and QR stand printing.",
@@ -188,7 +153,7 @@ export function FeaturesSection() {
     target: targetRef,
   });
 
-  const x = useTransform(scrollYProgress, [0, 1], ["1%", "-84%"]);
+  const x = useTransform(scrollYProgress, [0, 1], ["1%", "-82%"]);
 
   return (
     <section
@@ -213,21 +178,21 @@ export function FeaturesSection() {
                   className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F5A623]/15 border border-[#F5A623]/30 text-xs font-bold uppercase tracking-widest text-[#D99A2B] mb-4"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  Powerful Features
+                  Top Features & ROI Engine
                 </motion.div>
                 <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#100C09]">
                   Everything you need to <span className="italic text-[#F5A623]">succeed</span>
                 </h2>
               </div>
 
-              <div className="flex items-center gap-3 text-sm text-[#3A2818]/70 font-semibold">
-                <span>Scroll down to explore all 16 features</span>
-                <motion.div
-                  animate={{ x: [0, 6, 0] }}
-                  transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+              <div className="flex items-center gap-4">
+                <Link
+                  to="/features"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#100C09] text-[#FFC45A] hover:bg-[#F5A623] hover:text-white transition-all text-xs font-bold shadow-md"
                 >
-                  <ArrowRight className="w-4 h-4 text-[#F5A623]" />
-                </motion.div>
+                  <span>Explore All 16 Features</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </div>
           </div>
@@ -238,11 +203,15 @@ export function FeaturesSection() {
               {features.map((feature) => (
                 <div
                   key={feature.number}
-                  className="group relative w-[300px] sm:w-[380px] md:w-[440px] shrink-0 rounded-3xl bg-white border border-black/10 p-6 sm:p-8 md:p-10 shadow-xl transition-all duration-300 hover:shadow-2xl hover:border-[#F5A623]/50 flex flex-col justify-between overflow-hidden"
+                  className={`group relative w-[300px] sm:w-[380px] md:w-[440px] shrink-0 rounded-3xl bg-white border p-6 sm:p-8 md:p-10 shadow-xl transition-all duration-300 hover:shadow-2xl flex flex-col justify-between overflow-hidden ${
+                    feature.highlight
+                      ? "border-emerald-500/60 ring-2 ring-emerald-500/20 hover:border-emerald-500"
+                      : "border-black/10 hover:border-[#F5A623]/50"
+                  }`}
                 >
                   {/* Subtle Card Background Gradient */}
                   <div
-                    className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
+                    className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-20 group-hover:opacity-100 transition-opacity duration-500`}
                   />
 
                   {/* Card Top */}
@@ -251,7 +220,13 @@ export function FeaturesSection() {
                       <span className="font-mono text-3xl sm:text-4xl font-extrabold text-[#100C09]/20 group-hover:text-[#F5A623] transition-colors duration-300">
                         {feature.number}
                       </span>
-                      <div className="size-12 sm:size-14 rounded-2xl bg-[#100C09] text-[#FFC45A] border border-black/10 flex items-center justify-center group-hover:scale-110 group-hover:bg-[#F5A623] group-hover:text-white transition-all duration-300 shadow-md">
+                      <div
+                        className={`size-12 sm:size-14 rounded-2xl border flex items-center justify-center transition-all duration-300 shadow-md ${
+                          feature.highlight
+                            ? "bg-emerald-600 text-white border-emerald-400 group-hover:scale-110"
+                            : "bg-[#100C09] text-[#FFC45A] border-black/10 group-hover:scale-110 group-hover:bg-[#F5A623] group-hover:text-white"
+                        }`}
+                      >
                         <feature.icon className="size-6 sm:size-7" />
                       </div>
                     </div>

@@ -2,7 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, Sparkles, X, Minus, ShieldCheck, Loader2, Lock } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { PLANS } from "@/lib/shop";
+import { PLANS, parsePriceNumber, type PlanItem } from "@/lib/shop";
+import { useCustomPlans } from "@/hooks/useShopData";
+import { RazorpayModal } from "@/components/RazorpayModal";
 import { Navbar } from "@/sections/landing/Navbar";
 import { Footer } from "@/sections/landing/Footer";
 import { createRazorpayOrder, verifyRazorpayPayment } from "@/lib/payment.functions";
@@ -157,220 +159,14 @@ function ZCell({ value, highlight }: { value: CellValue; highlight?: boolean }) 
   );
 }
 
-// ── Razorpay Payment Modal ───────────────────────────────────────────────────
-
-interface RazorpayModalProps {
-  plan: (typeof PLANS)[0];
-  price: number;
-  onClose: () => void;
-  onSuccess: () => void;
-}
-
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Razorpay: any;
-  }
-}
-
-function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModalProps) {
-  const [loading, setLoading] = useState(false);
-  const overlayRef = useRef<HTMLDivElement>(null);
-
-  // Load Razorpay SDK
-  useEffect(() => {
-    if (document.getElementById("razorpay-sdk")) return;
-    const script = document.createElement("script");
-    script.id = "razorpay-sdk";
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
-
-  async function handlePay() {
-    setLoading(true);
-    try {
-      // Check if user is logged in
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("Please log in first to purchase a plan.");
-        setLoading(false);
-        return;
-      }
-
-      // Create Razorpay order via server function
-      const order = await createRazorpayOrder({
-        data: { amount: price, receipt: `rcpt_${plan.id}_${Date.now()}` },
-      });
-
-      if (!window.Razorpay) {
-        toast.error("Payment gateway not loaded. Please refresh the page.");
-        setLoading(false);
-        return;
-      }
-
-      const rzp = new window.Razorpay({
-        key: order.key_id,
-        amount: order.amount,
-        currency: order.currency,
-        name: "MY Link QR",
-        description: `${plan.name} Plan — Monthly`,
-        order_id: order.order_id,
-        theme: { color: "#F5A623" },
-        prefill: {
-          email: user.email,
-        },
-        modal: {
-          ondismiss: () => setLoading(false),
-        },
-        handler: async (response: {
-          razorpay_payment_id: string;
-          razorpay_order_id: string;
-          razorpay_signature: string;
-        }) => {
-          try {
-            await verifyRazorpayPayment({
-              data: {
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-                plan_name: plan.name,
-              },
-            });
-            toast.success(`🎉 ${plan.name} plan activated! Your shop is now upgraded.`);
-            onSuccess();
-          } catch (err) {
-            toast.error(err instanceof Error ? err.message : "Payment verification failed.");
-            setLoading(false);
-          }
-        },
-      });
-
-      rzp.open();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not initiate payment.");
-      setLoading(false);
-    }
-  }
-
-  return (
-    <motion.div
-      ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={(e) => {
-        if (e.target === overlayRef.current) onClose();
-      }}
-    >
-      <motion.div
-        className="w-full max-w-md rounded-3xl bg-white shadow-2xl overflow-hidden"
-        initial={{ scale: 0.95, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-      >
-        {/* Header */}
-        <div className="bg-[#100C09] p-6 relative">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            <X className="size-4" />
-          </button>
-          <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-1">
-            Upgrading to
-          </p>
-          <h2 className="text-2xl font-bold text-white">{plan.name} Plan</h2>
-          <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-4xl font-extrabold text-[#F5A623]">₹{price}</span>
-            <span className="text-white/50 text-sm">/month</span>
-          </div>
-        </div>
-
-        {/* Features summary */}
-        <div className="p-6 border-b border-black/5">
-          <p className="text-xs font-semibold text-[#3A2818]/60 uppercase tracking-wider mb-3">
-            What you get
-          </p>
-          <ul className="space-y-2">
-            {plan.features.slice(0, 5).map((f) => (
-              <li key={f} className="flex items-center gap-2 text-sm text-[#3A2818]/80">
-                <div className="size-4 rounded-full bg-[#F5A623]/20 text-[#D99A2B] flex items-center justify-center shrink-0">
-                  <Check className="size-2.5" />
-                </div>
-                {f}
-              </li>
-            ))}
-            {plan.features.length > 5 && (
-              <li className="text-xs text-[#3A2818]/50 pl-6">
-                + {plan.features.length - 5} more features
-              </li>
-            )}
-          </ul>
-        </div>
-
-        {/* Payment CTA */}
-        <div className="p-6 space-y-4">
-          <Button
-            onClick={handlePay}
-            disabled={loading}
-            className="w-full h-13 bg-[#F5A623] hover:bg-[#e09615] text-black font-bold text-base rounded-xl shadow-lg transition-all hover:scale-[1.01] active:scale-[0.99]"
-          >
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="size-4 animate-spin" />
-                Opening Razorpay…
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Lock className="size-4" />
-                Pay ₹{price} Securely with Razorpay
-              </span>
-            )}
-          </Button>
-
-          <div className="flex items-center justify-center gap-4 pt-1">
-            <div className="flex items-center gap-1.5 text-xs text-[#3A2818]/50">
-              <ShieldCheck className="size-3.5 text-emerald-500" />
-              <span>256-bit SSL Encrypted</span>
-            </div>
-            <span className="text-[#3A2818]/20">·</span>
-            <span className="text-xs text-[#3A2818]/50">Secured by Razorpay</span>
-          </div>
-
-          {/* Razorpay logo / accepted methods */}
-          <div className="rounded-xl border border-black/5 bg-[#F5F0E7]/60 p-3 text-center">
-            <p className="text-[10px] text-[#3A2818]/40 font-medium mb-2">
-              Accepted Payment Methods
-            </p>
-            <div className="flex items-center justify-center gap-3 flex-wrap">
-              {["UPI", "GPay", "PhonePe", "Cards", "Net Banking", "Wallets"].map((m) => (
-                <span
-                  key={m}
-                  className="text-[10px] font-bold bg-white border border-black/10 px-2 py-0.5 rounded-full text-[#3A2818]/70"
-                >
-                  {m}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
 // ── Main Page ────────────────────────────────────────────────────────────────
 
 function PricingPage() {
   const navigate = useNavigate();
-  const [selectedPlan, setSelectedPlan] = useState<(typeof PLANS)[0] | null>(null);
+  const { data: plans = PLANS } = useCustomPlans();
+  const [selectedPlan, setSelectedPlan] = useState<PlanItem | null>(null);
 
-  const handlePlanClick = (p: (typeof PLANS)[0]) => {
+  const handlePlanClick = (p: PlanItem) => {
     if (p.id === "trial") {
       navigate({ to: "/auth" });
     } else {
@@ -383,7 +179,7 @@ function PricingPage() {
     navigate({ to: "/dashboard" });
   };
 
-  const priceOf = (id: string) => (id === "pro" ? 499 : id === "premium" ? 799 : 249);
+  const priceOf = (p: PlanItem) => p.priceNumber ?? parsePriceNumber(p.price);
 
   return (
     <div className="min-h-screen bg-[#F5F0E7] text-[#100C09] font-sans selection:bg-[#F5A623]/30">
@@ -408,7 +204,7 @@ function PricingPage() {
         {/* 4 Plans Grid */}
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-24">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto items-stretch">
-            {PLANS.map((p) => (
+            {plans.map((p: PlanItem) => (
               <div
                 key={p.id}
                 className={`relative rounded-3xl bg-white p-6 sm:p-7 border ${
@@ -437,7 +233,7 @@ function PricingPage() {
                   </div>
 
                   <ul className="space-y-3 mb-8 text-xs text-[#3A2818]/80 font-medium">
-                    {p.features.map((f) => (
+                    {p.features.map((f: string) => (
                       <li key={f} className="flex items-center gap-2.5">
                         <div className="size-4 rounded-full bg-[#F5A623]/20 text-[#D99A2B] flex items-center justify-center shrink-0">
                           <Check className="size-2.5" />
@@ -607,7 +403,7 @@ function PricingPage() {
         {selectedPlan && (
           <RazorpayModal
             plan={selectedPlan}
-            price={priceOf(selectedPlan.id)}
+            price={priceOf(selectedPlan)}
             onClose={() => setSelectedPlan(null)}
             onSuccess={handlePaymentSuccess}
           />

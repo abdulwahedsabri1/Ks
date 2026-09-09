@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { PLANS, parsePriceNumber, type Category, type MenuItem, type Shop, type PlanItem } from "@/lib/shop";
 import { supabase } from "@/integrations/supabase/client";
-import type { Category, MenuItem, Shop } from "@/lib/shop";
 
 export function useMyShop(userId?: string) {
   const queryClient = useQueryClient();
@@ -79,7 +79,7 @@ export function useMyShop(userId?: string) {
           table: "shops",
           filter: `id=eq.${query.data.id}`,
         },
-        (payload) => {
+        (payload: any) => {
           queryClient.invalidateQueries({ queryKey: ["my-shop", userId] });
           if (payload.eventType === "UPDATE") {
             const oldRecord = payload.old as Shop;
@@ -144,7 +144,7 @@ export function useMenuItems(shopId?: string) {
         .eq("shop_id", shopId!)
         .order("position");
       if (error) throw error;
-      return (data ?? []).map((i) => ({
+      return (data ?? []).map((i: any) => ({
         ...i,
         price: Number(i.price),
         discount_price: i.discount_price === null ? null : Number(i.discount_price),
@@ -162,12 +162,17 @@ export type AnalyticsRow = {
   created_at: string;
 };
 
-export function useAnalytics(shopId?: string, days = 30) {
+export function useAnalytics(shopId?: string, days = 30, resetAt?: string | null) {
   return useQuery({
-    queryKey: ["analytics", shopId, days],
+    queryKey: ["analytics", shopId, days, resetAt],
     enabled: !!shopId,
     queryFn: async (): Promise<AnalyticsRow[]> => {
-      const since = new Date(Date.now() - days * 86400000).toISOString();
+      const thirtyDaysAgo = new Date(Date.now() - days * 86400000).toISOString();
+      const since =
+        resetAt && !isNaN(new Date(resetAt).getTime()) && new Date(resetAt).getTime() > new Date(thirtyDaysAgo).getTime()
+          ? new Date(resetAt).toISOString()
+          : thirtyDaysAgo;
+
       const { data, error } = await supabase
         .from("analytics_events")
         .select("*")
@@ -294,4 +299,65 @@ export function usePaymentHistory(shopId?: string) {
       return (data ?? []) as PaymentHistoryRow[];
     },
   });
+}
+
+export function useCustomPlans() {
+  return useQuery({
+    queryKey: ["custom-plans"],
+    queryFn: async (): Promise<PlanItem[]> => {
+      try {
+        const { data } = await supabase
+          .from("subscription_history")
+          .select("notes")
+          .eq("action", "platform_plans")
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (data && data.length > 0 && data[0]?.notes) {
+          const parsed = JSON.parse(data[0].notes);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed as PlanItem[];
+          }
+        }
+      } catch (err) {
+        console.error("Custom plans fetch error:", err);
+      }
+
+      try {
+        if (typeof window !== "undefined") {
+          const local = localStorage.getItem("mylink_custom_plans");
+          if (local) {
+            const parsed = JSON.parse(local);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed as PlanItem[];
+          }
+        }
+      } catch {}
+
+      return PLANS;
+    },
+  });
+}
+
+export async function savePlatformPlans(updatedPlans: PlanItem[], userId?: string) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("mylink_custom_plans", JSON.stringify(updatedPlans));
+  }
+
+  try {
+    const { data: shops } = await supabase.from("shops").select("id").limit(1);
+    const shopId = shops?.[0]?.id;
+
+    if (shopId) {
+      await supabase.from("subscription_history").insert({
+        shop_id: shopId,
+        action: "platform_plans",
+        previous_value: "custom_plans_update",
+        new_value: "updated",
+        performed_by: userId ?? null,
+        notes: JSON.stringify(updatedPlans),
+      });
+    }
+  } catch (err) {
+    console.error("Failed to sync platform plans to Supabase:", err);
+  }
 }

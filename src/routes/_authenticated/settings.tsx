@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { UpiPaymentBox } from "@/components/UpiPaymentBox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin, useMyShop, uploadShopMedia } from "@/hooks/useShopData";
@@ -10,8 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Lock } from "lucide-react";
 import {
   NICHES,
+  shopBusinessId,
   shopTiming,
   shopSocialLink,
   shopGoogleReviewLink,
@@ -67,6 +70,7 @@ function SettingsPage() {
     coupons: [] as Coupon[],
     upi_enabled: false,
     upi_id: "",
+    upi_qr_url: "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -141,6 +145,7 @@ function SettingsPage() {
       coupons: ((shop.features as Record<string, unknown> | null)?.["coupons"] as Coupon[]) || [],
       upi_enabled: Boolean((shop.features as Record<string, unknown> | null)?.["upi_enabled"]),
       upi_id: ((shop.features as Record<string, unknown> | null)?.["upi_id"] as string) || "",
+      upi_qr_url: ((shop.features as Record<string, unknown> | null)?.["upi_qr_url"] as string) || "",
     });
   }, [shop]);
 
@@ -163,6 +168,7 @@ function SettingsPage() {
       coupons: form.coupons,
       upi_enabled: form.upi_enabled,
       upi_id: form.upi_id.trim() || undefined,
+      upi_qr_url: form.upi_qr_url ? form.upi_qr_url.trim() : undefined,
     };
 
     // Clean up undefined properties from features before saving
@@ -195,14 +201,25 @@ function SettingsPage() {
     qc.invalidateQueries({ queryKey: ["my-shop"] });
   }
 
-  async function upload(kind: "logo_url" | "cover_url", file?: File) {
+  async function upload(kind: "logo_url" | "cover_url" | "upi_qr_url", file?: File) {
     if (!shop || !file) return;
     try {
       const url = await uploadShopMedia(file, shop.id);
-      const patch = kind === "logo_url" ? { logo_url: url } : { cover_url: url };
-      const { error } = await supabase.from("shops").update(patch).eq("id", shop.id);
-      if (error) throw error;
-      toast.success("Image updated");
+      if (kind === "upi_qr_url") {
+        setForm((prev) => ({ ...prev, upi_qr_url: url }));
+        const updatedFeatures = {
+          ...(shop.features || {}),
+          upi_qr_url: url,
+        };
+        const { error } = await supabase.from("shops").update({ features: updatedFeatures }).eq("id", shop.id);
+        if (error) throw error;
+        toast.success("UPI QR Code image updated");
+      } else {
+        const patch = kind === "logo_url" ? { logo_url: url } : { cover_url: url };
+        const { error } = await supabase.from("shops").update(patch).eq("id", shop.id);
+        if (error) throw error;
+        toast.success("Image updated");
+      }
       qc.invalidateQueries({ queryKey: ["my-shop"] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
@@ -219,6 +236,34 @@ function SettingsPage() {
         <p className="text-sm text-muted-foreground">Create your shop on the dashboard first.</p>
       ) : (
         <div className="max-w-2xl space-y-4 rounded-2xl border bg-card p-6">
+          <div className="flex items-center justify-between border-b pb-3 mb-2">
+            <h3 className="text-xs font-bold tracking-widest uppercase text-muted-foreground">
+              Business Details
+            </h3>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-mono font-bold">
+              <Lock className="size-3" />
+              <span>ID: {shopBusinessId(shop)}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="s-biz-id" className="text-xs font-medium text-muted-foreground">
+                Unique Business ID
+              </Label>
+              <span className="text-[11px] text-amber-500 flex items-center gap-1 font-medium">
+                <Lock className="size-3" /> Locked (Read-Only)
+              </span>
+            </div>
+            <Input
+              id="s-biz-id"
+              value={shopBusinessId(shop)}
+              readOnly
+              disabled
+              className="h-10 bg-muted/40 font-mono font-bold text-amber-600 dark:text-amber-400 border-amber-500/30 cursor-not-allowed"
+            />
+          </div>
+
           <Text
             id="s-name"
             label="Shop name"
@@ -365,15 +410,27 @@ function SettingsPage() {
                     <Label htmlFor="s-upi">UPI ID (Optional)</Label>
                     <Input
                       id="s-upi"
-                      placeholder="e.g. 9876543210@ybl"
+                      placeholder="e.g. sabriabdulwahed-2@okhdfcbank"
                       value={form.upi_id}
                       onChange={(e) => setForm({ ...form, upi_id: e.target.value })}
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      If you enter a UPI ID here, it will be automatically included in the WhatsApp
-                      order message to instruct your customers how to pay.
+                      If you enter a UPI ID here, it will be automatically included in the WhatsApp order message and generate the customer payment QR code below.
                     </p>
                   </div>
+
+                  {form.upi_id.trim() && (
+                    <div className="space-y-2 pt-2">
+                      <Label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+                        Live Customer Payment Preview
+                      </Label>
+                      <UpiPaymentBox
+                        upiId={form.upi_id}
+                        shopName={form.name || shop.name}
+                        currency={form.currency}
+                      />
+                    </div>
+                  )}
                 </div>
               )
             )}

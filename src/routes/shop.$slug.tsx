@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { UpiPaymentBox } from "@/components/UpiPaymentBox";
 import { getPublicShop } from "@/lib/menu.functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -828,65 +829,16 @@ function PublicMenu() {
 
                 {features.upi &&
                   Boolean((shop.features as Record<string, unknown> | null)?.["upi_enabled"]) &&
-                  Boolean((shop.features as Record<string, unknown> | null)?.["upi_id"]) && (
-                    <div
-                      className={`space-y-2 mb-6 p-4 rounded-xl border border-green-500/30 bg-green-500/10`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="size-6 rounded-full bg-green-500 flex items-center justify-center text-white">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                        </div>
-                        <Label className="text-green-700 font-bold dark:text-green-400">
-                          UPI Payment Accepted
-                        </Label>
-                      </div>
-                      <p className="text-xs text-green-700/80 dark:text-green-400/80 font-medium">
-                        Pay securely now using the buttons below, or wait for instructions via
-                        WhatsApp.
-                      </p>
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          asChild
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 bg-white border-green-200 text-green-800 hover:bg-green-50 shadow-sm"
-                        >
-                          <a
-                            href={`upi://pay?pa=${(shop.features as Record<string, unknown> | null)?.["upi_id"]}&pn=${encodeURIComponent(shop.name)}&am=${total.toFixed(2)}&cu=INR&tr=QR${Date.now()}`}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            GPay
-                          </a>
-                        </Button>
-                        <Button
-                          asChild
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 bg-white border-green-200 text-green-800 hover:bg-green-50 shadow-sm"
-                        >
-                          <a
-                            href={`phonepe://pay?pa=${(shop.features as Record<string, unknown> | null)?.["upi_id"]}&pn=${encodeURIComponent(shop.name)}&am=${total.toFixed(2)}&cu=INR&tr=QR${Date.now()}`}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            PhonePe
-                          </a>
-                        </Button>
-                      </div>
-                    </div>
+                  (Boolean((shop.features as Record<string, unknown> | null)?.["upi_id"]) ||
+                    Boolean((shop.features as Record<string, unknown> | null)?.["upi_qr_url"])) && (
+                    <UpiPaymentBox
+                      upiId={((shop.features as Record<string, unknown> | null)?.["upi_id"] as string) || ""}
+                      upiQrUrl={(shop.features as Record<string, unknown> | null)?.["upi_qr_url"] as string | null}
+                      shopName={shop.name}
+                      amount={total}
+                      currency={shop.currency}
+                      className="mb-6"
+                    />
                   )}
 
                 <div className="pt-2">
