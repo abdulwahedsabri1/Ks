@@ -46,6 +46,7 @@ import {
   useCustomPlans,
   savePlatformPlans,
 } from "@/hooks/useShopData";
+import { usePaymentSettings } from "@/hooks/usePaymentSettings";
 import { useAllReviews, useReviewStats } from "@/hooks/useReviews";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,7 +102,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type Tab = "overview" | "shops" | "staff" | "payments" | "reviews";
+type Tab = "overview" | "shops" | "staff" | "payments" | "reviews" | "analytics" | "settings";
 
 // ─── Manage Modal Tab ───────────────────────────────────────────
 type ModalTab =
@@ -137,6 +138,21 @@ function AdminPage() {
       return (data ?? []) as Shop[];
     },
   });
+
+  // Real-time subscription: refresh admin shops list when any shop changes
+  useEffect(() => {
+    if (!isAdmin) return;
+    const channelId = Math.random().toString(36).substring(7);
+    const channel = supabase
+      .channel(`admin-shops-realtime-${channelId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "shops" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-shops"] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin, qc]);
 
   const { data: staff } = useAllStaff(!!isAdmin);
 
@@ -212,13 +228,45 @@ function AdminPage() {
       if (managingShop?.id === targetShop.id) {
         setManagingShop(null);
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast.error(err.message || "Failed to delete shop.");
     } finally {
       setIsDeleting(false);
     }
   }
+
+  // Platform Settings
+  const { data: platformSettings } = useQuery({
+    queryKey: ["admin-platform-settings"],
+    enabled: !!isAdmin,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("app_settings")
+        .select("value")
+        .eq("key", "auth_settings")
+        .maybeSingle();
+      if (error && error.code !== "PGRST116") throw error; // ignore no rows error
+      return data?.value as { require_email_confirmation?: boolean } | null;
+    },
+  });
+
+  const toggleEmailConfirmation = async (checked: boolean) => {
+    try {
+      const { error } = await (supabase as any).from("app_settings").upsert(
+        {
+          key: "auth_settings",
+          value: { require_email_confirmation: checked },
+        },
+        { onConflict: "key" },
+      );
+
+      if (error) throw error;
+      toast.success(`Email confirmation is now ${checked ? "REQUIRED" : "DISABLED"}`);
+      qc.invalidateQueries({ queryKey: ["admin-platform-settings"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update settings");
+    }
+  };
 
   // Auto-purge analytics older than 30 days
   useEffect(() => {
@@ -250,10 +298,7 @@ function AdminPage() {
         analytics_reset_at: resetTimestamp,
       };
 
-      await supabase
-        .from("shops")
-        .update({ features: updatedFeatures })
-        .eq("id", targetShop.id);
+      await supabase.from("shops").update({ features: updatedFeatures }).eq("id", targetShop.id);
 
       await supabase.from("subscription_history").insert({
         shop_id: targetShop.id,
@@ -271,7 +316,6 @@ function AdminPage() {
       if (managingShop?.id === targetShop.id) {
         setManagingShop(null);
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast.error(err.message || "Failed to reset analytics.");
     } finally {
@@ -531,6 +575,40 @@ function AdminPage() {
       {/* ─── PAYMENTS ────────────────────────────── */}
       {tab === "payments" && <PaymentManagement isAdmin={isAdmin} />}
 
+      {/* ─── PLATFORM SETTINGS ───────────────────── */}
+      {tab === "settings" && (
+        <div className="space-y-6 max-w-4xl">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <h3 className="font-display text-lg font-semibold text-white">
+              Authentication Settings
+            </h3>
+            <p className="text-sm text-slate-400 mt-1 mb-6">
+              Manage global authentication behaviors for the platform.
+            </p>
+
+            <div className="flex items-center justify-between border-b border-white/10 pb-6">
+              <div className="space-y-0.5">
+                <div className="text-sm font-medium text-white">Require Email Confirmation</div>
+                <div className="text-xs text-slate-400 max-w-lg">
+                  When enabled, new users must click a confirmation link in their email before they
+                  can log in. When disabled, users are instantly verified (requires SERVICE_ROLE_KEY
+                  to be set in .env).
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={platformSettings?.require_email_confirmation ?? true}
+                  onChange={(e) => toggleEmailConfirmation(e.target.checked)}
+                />
+                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── MANAGE MODAL ────────────────────────── */}
       {managingShop && (
         <ManageShopModal
@@ -611,8 +689,8 @@ function AdminPage() {
                   <AlertTriangle className="size-4 text-amber-400" /> Confirm Analytics Reset
                 </p>
                 <p>
-                  This will clear all views, item clicks, and scan counts for this shop.
-                  Analytics automatically purge entries older than 30 days.
+                  This will clear all views, item clicks, and scan counts for this shop. Analytics
+                  automatically purge entries older than 30 days.
                 </p>
               </div>
             </div>
@@ -735,7 +813,6 @@ function ManageShopModal({
   }
 
   async function updateShop(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     patch: any,
     action: string,
     prevVal: string,
@@ -768,7 +845,6 @@ function ManageShopModal({
   }
 
   async function markPayment(newStatus: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const patch: any = { payment_status: newStatus };
     if (newStatus === "paid") {
       patch.status = "active";
@@ -802,11 +878,25 @@ function ManageShopModal({
       };
       const unlockedFeatureMap: Record<string, Record<string, boolean>> = {
         basic: { logo_cover: true, social_link: true, opening_hours: true, multi_language: true },
-        pro: { logo_cover: true, social_link: true, opening_hours: true, multi_language: true, ai: true, ordering: true, analytics: true, qr_downloads: true, on_table: true, take_away: true },
+        pro: {
+          logo_cover: true,
+          social_link: true,
+          opening_hours: true,
+          multi_language: true,
+          ai: true,
+          ordering: true,
+          analytics: true,
+          qr_downloads: true,
+          on_table: true,
+          take_away: true,
+        },
         premium: ALL_FEATURES,
       };
       const unlocked = unlockedFeatureMap[localShop.plan.toLowerCase()] ?? ALL_FEATURES;
-      patch["features"] = { ...((localShop.features as Record<string, unknown> | null) ?? {}), ...unlocked };
+      patch["features"] = {
+        ...((localShop.features as Record<string, unknown> | null) ?? {}),
+        ...unlocked,
+      };
 
       await supabase.from("payment_history").insert({
         shop_id: shop.id,
@@ -853,8 +943,12 @@ function ManageShopModal({
 
   async function changePlan(newPlan: string) {
     const cycle = localShop.billing_cycle ?? "monthly";
-    const pObj = dynamicPlans.find((p) => p.id.toLowerCase() === newPlan.toLowerCase()) || PLANS.find((p) => p.id.toLowerCase() === newPlan.toLowerCase());
-    const amount = pObj ? (pObj.priceNumber ?? parsePriceNumber(pObj.price)) : planAmount(newPlan, cycle);
+    const pObj =
+      dynamicPlans.find((p) => p.id.toLowerCase() === newPlan.toLowerCase()) ||
+      PLANS.find((p) => p.id.toLowerCase() === newPlan.toLowerCase());
+    const amount = pObj
+      ? (pObj.priceNumber ?? parsePriceNumber(pObj.price))
+      : planAmount(newPlan, cycle);
 
     const ALL_FEATURES = {
       logo_cover: true,
@@ -878,7 +972,18 @@ function ManageShopModal({
 
     const unlockedFeatureMap: Record<string, Record<string, boolean>> = {
       basic: { logo_cover: true, social_link: true, opening_hours: true, multi_language: true },
-      pro: { logo_cover: true, social_link: true, opening_hours: true, multi_language: true, ai: true, ordering: true, analytics: true, qr_downloads: true, on_table: true, take_away: true },
+      pro: {
+        logo_cover: true,
+        social_link: true,
+        opening_hours: true,
+        multi_language: true,
+        ai: true,
+        ordering: true,
+        analytics: true,
+        qr_downloads: true,
+        on_table: true,
+        take_away: true,
+      },
       premium: ALL_FEATURES,
     };
 
@@ -1013,7 +1118,10 @@ function ManageShopModal({
                 <InfoField label="Business ID" value={shopBusinessId(shop)} />
                 <InfoField label="Owner ID" value={shop.owner_id.slice(0, 8) + "…"} />
                 <InfoField label="Created Date" value={formatDate(shop.created_at)} />
-                <InfoField label="Plan Started" value={formatDate(shop.plan_started_at || shop.created_at)} />
+                <InfoField
+                  label="Plan Started"
+                  value={formatDate(shop.plan_started_at || shop.created_at)}
+                />
                 <InfoField label="Plan Expires" value={formatDate(shop.plan_expires_at)} />
                 <InfoField label="Account Status" value={shop.status} />
                 <InfoField label="Subscription State" value={subscriptionStateLabel(subState)} />
@@ -1179,7 +1287,6 @@ function ManageShopModal({
                             .eq("id", shop.id);
                         }
                         toast.success(`Login credentials for ${ownerEmail} are now active!`);
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       } catch (err: any) {
                         toast.error(err.message || "Failed to activate account");
                       } finally {
@@ -1441,7 +1548,7 @@ Dashboard: ${window.location.origin}/auth`;
                     const endIso = billingForm.endDate
                       ? new Date(billingForm.endDate).toISOString()
                       : null;
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
                     const patch: any = {
                       payment_status: billingForm.payStatus,
                       plan_started_at: startIso,
@@ -1723,7 +1830,12 @@ Dashboard: ${window.location.origin}/auth`;
                     setBusy(true);
                     try {
                       await supabase.from("analytics_events").delete().eq("shop_id", shop.id);
-                      await logAction("analytics_reset", "active_events", "cleared", "Analytics reset via Manage modal");
+                      await logAction(
+                        "analytics_reset",
+                        "active_events",
+                        "cleared",
+                        "Analytics reset via Manage modal",
+                      );
                       toast.success(`Analytics reset for "${shop.name}".`);
                       onRefresh();
                     } catch (err: any) {
@@ -2068,6 +2180,103 @@ function PaymentManagement({ isAdmin }: { isAdmin?: boolean | undefined }) {
   const [newPlanPrice, setNewPlanPrice] = useState("");
   const [newPlanTagline, setNewPlanTagline] = useState("");
 
+  // Payment Settings
+  const { data: paymentSettings } = usePaymentSettings();
+  const [razorpayEnabled, setRazorpayEnabled] = useState(true);
+  const [upiId, setUpiId] = useState("");
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  useEffect(() => {
+    if (paymentSettings) {
+      setRazorpayEnabled(paymentSettings.razorpay_enabled);
+      setUpiId(paymentSettings.upi_id);
+    }
+  }, [paymentSettings]);
+
+  async function handleToggleRazorpay(newValue: boolean) {
+    setRazorpayEnabled(newValue);
+    setIsSavingSettings(true);
+    try {
+      const { data: settingsShop } = await supabase
+        .from("shops")
+        .select("id, features")
+        .eq("slug", "platform-settings-internal")
+        .maybeSingle();
+
+      const newSettings = { razorpay_enabled: newValue, upi_id: upiId };
+      const newFeatures = settingsShop
+        ? { ...(settingsShop.features as any), payment_settings: newSettings }
+        : { payment_settings: newSettings };
+
+      if (!settingsShop) {
+        const { error } = await supabase.from("shops").insert({
+          name: "Platform Settings",
+          slug: "platform-settings-internal",
+          niche: "System",
+          features: newFeatures,
+          status: "active",
+          owner_id: user?.id ?? "",
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("shops")
+          .update({ features: newFeatures })
+          .eq("id", settingsShop.id);
+        if (error) throw error;
+      }
+
+      toast.success(newValue ? "Razorpay Gateway Enabled!" : "Manual UPI Payment Enabled!");
+      qc.invalidateQueries({ queryKey: ["payment_settings"] });
+    } catch (err: any) {
+      setRazorpayEnabled(!newValue); // Revert on failure
+      toast.error(err.message || "Failed to update payment settings");
+    } finally {
+      setIsSavingSettings(false);
+    }
+  }
+
+  async function handleSavePaymentSettings() {
+    setIsSavingSettings(true);
+    try {
+      const { data: settingsShop } = await supabase
+        .from("shops")
+        .select("id, features")
+        .eq("slug", "platform-settings-internal")
+        .maybeSingle();
+
+      const newSettings = { razorpay_enabled: razorpayEnabled, upi_id: upiId };
+      const newFeatures = settingsShop
+        ? { ...(settingsShop.features as any), payment_settings: newSettings }
+        : { payment_settings: newSettings };
+
+      if (!settingsShop) {
+        const { error } = await supabase.from("shops").insert({
+          name: "Platform Settings",
+          slug: "platform-settings-internal",
+          niche: "System",
+          features: newFeatures,
+          status: "active",
+          owner_id: user?.id ?? "",
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("shops")
+          .update({ features: newFeatures })
+          .eq("id", settingsShop.id);
+        if (error) throw error;
+      }
+
+      toast.success("Payment Gateway settings updated globally!");
+      qc.invalidateQueries({ queryKey: ["payment_settings"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update payment settings");
+    } finally {
+      setIsSavingSettings(false);
+    }
+  }
+
   useEffect(() => {
     if (plansData && plansData.length > 0) {
       setLocalPlans(plansData);
@@ -2082,7 +2291,6 @@ function PaymentManagement({ isAdmin }: { isAdmin?: boolean | undefined }) {
     queryKey: ["admin-payments"],
     enabled: !!isAdmin,
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const allLogItems: any[] = [];
 
       // 1. Fetch from payments table
@@ -2106,11 +2314,15 @@ function PaymentManagement({ isAdmin }: { isAdmin?: boolean | undefined }) {
           .order("created_at", { ascending: false });
 
         if (historyLogs && historyLogs.length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           historyLogs.forEach((ph: any) => {
             // Avoid duplicate if transaction ID matches
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            if (!allLogItems.some((m: any) => m.id === ph.id || (ph.transaction_id && m.transaction_id === ph.transaction_id))) {
+
+            if (
+              !allLogItems.some(
+                (m: any) =>
+                  m.id === ph.id || (ph.transaction_id && m.transaction_id === ph.transaction_id),
+              )
+            ) {
               const shopInfo = ph.shops;
               allLogItems.push({
                 id: ph.id,
@@ -2142,13 +2354,17 @@ function PaymentManagement({ isAdmin }: { isAdmin?: boolean | undefined }) {
           .order("updated_at", { ascending: false });
 
         if (paidShops && paidShops.length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           paidShops.forEach((s: any) => {
             const shopIdStr = s.id;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const exists = allLogItems.some((m: any) => m.business_name === s.name || (m.id && m.id.includes(shopIdStr)));
+
+            const exists = allLogItems.some(
+              (m: any) => m.business_name === s.name || (m.id && m.id.includes(shopIdStr)),
+            );
             if (!exists) {
-              const amt = s.amount_paid && Number(s.amount_paid) > 0 ? Number(s.amount_paid) : planAmount(s.plan, "monthly", plansData);
+              const amt =
+                s.amount_paid && Number(s.amount_paid) > 0
+                  ? Number(s.amount_paid)
+                  : planAmount(s.plan, "monthly", plansData);
               allLogItems.push({
                 id: "shop-pay-" + s.id,
                 business_name: s.name,
@@ -2248,7 +2464,6 @@ function PaymentManagement({ isAdmin }: { isAdmin?: boolean | undefined }) {
     setNewPlanTagline("");
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function updatePaymentStatus(payment: any, status: string) {
     const { error } = await supabase.from("payments").update({ status }).eq("id", payment.id);
     if (error) {
@@ -2374,12 +2589,62 @@ function PaymentManagement({ isAdmin }: { isAdmin?: boolean | undefined }) {
         <div className="space-y-6">
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 sm:p-5">
             <h3 className="font-display text-base sm:text-lg font-bold text-amber-300 flex items-center gap-2">
-              <RotateCcw className="size-5 text-amber-400" /> Platform Plans & Rupee (₹) Price Management
+              <RotateCcw className="size-5 text-amber-400" /> Platform Plans & Rupee (₹) Price
+              Management
             </h3>
             <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-              Set custom plan prices in Rupees (₹), edit plan details, or add new subscription tiers.
-              Updates automatically synchronize in real-time across the <strong>User Dashboard</strong>, <strong>Website Pricing Page</strong>, and <strong>Razorpay Payment Gateway</strong>.
+              Set custom plan prices in Rupees (₹), edit plan details, or add new subscription
+              tiers. Updates automatically synchronize in real-time across the{" "}
+              <strong>User Dashboard</strong>, <strong>Website Pricing Page</strong>, and{" "}
+              <strong>Razorpay Payment Gateway</strong>.
             </p>
+          </div>
+
+          {/* Payment Gateway Toggle */}
+          <div className="rounded-2xl border border-white/10 bg-slate-900 p-5">
+            <h4 className="font-display text-base font-bold text-white flex items-center gap-2 mb-4">
+              <CreditCard className="size-4 text-emerald-400" /> Gateway & Manual Payment Settings
+            </h4>
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start justify-between">
+              <div className="space-y-4 flex-1">
+                <div className="flex items-center justify-between max-w-sm">
+                  <div>
+                    <Label className="text-sm text-white">Enable Razorpay Integration</Label>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Toggle live Razorpay checkout. When OFF, users will see manual UPI payment
+                      instructions.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={razorpayEnabled}
+                    onCheckedChange={handleToggleRazorpay}
+                    disabled={isSavingSettings}
+                    className="data-[state=checked]:bg-emerald-500"
+                  />
+                </div>
+
+                <div className="max-w-sm space-y-1.5">
+                  <Label className="text-xs text-slate-400">
+                    Manual UPI ID (Used when Razorpay is OFF)
+                  </Label>
+                  <Input
+                    value={upiId}
+                    onChange={(e) => setUpiId(e.target.value)}
+                    disabled={isSavingSettings}
+                    placeholder="e.g. 9392318135-2@axl"
+                    className="h-9 border-white/10 bg-slate-800 text-sm text-white"
+                  />
+                </div>
+              </div>
+
+              <Button
+                onClick={handleSavePaymentSettings}
+                disabled={isSavingSettings}
+                className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold"
+              >
+                {isSavingSettings ? "Saving..." : "Save Gateway Settings"}
+              </Button>
+            </div>
           </div>
 
           <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
@@ -2448,10 +2713,15 @@ function PaymentManagement({ isAdmin }: { isAdmin?: boolean | undefined }) {
 
                     {/* Features list */}
                     <div className="space-y-2">
-                      <Label className="text-slate-400 text-xs font-semibold">Features Included</Label>
+                      <Label className="text-slate-400 text-xs font-semibold">
+                        Features Included
+                      </Label>
                       <ul className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
                         {p.features.map((f, idx) => (
-                          <li key={idx} className="flex items-center gap-1.5 text-xs text-slate-300">
+                          <li
+                            key={idx}
+                            className="flex items-center gap-1.5 text-xs text-slate-300"
+                          >
                             <CheckCircle2 className="size-3 text-emerald-400 shrink-0" />
                             <span className="truncate">{f}</span>
                           </li>
@@ -2518,7 +2788,7 @@ function PaymentManagement({ isAdmin }: { isAdmin?: boolean | undefined }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {}
                   {(payments ?? []).map((p: any) => (
                     <tr
                       key={p.id}
@@ -2601,7 +2871,8 @@ function PaymentManagement({ isAdmin }: { isAdmin?: boolean | undefined }) {
                   {(payments ?? []).length === 0 && (
                     <tr>
                       <td className="p-6 text-center text-slate-400 font-medium" colSpan={9}>
-                        No payment logs recorded yet. Automated Razorpay orders, direct activations, and paid shop records will display here.
+                        No payment logs recorded yet. Automated Razorpay orders, direct activations,
+                        and paid shop records will display here.
                       </td>
                     </tr>
                   )}
@@ -2634,9 +2905,13 @@ function PaymentManagement({ isAdmin }: { isAdmin?: boolean | undefined }) {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-slate-400 text-xs font-semibold">Price in Rupees (₹ / month)</Label>
+                <Label className="text-slate-400 text-xs font-semibold">
+                  Price in Rupees (₹ / month)
+                </Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-amber-400 font-bold text-sm">₹</span>
+                  <span className="absolute left-3 top-2.5 text-amber-400 font-bold text-sm">
+                    ₹
+                  </span>
                   <Input
                     type="number"
                     min={0}

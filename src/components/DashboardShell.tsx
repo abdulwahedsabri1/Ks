@@ -3,7 +3,6 @@ import {
   BarChart3,
   LayoutDashboard,
   LogOut,
-  Palette,
   QrCode,
   Settings,
   Shield,
@@ -15,12 +14,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useMyShop } from "@/hooks/useShopData";
+import { useAuth } from "@/hooks/useAuth";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/menu", label: "Menu", icon: UtensilsCrossed },
+  { to: "/menu", label: "Menu & Items", icon: UtensilsCrossed },
   { to: "/qr", label: "QR Code", icon: QrCode },
-  { to: "/themes", label: "Themes", icon: Palette },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/settings", label: "Shop Settings", icon: Settings },
 ] as const;
@@ -40,7 +39,8 @@ export function DashboardShell({
 }) {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { data: shop } = useMyShop();
+  const { user } = useAuth();
+  const { data: shop } = useMyShop(user?.id);
   const isPending = shop?.status === "pending";
 
   async function signOut() {

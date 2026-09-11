@@ -14,16 +14,13 @@ async function getRoleRedirectPath(userId: string): Promise<string> {
   try {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, onboarding_completed")
+      .select("role")
       .eq("id", userId)
       .single();
 
     const role = profile?.role ?? "owner";
     if (role === "admin") return "/admin";
     if (role === "staff") return "/staff";
-
-    // New users (no onboarding completed) → onboarding flow
-    if (!profile?.onboarding_completed) return "/onboarding";
 
     return "/dashboard";
   } catch {

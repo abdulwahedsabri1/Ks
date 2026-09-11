@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   QrCode,
@@ -20,6 +20,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/hooks/useAuth";
+import { useMyShop } from "@/hooks/useShopData";
+import { shopSocialLinks, shopGoogleReviewLink, shopFeatures, type Shop } from "@/lib/shop";
 
 export const Route = createFileRoute("/onboarding")({
   ssr: false,
@@ -56,6 +59,29 @@ function OnboardingPage() {
   const [facebook, setFacebook] = useState("");
   const [twitter, setTwitter] = useState("");
   const [website, setWebsite] = useState("");
+
+  const { user } = useAuth();
+  const { data: shop } = useMyShop(user?.id);
+  const feat = shop ? shopFeatures(shop) : null;
+
+  // Initialize data from database
+  useEffect(() => {
+    if (shop) {
+      if (shop.logo_url && !logoUrl && !logoPreview) {
+        setLogoUrl(shop.logo_url);
+        setLogoPreview(shop.logo_url);
+      }
+      const gr = shopGoogleReviewLink(shop);
+      if (gr) setGoogleReviewLink(gr);
+
+      const socials = shopSocialLinks(shop);
+      if (socials.instagram) setInstagram(socials.instagram);
+      if (socials.facebook) setFacebook(socials.facebook);
+      if (socials.twitter) setTwitter(socials.twitter);
+      if (socials.website) setWebsite(socials.website);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shop]);
 
   async function handleLogoUpload(file: File) {
     setLogoUploading(true);
@@ -116,48 +142,49 @@ function OnboardingPage() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Save onboarding data
-      const { error: onboardingError } = await supabase.from("onboarding_data").upsert(
-        {
-          user_id: user.id,
-          logo_url: logoUrl,
-          google_review_link: googleReviewLink.trim() || null,
-          instagram_url: instagram.trim() || null,
-          facebook_url: facebook.trim() || null,
-          twitter_url: twitter.trim() || null,
-          website_url: website.trim() || null,
-          completed: true,
-        },
-        { onConflict: "user_id" },
-      );
-
-      if (onboardingError) throw onboardingError;
-
-      // Mark onboarding as complete in profile
-      await supabase.from("profiles").update({ onboarding_completed: true }).eq("id", user.id);
-
-      // Update shop with logo and social links
       const updatePayload: Record<string, unknown> = {};
       if (logoUrl) updatePayload["logo_url"] = logoUrl;
-      if (instagram.trim() || facebook.trim() || website.trim() || googleReviewLink.trim()) {
-        const { data: shop } = await supabase
-          .from("shops")
-          .select("id, features")
-          .eq("owner_id", user.id)
-          .maybeSingle();
 
-        if (shop) {
-          const existingFeatures = (shop.features as Record<string, unknown>) ?? {};
-          const newFeatures = {
-            ...existingFeatures,
-            ...(instagram.trim() ? { social_link: instagram.trim() } : {}),
-            ...(googleReviewLink.trim() ? { google_review_link: googleReviewLink.trim() } : {}),
+      const { data: currentShop } = await supabase
+        .from("shops")
+        .select("id, features")
+        .eq("owner_id", user.id)
+        .maybeSingle();
+
+      if (currentShop) {
+        let newFeatures = currentShop.features as Record<string, unknown> | null;
+
+        // URL validation/cleanup helper
+        const cleanUrl = (url: string) => {
+          const trimmed = url.trim();
+          if (!trimmed) return null;
+          if (!/^https?:\/\//i.test(trimmed)) return `https://${trimmed}`;
+          return trimmed;
+        };
+
+        const ig = cleanUrl(instagram);
+        const fb = cleanUrl(facebook);
+        const tw = cleanUrl(twitter);
+        const web = cleanUrl(website);
+        const gr = cleanUrl(googleReviewLink);
+
+        if (ig || fb || tw || web || gr || newFeatures) {
+          newFeatures = {
+            ...(newFeatures || {}),
+            ...(ig ? { instagram_url: ig } : {}),
+            ...(fb ? { facebook_url: fb } : {}),
+            ...(tw ? { twitter_url: tw } : {}),
+            ...(web ? { website_url: web } : {}),
+            ...(gr ? { google_review_link: gr } : {}),
           };
+        }
 
+        if (Object.keys(updatePayload).length > 0 || newFeatures !== currentShop.features) {
           await supabase
             .from("shops")
-            .update({ ...updatePayload, features: newFeatures })
-            .eq("id", shop.id);
+
+            .update({ ...updatePayload, ...(newFeatures ? { features: newFeatures as any } : {}) })
+            .eq("id", currentShop.id);
         }
       }
 
@@ -188,11 +215,6 @@ function OnboardingPage() {
         </div>
         <button
           onClick={() => {
-            void supabase
-              .from("profiles")
-              .update({ onboarding_completed: true })
-              .eq("id", "")
-              .then(() => navigate({ to: "/dashboard" }));
             navigate({ to: "/dashboard" });
           }}
           className="text-xs text-white/30 hover:text-white/60 transition-colors"
@@ -249,6 +271,7 @@ function OnboardingPage() {
                 onFileChange={handleFileChange}
                 onNext={() => setStep(2)}
                 logoUrl={logoUrl}
+                feat={feat}
               />
             )}
             {step === 2 && (
@@ -258,6 +281,7 @@ function OnboardingPage() {
                 setGoogleReviewLink={setGoogleReviewLink}
                 onNext={() => setStep(3)}
                 onBack={() => setStep(1)}
+                feat={feat}
               />
             )}
             {step === 3 && (
@@ -274,6 +298,7 @@ function OnboardingPage() {
                 onComplete={handleComplete}
                 onBack={() => setStep(2)}
                 saving={saving}
+                feat={feat}
               />
             )}
             {step === 4 && (
@@ -295,6 +320,7 @@ function Step1({
   onFileChange,
   onNext,
   logoUrl,
+  feat,
 }: {
   logoPreview: string | null;
   logoUploading: boolean;
@@ -302,6 +328,7 @@ function Step1({
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onNext: () => void;
   logoUrl: string | null;
+  feat: ReturnType<typeof shopFeatures> | null;
 }) {
   return (
     <motion.div
@@ -321,13 +348,31 @@ function Step1({
 
       {/* Upload area */}
       <div
-        onClick={() => fileInputRef.current?.click()}
-        className={`relative border-2 border-dashed rounded-2xl p-10 flex flex-col items-center gap-4 cursor-pointer transition-all duration-200 ${
-          logoPreview
-            ? "border-[#F5A623]/30 bg-[#F5A623]/5"
-            : "border-white/10 hover:border-[#F5A623]/30 hover:bg-white/5 bg-white/[0.02]"
+        onClick={() => {
+          if (feat && !feat.logo_cover) return;
+          fileInputRef.current?.click();
+        }}
+        className={`relative border-2 border-dashed rounded-2xl p-10 flex flex-col items-center gap-4 transition-all duration-200 overflow-hidden ${
+          feat && !feat.logo_cover
+            ? "border-white/5 bg-white/[0.01] cursor-not-allowed"
+            : logoPreview
+              ? "border-[#F5A623]/30 bg-[#F5A623]/5 cursor-pointer"
+              : "border-white/10 hover:border-[#F5A623]/30 hover:bg-white/5 bg-white/[0.02] cursor-pointer"
         }`}
       >
+        {feat && !feat.logo_cover && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#080604]/80 backdrop-blur-sm p-6 text-center">
+            <p className="text-white mb-3 font-medium">
+              Business Logo is locked in your current plan.
+            </p>
+            <Button asChild size="sm" className="bg-[#F5A623] text-black hover:bg-[#e09615]">
+              <a href="/pricing" target="_blank" rel="noreferrer">
+                Upgrade to Basic
+              </a>
+            </Button>
+          </div>
+        )}
+
         {logoUploading ? (
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="size-10 text-[#F5A623] animate-spin" />
@@ -394,11 +439,13 @@ function Step2({
   setGoogleReviewLink,
   onNext,
   onBack,
+  feat,
 }: {
   googleReviewLink: string;
   setGoogleReviewLink: (v: string) => void;
   onNext: () => void;
   onBack: () => void;
+  feat: ReturnType<typeof shopFeatures> | null;
 }) {
   return (
     <motion.div
@@ -418,7 +465,20 @@ function Step2({
         </p>
       </div>
 
-      <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 space-y-6">
+      <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 space-y-6 relative overflow-hidden">
+        {feat && !feat.google_reviews && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#080604]/80 backdrop-blur-sm p-6 text-center">
+            <p className="text-white mb-3 font-medium">
+              Google Reviews integration is locked in your current plan.
+            </p>
+            <Button asChild size="sm" className="bg-[#F5A623] text-black hover:bg-[#e09615]">
+              <a href="/pricing" target="_blank" rel="noreferrer">
+                Upgrade to Premium
+              </a>
+            </Button>
+          </div>
+        )}
+
         <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
           <Star className="size-5 text-amber-400 shrink-0" />
           <p className="text-sm text-amber-300/80">
@@ -483,6 +543,7 @@ function Step3({
   onComplete,
   onBack,
   saving,
+  feat,
 }: {
   instagram: string;
   setInstagram: (v: string) => void;
@@ -495,6 +556,7 @@ function Step3({
   onComplete: () => void;
   onBack: () => void;
   saving: boolean;
+  feat: ReturnType<typeof shopFeatures> | null;
 }) {
   const socials = [
     {
@@ -505,6 +567,8 @@ function Step3({
       value: instagram,
       setter: setInstagram,
       placeholder: "https://instagram.com/yourbusiness",
+      locked: feat ? !feat.social_link : false,
+      upgradeText: "Basic",
     },
     {
       id: "facebook-input",
@@ -514,6 +578,8 @@ function Step3({
       value: facebook,
       setter: setFacebook,
       placeholder: "https://facebook.com/yourbusiness",
+      locked: feat ? !feat.advanced_social_links : false,
+      upgradeText: "Pro",
     },
     {
       id: "twitter-input",
@@ -523,6 +589,8 @@ function Step3({
       value: twitter,
       setter: setTwitter,
       placeholder: "https://twitter.com/yourbusiness",
+      locked: feat ? !feat.advanced_social_links : false,
+      upgradeText: "Pro",
     },
     {
       id: "website-input",
@@ -532,6 +600,8 @@ function Step3({
       value: website,
       setter: setWebsite,
       placeholder: "https://yourbusiness.com",
+      locked: feat ? !feat.advanced_social_links : false,
+      upgradeText: "Pro",
     },
   ];
 
@@ -554,25 +624,43 @@ function Step3({
       </div>
 
       <div className="space-y-4">
-        {socials.map(({ id, icon: Icon, color, label, value, setter, placeholder }) => (
-          <div key={id} className="space-y-2">
-            <Label
-              htmlFor={id}
-              className="text-white/70 text-sm font-medium flex items-center gap-2"
-            >
-              <Icon className={`size-4 ${color}`} />
-              {label}
-            </Label>
-            <Input
-              id={id}
-              type="url"
-              placeholder={placeholder}
-              value={value}
-              onChange={(e) => setter(e.target.value)}
-              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#F5A623]/50 h-11"
-            />
-          </div>
-        ))}
+        {socials.map(
+          ({ id, icon: Icon, color, label, value, setter, placeholder, locked, upgradeText }) => (
+            <div key={id} className="space-y-2 relative">
+              <Label
+                htmlFor={id}
+                className={`text-sm font-medium flex items-center gap-2 ${locked ? "text-white/30" : "text-white/70"}`}
+              >
+                <Icon className={`size-4 ${locked ? "text-white/20" : color}`} />
+                {label}
+              </Label>
+              <div className="relative overflow-hidden rounded-md">
+                {locked && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-between bg-black/60 backdrop-blur-sm px-3">
+                    <span className="text-xs text-white/70">Locked in current plan</span>
+                    <a
+                      href="/pricing"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-[#F5A623] hover:underline"
+                    >
+                      Upgrade to {upgradeText}
+                    </a>
+                  </div>
+                )}
+                <Input
+                  id={id}
+                  type="url"
+                  placeholder={placeholder}
+                  value={value}
+                  onChange={(e) => setter(e.target.value)}
+                  disabled={locked}
+                  className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 h-11 ${locked ? "opacity-50" : "focus:border-[#F5A623]/50"}`}
+                />
+              </div>
+            </div>
+          ),
+        )}
       </div>
 
       <div className="flex gap-3">

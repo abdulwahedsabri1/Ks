@@ -459,11 +459,16 @@ function FeaturesRoute() {
           </h1>
 
           <p className="text-base sm:text-lg text-[#3A2818]/80 max-w-2xl mx-auto leading-relaxed mb-8 font-medium">
-            From direct WhatsApp ordering and instant UPI payments to AI menu generation, 6 luxury themes, and live analytics — explore all 16+ powerful features built for your store.
+            From direct WhatsApp ordering and instant UPI payments to AI menu generation, 6 luxury
+            themes, and live analytics — explore all 16+ powerful features built for your store.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <Button asChild size="lg" className="rounded-full bg-[#100C09] hover:bg-[#F5A623] text-white font-bold h-12 px-8 text-sm shadow-xl transition-all hover:scale-105">
+            <Button
+              asChild
+              size="lg"
+              className="rounded-full bg-[#100C09] hover:bg-[#F5A623] text-white font-bold h-12 px-8 text-sm shadow-xl transition-all hover:scale-105"
+            >
               <Link to="/auth">
                 Start Free 7-Day Trial <ArrowRight className="ml-2 size-4" />
               </Link>
@@ -491,20 +496,31 @@ function FeaturesRoute() {
                   WhatsApp Direct Ordering + Instant 0% Fee UPI Payments
                 </h2>
                 <p className="text-sm text-[#3A2818]/80 leading-relaxed font-medium">
-                  Eliminate 15%–30% food aggregator commission fees. Accept orders directly to your staff WhatsApp with payments deposited straight to your UPI ID (<code className="text-emerald-800 font-bold bg-emerald-100/70 px-1.5 py-0.5 rounded">GPay, PhonePe, Paytm</code>) with <strong className="text-emerald-800 font-bold">0% fees</strong>.
+                  Eliminate 15%–30% food aggregator commission fees. Accept orders directly to your
+                  staff WhatsApp with payments deposited straight to your UPI ID (
+                  <code className="text-emerald-800 font-bold bg-emerald-100/70 px-1.5 py-0.5 rounded">
+                    GPay, PhonePe, Paytm
+                  </code>
+                  ) with <strong className="text-emerald-800 font-bold">0% fees</strong>.
                 </p>
                 <div className="flex flex-wrap gap-4 text-xs text-[#3A2818]/90 font-semibold pt-1">
                   <span className="flex items-center gap-1.5">
-                    <Check className="size-4 text-emerald-600 stroke-[3]" /> Save ₹15,000+ monthly in fees
+                    <Check className="size-4 text-emerald-600 stroke-[3]" /> Save ₹15,000+ monthly
+                    in fees
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Check className="size-4 text-emerald-600 stroke-[3]" /> 100% Instant bank settlements
+                    <Check className="size-4 text-emerald-600 stroke-[3]" /> 100% Instant bank
+                    settlements
                   </span>
                 </div>
               </div>
 
               <div className="flex-shrink-0 w-full md:w-auto">
-                <Button asChild size="lg" className="w-full md:w-auto rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-12 px-8 shadow-lg hover:scale-105 transition-all">
+                <Button
+                  asChild
+                  size="lg"
+                  className="w-full md:w-auto rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-12 px-8 shadow-lg hover:scale-105 transition-all"
+                >
                   <Link to="/auth">Unlock UPI Payments</Link>
                 </Button>
               </div>
@@ -593,9 +609,7 @@ function FeaturesRoute() {
                       <span className="font-mono text-3xl sm:text-4xl font-extrabold text-[#F5A623] transition-colors duration-300">
                         {feat.number}
                       </span>
-                      <div
-                        className="size-12 sm:size-14 rounded-2xl bg-[#F5A623] text-white border border-black/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md"
-                      >
+                      <div className="size-12 sm:size-14 rounded-2xl bg-[#F5A623] text-white border border-black/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
                         <Icon className="size-6 sm:size-7" />
                       </div>
                     </div>
@@ -658,7 +672,11 @@ function FeaturesRoute() {
                 and customer satisfaction.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-4">
-                <Button asChild size="lg" className="rounded-full bg-[#FFC45A] hover:bg-[#FFC45A]/90 text-[#100C09] font-bold h-12 px-8 text-sm shadow-xl hover:scale-105 transition-all">
+                <Button
+                  asChild
+                  size="lg"
+                  className="rounded-full bg-[#FFC45A] hover:bg-[#FFC45A]/90 text-[#100C09] font-bold h-12 px-8 text-sm shadow-xl hover:scale-105 transition-all"
+                >
                   <Link to="/auth">Create Your QR Menu Now</Link>
                 </Button>
                 <Button

@@ -69,7 +69,8 @@ export function UpiPaymentBox({
 
   // Generate payment links
   const getUpiUrl = (scheme: string) => {
-    let url = `${scheme}://pay?pa=${encodeURIComponent(cleanUpiId)}&pn=${encodeURIComponent(shopName)}&cu=INR`;
+    const base = scheme === "tez" ? "tez://upi/pay" : `${scheme}://pay`;
+    let url = `${base}?pa=${encodeURIComponent(cleanUpiId)}&pn=${encodeURIComponent(shopName)}&cu=INR`;
     if (amount && amount > 0) {
       url += `&am=${amount.toFixed(2)}`;
     }
@@ -238,7 +239,12 @@ export function UpiPaymentBox({
                 <span className="text-xs font-mono font-bold text-foreground truncate select-all">
                   {cleanUpiId}
                 </span>
-                <Button size="sm" variant="outline" onClick={copyUpiId} className="h-7 text-xs flex-shrink-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={copyUpiId}
+                  className="h-7 text-xs flex-shrink-0"
+                >
                   Copy
                 </Button>
               </div>

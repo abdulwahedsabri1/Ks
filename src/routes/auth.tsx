@@ -43,6 +43,23 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
+  let attempt = 1;
+  while (attempt <= maxRetries) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (attempt === maxRetries) throw error;
+      console.log(`Retry attempt ${attempt} failed, retrying in 1s...`);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      attempt++;
+    }
+  }
+  throw new Error("Maximum retries reached");
+}
+
 // ── Schemas ──────────────────────────────────────────────────────────────────
 
 const loginSchema = z.object({
@@ -52,8 +69,12 @@ const loginSchema = z.object({
 
 const signupSchema = z
   .object({
-    fullName: z.string().trim().min(1, "Please enter your name"),
     businessName: z.string().trim().min(2, "Business name must be at least 2 characters"),
+    username: z
+      .string()
+      .trim()
+      .min(3, "Username must be at least 3 characters")
+      .regex(/^[a-z0-9-]+$/, "Only lowercase letters, numbers, and hyphens allowed"),
     businessCategory: z.string().min(1, "Please select a business category"),
     phoneNumber: z
       .string()
@@ -104,6 +125,7 @@ async function getRoleRedirectPath(userId: string): Promise<string> {
     const role = profile?.role ?? "owner";
     if (role === "admin") return "/admin";
     if (role === "staff") return "/staff";
+
     return "/dashboard";
   } catch {
     return "/dashboard";
@@ -361,25 +383,37 @@ function TermsModal({
               <div>
                 <h3 className="text-lg font-bold text-white mb-2">1. Acceptance of Terms</h3>
                 <p>
-                  By creating an account on MY Link QR, you agree to these Terms of Service. If you are registering on behalf of a store, restaurant, or business entity, you represent that you have legal authority to bind that entity.
+                  By creating an account on MY Link QR, you agree to these Terms of Service. If you
+                  are registering on behalf of a store, restaurant, or business entity, you
+                  represent that you have legal authority to bind that entity.
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white mb-2">2. Business & Contact Information</h3>
+                <h3 className="text-lg font-bold text-white mb-2">
+                  2. Business & Contact Information
+                </h3>
                 <p>
-                  You agree to provide accurate business details, including valid contact numbers and email addresses. You are responsible for maintaining account confidentiality and all activities under your account.
+                  You agree to provide accurate business details, including valid contact numbers
+                  and email addresses. You are responsible for maintaining account confidentiality
+                  and all activities under your account.
                 </p>
               </div>
               <div>
                 <h3 className="text-lg font-bold text-white mb-2">3. Menu Content & Ownership</h3>
                 <p>
-                  You retain complete ownership of all uploaded content (item names, descriptions, images, prices). You warrant that uploaded items do not violate trademark or local trade regulations.
+                  You retain complete ownership of all uploaded content (item names, descriptions,
+                  images, prices). You warrant that uploaded items do not violate trademark or local
+                  trade regulations.
                 </p>
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white mb-2">4. Service Availability & Subscription</h3>
+                <h3 className="text-lg font-bold text-white mb-2">
+                  4. Service Availability & Subscription
+                </h3>
                 <p>
-                  MY Link QR provides dynamic digital menu QR codes. Free trial access enables full menu setup and preview. Subscriptions can be managed or canceled anytime from your store settings.
+                  MY Link QR provides dynamic digital menu QR codes. Free trial access enables full
+                  menu setup and preview. Subscriptions can be managed or canceled anytime from your
+                  store settings.
                 </p>
               </div>
             </>
@@ -388,19 +422,23 @@ function TermsModal({
               <div>
                 <h3 className="text-lg font-bold text-white mb-2">1. Data We Collect</h3>
                 <p>
-                  We collect your full name, business name, phone number, and email address to set up your store workspace and provide seamless menu management services.
+                  We collect your full name, business name, phone number, and email address to set
+                  up your store workspace and provide seamless menu management services.
                 </p>
               </div>
               <div>
                 <h3 className="text-lg font-bold text-white mb-2">2. How We Use Your Data</h3>
                 <p>
-                  Your information is used strictly to power your digital menu dashboard, display WhatsApp ordering links for your customers, and provide technical support. We never sell your personal data.
+                  Your information is used strictly to power your digital menu dashboard, display
+                  WhatsApp ordering links for your customers, and provide technical support. We
+                  never sell your personal data.
                 </p>
               </div>
               <div>
                 <h3 className="text-lg font-bold text-white mb-2">3. Security & Storage</h3>
                 <p>
-                  All database transactions are protected with 256-bit SSL encryption provided by Supabase. Your passwords and credentials are securely hashed and encrypted.
+                  All database transactions are protected with 256-bit SSL encryption provided by
+                  Supabase. Your passwords and credentials are securely hashed and encrypted.
                 </p>
               </div>
             </>
@@ -512,6 +550,7 @@ function AuthPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<AuthTab>("login");
   const [showForgot, setShowForgot] = useState(false);
+  const isSigningUp = useRef(false);
 
   // Login state
   const [loginEmail, setLoginEmail] = useState(() => {
@@ -535,8 +574,8 @@ function AuthPage() {
   const [loginLoading, setLoginLoading] = useState(false);
 
   // Signup state
-  const [fullName, setFullName] = useState("");
   const [businessName, setBusinessName] = useState("");
+  const [signupUsername, setSignupUsername] = useState("");
   const [businessCategory, setBusinessCategory] = useState(NICHES[0]!);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
@@ -545,6 +584,8 @@ function AuthPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [signupLoading, setSignupLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [signupErrorModal, setSignupErrorModal] = useState<string | null>(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [termsModalTab, setTermsModalTab] = useState<"terms" | "privacy">("terms");
 
@@ -562,6 +603,7 @@ function AuthPage() {
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: "openid email profile",
         },
       });
       if (error) {
@@ -578,7 +620,7 @@ function AuthPage() {
   useEffect(() => {
     let done = false;
     const go = async (userId: string) => {
-      if (done) return;
+      if (done || isSigningUp.current) return;
       done = true;
       const path = await getRoleRedirectPath(userId);
       navigate({ to: path, replace: true });
@@ -655,8 +697,8 @@ function AuthPage() {
     e?.preventDefault();
 
     const parsed = signupSchema.safeParse({
-      fullName,
       businessName,
+      username: signupUsername,
       businessCategory,
       phoneNumber,
       email: signupEmail,
@@ -665,17 +707,25 @@ function AuthPage() {
     });
 
     if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Please fix the errors above");
+      const fieldErrors: Record<string, string> = {};
+      parsed.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          fieldErrors[issue.path[0].toString()] = issue.message;
+        }
+      });
+      setErrors(fieldErrors);
+      toast.error("Please fix the errors below.");
       return;
     }
+    setErrors({});
 
     const emailAnalysis = analyzeEmail(signupEmail);
     if (emailAnalysis.isDisposable) {
-      toast.error("Temporary or disposable emails are not allowed. Please use a real email.");
+      setErrors({ email: "Temporary or disposable emails are not allowed." });
       return;
     }
     if (!emailAnalysis.isValid) {
-      toast.error(emailAnalysis.message ?? "Please enter a valid email address.");
+      setErrors({ email: emailAnalysis.message ?? "Please enter a valid email." });
       return;
     }
 
@@ -684,69 +734,154 @@ function AuthPage() {
       return;
     }
 
+    console.log("Signup button clicked");
+    console.log("Form validation passed");
+
+    const supabaseUrl = import.meta.env["VITE_SUPABASE_URL"];
+    const supabaseKey =
+      import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || import.meta.env["VITE_SUPABASE_ANON_KEY"];
+
+    console.log("SUPABASE_URL:", !!supabaseUrl);
+    console.log("SUPABASE_KEY:", !!supabaseKey);
+
+    if (!supabaseUrl || !supabaseKey) {
+      const missingVars = [];
+      if (!supabaseUrl) missingVars.push("VITE_SUPABASE_URL");
+      if (!supabaseKey) missingVars.push("VITE_SUPABASE_ANON_KEY / VITE_SUPABASE_PUBLISHABLE_KEY");
+
+      console.error("Missing configuration:", missingVars.join(", "));
+      setSignupErrorModal("Supabase configuration not found");
+      return;
+    }
+
+    console.log("Supabase URL Loaded");
+    console.log("Supabase Key Loaded");
     setSignupLoading(true);
+    isSigningUp.current = true;
+
     try {
-      const cleanEmail = parsed.data.email.toLowerCase().trim();
+      await Promise.race([
+        (async () => {
+          console.log("Connecting to Supabase");
+          // Connection health check
+          const { error: healthError } = await supabase.from("profiles").select("id").limit(1);
+          if (healthError) {
+            console.error(healthError);
+            throw new Error(`Backend Connection Failed: ${healthError.message}`);
+          }
 
-      const { data, error } = await supabase.auth.signUp({
-        email: cleanEmail,
-        password: parsed.data.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: {
-            full_name: parsed.data.fullName.trim(),
-            business_name: parsed.data.businessName.trim(),
-            business_category: parsed.data.businessCategory,
-            niche: parsed.data.businessCategory,
-            phone: parsed.data.phoneNumber.trim(),
-          },
-        },
-      });
+          console.log("Signup Started");
+          const cleanEmail = parsed.data.email.toLowerCase().trim();
 
-      if (error) {
-        if (error.message.toLowerCase().includes("registered")) {
-          toast.error("This email already has an account — log in instead.");
-        } else {
-          toast.error(error.message);
-        }
-        return;
-      }
+          console.log("Creating Auth User");
+          console.log("Email:", cleanEmail);
+          const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: cleanEmail,
+            password: parsed.data.password,
+            options: {
+              data: {
+                full_name: parsed.data.businessName.trim(),
+              },
+            },
+          });
 
-      if (data.user) {
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7);
+          if (authError) {
+            console.error("Auth Error:", authError);
+            throw new Error(authError.message);
+          }
 
-        // Create shop workspace for the new user
-        const { error: shopError } = await supabase.from("shops").insert({
-          owner_id: data.user.id,
-          name: parsed.data.businessName.trim(),
-          slug: `${slugify(parsed.data.businessName.trim())}-${Math.random().toString(36).slice(2, 6)}`,
-          niche: parsed.data.businessCategory,
-          phone: parsed.data.phoneNumber.trim(),
-          whatsapp: parsed.data.phoneNumber.trim(),
-          status: "active",
-          plan: "trial",
-          plan_expires_at: expiresAt.toISOString(),
-        });
+          console.log("Auth Created");
+          const activeUserId = authData.user?.id;
+          if (!activeUserId)
+            throw new Error("Email already registered or authentication provider disabled.");
 
-        if (shopError) {
-          console.warn("Shop creation notice:", shopError.message);
-        }
+          console.log("Generating Slug");
+          const { slugify } = await import("@/lib/shop");
+          const baseSlug = parsed.data.username.trim();
+          let finalSlug = baseSlug;
+          let counter = 2;
 
-        if (data.session) {
-          toast.success("🎉 Account created! Welcome to MY Link QR!");
+          while (true) {
+            const { data: existing } = await supabase
+              .from("shops")
+              .select("id")
+              .eq("slug", finalSlug)
+              .maybeSingle();
+            if (!existing) break;
+            finalSlug = `${baseSlug}-${counter}`;
+            counter++;
+          }
+
+          console.log("Creating Shop");
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 7);
+
+          await withRetry(async () => {
+            const { data: existingShop } = await supabase
+              .from("shops")
+              .select("id")
+              .eq("owner_id", activeUserId)
+              .maybeSingle();
+
+            if (existingShop) return;
+
+            const { error: shopError } = await supabase.from("shops").insert({
+              owner_id: activeUserId,
+              name: parsed.data.businessName.trim(),
+              slug: finalSlug,
+              niche: parsed.data.businessCategory,
+              phone: parsed.data.phoneNumber.trim(),
+              whatsapp: parsed.data.phoneNumber.trim(),
+              status: "active",
+              plan: "trial",
+              plan_started_at: new Date().toISOString(),
+              plan_expires_at: expiresAt.toISOString(),
+            });
+            if (shopError) throw shopError;
+          });
+          console.log("Shop Created");
+
+          console.log("Auto Login");
+          // Force sign in to guarantee session existence
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: cleanEmail,
+            password: parsed.data.password,
+          });
+
+          if (signInError && signInError.message !== "Email not confirmed") {
+            // Ignore email not confirmed if they successfully created the session some other way
+            console.error("Sign In Error:", signInError);
+          }
+
+          // Verify session exists
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (!sessionData.session) {
+            throw new Error("Authentication Failed");
+          }
+          console.log("Session Created");
+
+          console.log("Realtime Synced");
+          console.log("Dashboard Created");
+          console.log("Redirecting");
+
+          toast.success("🎉 Account created successfully.\nLet's set up your store!", {
+            duration: 5000,
+          });
           navigate({ to: "/onboarding", replace: true });
-        } else {
-          toast.success(
-            "Account created! Please check your inbox to verify your email, then log in.",
-            { duration: 6000 },
-          );
-          setActiveTab("login");
-          setLoginEmail(cleanEmail);
-        }
+        })(),
+        new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error("Request timeout")), 15000);
+        }),
+      ]);
+    } catch (err: any) {
+      console.error("Auth Error:", err);
+      const msg = err.message?.toLowerCase() || "";
+      if (msg.includes("registered") || msg.includes("already") || msg.includes("exists")) {
+        setErrors({ email: "This email already has an account — log in instead." });
+      } else {
+        setSignupErrorModal(err.message || "An unexpected error occurred during signup.");
       }
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+      isSigningUp.current = false;
     } finally {
       setSignupLoading(false);
     }
@@ -1050,24 +1185,6 @@ function AuthPage() {
                   onSubmit={handleSignup}
                   className="space-y-5"
                 >
-                  {/* Full Name */}
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name" className="text-white/70 text-sm font-medium">
-                      Full Name
-                    </Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-white/30" />
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        placeholder="John Doe"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#F5A623]/50 focus:ring-[#F5A623]/20 h-11"
-                      />
-                    </div>
-                  </div>
-
                   {/* Business Name */}
                   <div className="space-y-2">
                     <Label htmlFor="signup-biz" className="text-white/70 text-sm font-medium">
@@ -1080,10 +1197,46 @@ function AuthPage() {
                         type="text"
                         placeholder="e.g. Gourmet Bistro"
                         value={businessName}
-                        onChange={(e) => setBusinessName(e.target.value)}
-                        className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#F5A623]/50 focus:ring-[#F5A623]/20 h-11"
+                        onChange={(e) => {
+                          setBusinessName(e.target.value);
+                          setErrors((prev) => ({ ...prev, ["businessName"]: "" }));
+                        }}
+                        className={`pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#F5A623]/50 focus:ring-[#F5A623]/20 h-11 ${errors["businessName"] ? "border-red-500/50 focus:border-red-500/50" : ""}`}
                       />
                     </div>
+                    {errors["businessName"] && (
+                      <p className="text-red-400 text-xs font-medium">{errors["businessName"]}</p>
+                    )}
+                  </div>
+
+                  {/* Username / Store Link */}
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-username" className="text-white/70 text-sm font-medium">
+                      Store URL (Username)
+                    </Label>
+                    <div className="relative">
+                      <Store className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-white/30" />
+                      <Input
+                        id="signup-username"
+                        type="text"
+                        placeholder="e.g. jashan-resturant"
+                        value={signupUsername}
+                        onChange={(e) => {
+                          const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+                          setSignupUsername(val);
+                          setErrors((prev) => ({ ...prev, ["username"]: "" }));
+                        }}
+                        className={`pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#F5A623]/50 focus:ring-[#F5A623]/20 h-11 ${errors["username"] ? "border-red-500/50 focus:border-red-500/50" : ""}`}
+                      />
+                    </div>
+                    {signupUsername.length > 0 && (
+                      <p className="text-[10px] text-emerald-400/80 mt-1 pl-1">
+                        Your link: mylinkqr.in/shop/{signupUsername}
+                      </p>
+                    )}
+                    {errors["username"] && (
+                      <p className="text-red-400 text-xs font-medium">{errors["username"]}</p>
+                    )}
                   </div>
 
                   {/* Business Category */}
@@ -1094,7 +1247,10 @@ function AuthPage() {
                         <button
                           key={n}
                           type="button"
-                          onClick={() => setBusinessCategory(n)}
+                          onClick={() => {
+                            setBusinessCategory(n);
+                            setErrors((prev) => ({ ...prev, ["businessCategory"]: "" }));
+                          }}
                           className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
                             businessCategory === n
                               ? "bg-[#F5A623]/15 text-[#F5A623] border-[#F5A623]/40"
@@ -1105,6 +1261,11 @@ function AuthPage() {
                         </button>
                       ))}
                     </div>
+                    {errors["businessCategory"] && (
+                      <p className="text-red-400 text-xs font-medium">
+                        {errors["businessCategory"]}
+                      </p>
+                    )}
                   </div>
 
                   {/* Phone Number */}
@@ -1119,8 +1280,11 @@ function AuthPage() {
                         type="tel"
                         placeholder="+91 98765 43210"
                         value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#F5A623]/50 focus:ring-[#F5A623]/20 h-11"
+                        onChange={(e) => {
+                          setPhoneNumber(e.target.value);
+                          setErrors((prev) => ({ ...prev, ["phoneNumber"]: "" }));
+                        }}
+                        className={`pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#F5A623]/50 focus:ring-[#F5A623]/20 h-11 ${errors["phoneNumber"] ? "border-red-500/50 focus:border-red-500/50" : ""}`}
                       />
                       {phoneNumber && (
                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -1132,6 +1296,9 @@ function AuthPage() {
                         </div>
                       )}
                     </div>
+                    {errors["phoneNumber"] && (
+                      <p className="text-red-400 text-xs font-medium">{errors["phoneNumber"]}</p>
+                    )}
                   </div>
 
                   {/* Email */}
@@ -1146,25 +1313,42 @@ function AuthPage() {
                         type="email"
                         placeholder="you@business.com"
                         value={signupEmail}
-                        onChange={(e) => setSignupEmail(e.target.value)}
-                        className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#F5A623]/50 focus:ring-[#F5A623]/20 h-11"
+                        onChange={(e) => {
+                          setSignupEmail(e.target.value);
+                          setErrors((prev) => ({ ...prev, ["email"]: "" }));
+                        }}
+                        className={`pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#F5A623]/50 focus:ring-[#F5A623]/20 h-11 ${errors["email"] ? "border-red-500/50 focus:border-red-500/50" : ""}`}
                       />
                     </div>
+                    {errors["email"] && (
+                      <p className="text-red-400 text-xs font-medium">{errors["email"]}</p>
+                    )}
                     <EmailAnalysisStatus
                       email={signupEmail}
-                      onApplySuggestion={(s) => setSignupEmail(s)}
+                      onApplySuggestion={(s) => {
+                        setSignupEmail(s);
+                        setErrors((prev) => ({ ...prev, ["email"]: "" }));
+                      }}
                     />
                   </div>
 
                   {/* Password */}
-                  <PasswordField
-                    id="signup-password"
-                    label="Password"
-                    value={signupPassword}
-                    onChange={setSignupPassword}
-                    showStrength
-                    placeholder="Min. 6 characters"
-                  />
+                  <div className="space-y-1">
+                    <PasswordField
+                      id="signup-password"
+                      label="Password"
+                      value={signupPassword}
+                      onChange={(val) => {
+                        setSignupPassword(val);
+                        setErrors((prev) => ({ ...prev, ["password"]: "" }));
+                      }}
+                      showStrength
+                      placeholder="Min. 6 characters"
+                    />
+                    {errors["password"] && (
+                      <p className="text-red-400 text-xs font-medium">{errors["password"]}</p>
+                    )}
+                  </div>
 
                   {/* Confirm Password */}
                   <div className="space-y-2">
@@ -1178,9 +1362,13 @@ function AuthPage() {
                         type="password"
                         placeholder="••••••••"
                         value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          setErrors((prev) => ({ ...prev, ["confirmPassword"]: "" }));
+                        }}
                         className={`pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-[#F5A623]/50 focus:ring-[#F5A623]/20 h-11 ${
-                          confirmPassword && confirmPassword !== signupPassword
+                          (confirmPassword && confirmPassword !== signupPassword) ||
+                          errors["confirmPassword"]
                             ? "border-red-500/50"
                             : confirmPassword && confirmPassword === signupPassword
                               ? "border-emerald-500/50"
@@ -1199,6 +1387,11 @@ function AuthPage() {
                     </div>
                     {confirmPassword && confirmPassword !== signupPassword && (
                       <p className="text-xs text-red-400 font-medium">Passwords do not match</p>
+                    )}
+                    {errors["confirmPassword"] && confirmPassword === signupPassword && (
+                      <p className="text-xs text-red-400 font-medium">
+                        {errors["confirmPassword"]}
+                      </p>
                     )}
                   </div>
 
@@ -1315,6 +1508,40 @@ function AuthPage() {
             onClose={() => setShowTermsModal(false)}
             onAccept={handleAcceptTermsAndLaunch}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Backend Error Modal */}
+      <AnimatePresence>
+        {signupErrorModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm bg-[#120e09] border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500/0 via-red-500 to-red-500/0 opacity-50" />
+              <div className="flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-4 border border-red-500/20">
+                  <AlertCircle className="size-6 text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Signup Failed</h3>
+                <div className="text-sm text-white/70 mb-6 bg-white/5 border border-white/5 rounded-lg p-3 w-full text-left font-mono break-words">
+                  <span className="text-white/40 uppercase text-[10px] tracking-wider mb-1 block">
+                    Reason:
+                  </span>
+                  {signupErrorModal}
+                </div>
+                <Button
+                  onClick={() => setSignupErrorModal(null)}
+                  className="w-full h-11 bg-white/10 hover:bg-white/20 text-white font-medium rounded-xl transition-all"
+                >
+                  Try Again
+                </Button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </>

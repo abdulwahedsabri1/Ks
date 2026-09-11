@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { UpiPaymentBox } from "@/components/UpiPaymentBox";
 import { supabase } from "@/integrations/supabase/client";
-import { updateShopSettings } from "@/lib/payment.functions";
+import { updateShopSettings } from "@/lib/shop.functions";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin, useMyShop, uploadShopMedia } from "@/hooks/useShopData";
 import { DashboardShell } from "@/components/DashboardShell";
@@ -12,12 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Lock } from "lucide-react";
+import { Lock, Copy, Check } from "lucide-react";
 import {
   NICHES,
   shopBusinessId,
-  shopTiming,
-  shopSocialLink,
   shopGoogleReviewLink,
   shopDeliveryEnabled,
   shopTakeawayEnabled,
@@ -25,6 +23,9 @@ import {
   shopTheme,
   shopFeatures,
   shopLanguages,
+  shopSocialLinks,
+  shopTiming,
+  shopMapUrl,
   AVAILABLE_LANGUAGES,
   type ThemeId,
   type Coupon,
@@ -64,9 +65,14 @@ function SettingsPage() {
     whatsapp: "",
     phone: "",
     address: "",
+    map_url: "",
     currency: "₹",
     timing: "",
     social_link: "",
+    instagram_url: "",
+    facebook_url: "",
+    twitter_url: "",
+    website_url: "",
     google_review_link: "",
     delivery: true,
     takeaway: true,
@@ -82,6 +88,15 @@ function SettingsPage() {
     cover_url: "",
   });
   const [saving, setSaving] = useState(false);
+  const [testUpiAmount, setTestUpiAmount] = useState<number>(240);
+  const [copiedId, setCopiedId] = useState(false);
+
+  const handleCopyBizId = (id: string) => {
+    navigator.clipboard.writeText(id);
+    setCopiedId(true);
+    toast.success("Business ID copied!");
+    setTimeout(() => setCopiedId(false), 2000);
+  };
 
   const [newCoupon, setNewCoupon] = useState({
     code: "",
@@ -140,9 +155,14 @@ function SettingsPage() {
       whatsapp: safeStr(shop.whatsapp),
       phone: safeStr(shop.phone),
       address: safeStr(shop.address),
+      map_url: safeStr(shopMapUrl(shop)),
       currency: safeStr(shop.currency) || "₹",
       timing: safeStr(shopTiming(shop)),
-      social_link: safeStr(shopSocialLink(shop)),
+      social_link: safeStr(shopSocialLinks(shop).instagram),
+      instagram_url: safeStr(shopSocialLinks(shop).instagram),
+      facebook_url: safeStr(shopSocialLinks(shop).facebook),
+      twitter_url: safeStr(shopSocialLinks(shop).twitter),
+      website_url: safeStr(shopSocialLinks(shop).website),
       google_review_link: safeStr(shopGoogleReviewLink(shop)),
       delivery: shopDeliveryEnabled(shop),
       takeaway: shopTakeawayEnabled(shop),
@@ -151,7 +171,9 @@ function SettingsPage() {
       languages: shopLanguages(shop),
       multi_language_enabled:
         (shop.features as Record<string, unknown> | null)?.["multi_language_enabled"] !== false,
-      coupons: ((shop.features as Record<string, unknown> | null)?.["coupons"] as Coupon[]) || [],
+      coupons: Array.isArray((shop.features as Record<string, unknown> | null)?.["coupons"])
+        ? ((shop.features as Record<string, unknown> | null)?.["coupons"] as Coupon[])
+        : [],
       upi_enabled: Boolean((shop.features as Record<string, unknown> | null)?.["upi_enabled"]),
       upi_id: safeStr((shop.features as Record<string, unknown> | null)?.["upi_id"]),
       upi_qr_url: safeStr((shop.features as Record<string, unknown> | null)?.["upi_qr_url"]),
@@ -171,7 +193,12 @@ function SettingsPage() {
       const updatedFeatures = {
         ...currentFeatures,
         timing: safeStr(form.timing) || undefined,
-        social_link: safeStr(form.social_link) || undefined,
+        map_url: safeStr(form.map_url) || undefined,
+        social_link: safeStr(form.instagram_url) || undefined,
+        instagram_url: safeStr(form.instagram_url) || undefined,
+        facebook_url: safeStr(form.facebook_url) || undefined,
+        twitter_url: safeStr(form.twitter_url) || undefined,
+        website_url: safeStr(form.website_url) || undefined,
         google_review_link: safeStr(form.google_review_link) || undefined,
         delivery: form.delivery,
         takeaway: form.takeaway,
@@ -246,7 +273,10 @@ function SettingsPage() {
           ...(shop.features || {}),
           upi_qr_url: url,
         };
-        const { error } = await supabase.from("shops").update({ features: updatedFeatures }).eq("id", shop.id);
+        const { error } = await supabase
+          .from("shops")
+          .update({ features: updatedFeatures })
+          .eq("id", shop.id);
         if (error) throw error;
         toast.success("UPI QR Code image updated");
       } else {
@@ -254,7 +284,9 @@ function SettingsPage() {
         setForm((f) => ({ ...f, [kind]: url }));
         const { error } = await supabase.from("shops").update(patch).eq("id", shop.id);
         if (error) throw error;
-        toast.success(kind === "logo_url" ? "Shop logo uploaded & synced!" : "Cover banner uploaded & synced!");
+        toast.success(
+          kind === "logo_url" ? "Shop logo uploaded & synced!" : "Cover banner uploaded & synced!",
+        );
       }
       await qc.invalidateQueries();
     } catch (err) {
@@ -290,9 +322,14 @@ function SettingsPage() {
             <h3 className="text-xs font-bold tracking-widest uppercase text-muted-foreground">
               Business Details
             </h3>
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-mono font-bold">
-              <Lock className="size-3" />
+            <div
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-mono font-bold cursor-pointer hover:bg-amber-500/20 transition-colors"
+              onClick={() => handleCopyBizId(shopBusinessId(shop))}
+              title="Click to copy Business ID"
+            >
+              {copiedId ? <Check className="size-3" /> : <Lock className="size-3" />}
               <span>ID: {shopBusinessId(shop)}</span>
+              {!copiedId && <Copy className="size-3 ml-1 opacity-70" />}
             </div>
           </div>
 
@@ -341,33 +378,12 @@ function SettingsPage() {
               ))}
             </select>
           </div>
-          {!feat.ordering ? (
-            <div className="rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/5 p-4 mt-2">
-              <Label className="text-muted-foreground line-through opacity-70">
-                WhatsApp number
-              </Label>
-              <div className="mt-1 flex items-center justify-between gap-4">
-                <p className="text-sm text-muted-foreground">
-                  Unlock WhatsApp ordering in the Basic plan.
-                </p>
-                <Button
-                  asChild
-                  size="sm"
-                  variant="outline"
-                  className="h-8 border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10"
-                >
-                  <a href="/pricing">Upgrade</a>
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Text
-              id="s-wa"
-              label="WhatsApp number"
-              value={form.whatsapp}
-              onChange={(v) => setForm({ ...form, whatsapp: v })}
-            />
-          )}
+          <Text
+            id="s-wa"
+            label="WhatsApp number"
+            value={form.whatsapp}
+            onChange={(v) => setForm({ ...form, whatsapp: v })}
+          />
           <Text
             id="s-phone"
             label="Phone"
@@ -381,17 +397,67 @@ function SettingsPage() {
             onChange={(v) => setForm({ ...form, address: v })}
           />
           <Text
+            id="s-map-url"
+            label="Map Link (Google Maps URL)"
+            value={form.map_url}
+            onChange={(v) => setForm({ ...form, map_url: v })}
+          />
+          <Text
             id="s-timing"
             label="Opening Hours (e.g. Mon-Sun, 9am-10pm)"
             value={form.timing}
             onChange={(v) => setForm({ ...form, timing: v })}
           />
-          <Text
-            id="s-social"
-            label="Social Media Link (e.g. Instagram URL)"
-            value={form.social_link}
-            onChange={(v) => setForm({ ...form, social_link: v })}
-          />
+          <div className="space-y-4 pt-4 border-t border-border">
+            <h3 className="font-medium text-lg pb-2">Social Media Links</h3>
+            <Text
+              id="s-instagram"
+              label="Instagram URL"
+              value={form.instagram_url}
+              onChange={(v) => setForm({ ...form, instagram_url: v })}
+            />
+            {!feat.advanced_social_links ? (
+              <div className="rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/5 p-4 mt-2">
+                <Label className="text-muted-foreground line-through opacity-70">
+                  Advanced Social Links (Facebook, X, Website)
+                </Label>
+                <div className="mt-1 flex items-center justify-between gap-4">
+                  <p className="text-sm text-muted-foreground">
+                    Unlock Facebook, Twitter / X, and Website links in the Pro plan.
+                  </p>
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="outline"
+                    className="h-8 border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10 shrink-0"
+                  >
+                    <a href="/pricing">Upgrade</a>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <Text
+                  id="s-facebook"
+                  label="Facebook URL"
+                  value={form.facebook_url}
+                  onChange={(v) => setForm({ ...form, facebook_url: v })}
+                />
+                <Text
+                  id="s-twitter"
+                  label="Twitter / X URL"
+                  value={form.twitter_url}
+                  onChange={(v) => setForm({ ...form, twitter_url: v })}
+                />
+                <Text
+                  id="s-website"
+                  label="Website URL"
+                  value={form.website_url}
+                  onChange={(v) => setForm({ ...form, website_url: v })}
+                />
+              </>
+            )}
+          </div>
 
           {!feat.google_reviews ? (
             <div className="rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/5 p-4 mt-2">
@@ -456,17 +522,33 @@ function SettingsPage() {
             ) : (
               form.upi_enabled && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="space-y-2">
-                    <Label htmlFor="s-upi">UPI ID (Optional)</Label>
-                    <Input
-                      id="s-upi"
-                      placeholder="e.g. sabriabdulwahed-2@okhdfcbank"
-                      value={form.upi_id}
-                      onChange={(e) => setForm({ ...form, upi_id: e.target.value })}
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      If you enter a UPI ID here, it will be automatically included in the WhatsApp order message and generate the customer payment QR code below.
-                    </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="s-upi">UPI ID (Optional)</Label>
+                      <Input
+                        id="s-upi"
+                        placeholder="e.g. sabriabdulwahed-2@okhdfcbank"
+                        value={form.upi_id}
+                        onChange={(e) => setForm({ ...form, upi_id: e.target.value })}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        It will be automatically included in the WhatsApp order message.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="s-upi-amount">Test Amount (for Preview)</Label>
+                      <Input
+                        id="s-upi-amount"
+                        type="number"
+                        min="1"
+                        placeholder="e.g. 240"
+                        value={testUpiAmount}
+                        onChange={(e) => setTestUpiAmount(parseFloat(e.target.value) || 0)}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Test the dynamic amount generation in the preview below.
+                      </p>
+                    </div>
                   </div>
 
                   {form.upi_id.trim() && (
@@ -478,6 +560,7 @@ function SettingsPage() {
                         upiId={form.upi_id}
                         shopName={form.name || shop.name}
                         currency={form.currency}
+                        amount={testUpiAmount}
                       />
                     </div>
                   )}
@@ -879,7 +962,9 @@ function SettingsPage() {
           <div className="grid gap-6 sm:grid-cols-2 pt-4 border-t">
             {/* Logo Section */}
             <div className="space-y-3">
-              <Label htmlFor="s-logo" className="font-semibold text-sm">Shop Logo</Label>
+              <Label htmlFor="s-logo" className="font-semibold text-sm">
+                Shop Logo
+              </Label>
               <div className="flex items-center gap-4 p-3 rounded-xl border bg-muted/30">
                 <div className="size-16 rounded-xl border overflow-hidden bg-background shrink-0 flex items-center justify-center shadow-sm relative">
                   {form.logo_url ? (
@@ -889,7 +974,9 @@ function SettingsPage() {
                       className="size-full object-cover"
                     />
                   ) : (
-                    <span className="text-xs text-muted-foreground opacity-50 font-medium">No Logo</span>
+                    <span className="text-xs text-muted-foreground opacity-50 font-medium">
+                      No Logo
+                    </span>
                   )}
                 </div>
                 <div className="space-y-2 flex-1 min-w-0">
@@ -918,7 +1005,9 @@ function SettingsPage() {
 
             {/* Cover Banner Section */}
             <div className="space-y-3">
-              <Label htmlFor="s-cover" className="font-semibold text-sm">Cover Banner Image</Label>
+              <Label htmlFor="s-cover" className="font-semibold text-sm">
+                Cover Banner Image
+              </Label>
               <div className="space-y-3 p-3 rounded-xl border bg-muted/30">
                 <div className="h-16 w-full rounded-lg border overflow-hidden bg-background flex items-center justify-center shadow-sm relative">
                   {form.cover_url ? (
@@ -928,7 +1017,9 @@ function SettingsPage() {
                       className="size-full object-cover"
                     />
                   ) : (
-                    <span className="text-xs text-muted-foreground opacity-50 font-medium">No Cover Banner</span>
+                    <span className="text-xs text-muted-foreground opacity-50 font-medium">
+                      No Cover Banner
+                    </span>
                   )}
                 </div>
                 <div className="flex items-center justify-between gap-2">

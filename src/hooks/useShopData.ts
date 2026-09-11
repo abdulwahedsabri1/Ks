@@ -1,7 +1,14 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { PLANS, parsePriceNumber, type Category, type MenuItem, type Shop, type PlanItem } from "@/lib/shop";
+import {
+  PLANS,
+  parsePriceNumber,
+  type Category,
+  type MenuItem,
+  type Shop,
+  type PlanItem,
+} from "@/lib/shop";
 import { supabase } from "@/integrations/supabase/client";
 
 export function useMyShop(userId?: string) {
@@ -10,7 +17,7 @@ export function useMyShop(userId?: string) {
     queryKey: ["my-shop", userId],
     enabled: !!userId,
     queryFn: async (): Promise<Shop | null> => {
-      // 1. Try finding shop by owner_id
+      // 1. Primary: Find shop by owner_id
       const { data, error } = await supabase
         .from("shops")
         .select("*")
@@ -23,7 +30,8 @@ export function useMyShop(userId?: string) {
         return data[0] as Shop;
       }
 
-      // 2. Fallback: match shop by user email / slug (e.g. rafeek-7kz7@mylinkqr.com -> slug rafeek-7kz7)
+      // 2. Fallback: try to locate shop by email prefix (for legacy accounts with orphaned shops)
+      // This does NOT create a new shop — it just re-links an existing one.
       try {
         const { data: authData } = await supabase.auth.getUser();
         const userEmail = authData.user?.email;
@@ -39,7 +47,7 @@ export function useMyShop(userId?: string) {
 
           if (matchedShops && matchedShops.length > 0) {
             const foundShop = matchedShops[0] as Shop;
-            // Claim / link owner_id so it belongs to this logged in user permanently!
+            // Re-link the orphaned shop to this user (safe update, no creation)
             await supabase.from("shops").update({ owner_id: userId! }).eq("id", foundShop.id);
 
             return { ...foundShop, owner_id: userId! };
@@ -49,35 +57,28 @@ export function useMyShop(userId?: string) {
         console.error("Shop fallback search error:", err);
       }
 
-      // 3. Fallback: check if there is any existing shop created for this user
-      const { data: allShops } = await supabase
-        .from("shops")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      if (allShops && allShops.length > 0) {
-        const fallbackShop = allShops[0] as Shop;
-        await supabase.from("shops").update({ owner_id: userId! }).eq("id", fallbackShop.id);
-        return { ...fallbackShop, owner_id: userId! };
-      }
-
+      // Return null — DO NOT auto-create shops here.
+      // Shop creation happens only during:
+      //   1. Email signup in auth.tsx
+      //   2. Google OAuth in auth/callback.tsx (ensureShopExists)
       return null;
     },
   });
 
   useEffect(() => {
     if (!userId || !query.data?.id) return;
+    const shopId = query.data.id;
 
+    const channelId = Math.random().toString(36).substring(7);
     const channel = supabase
-      .channel("public:shops")
+      .channel(`shop-changes-${shopId}-${channelId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "shops",
-          filter: `id=eq.${query.data.id}`,
+          filter: `id=eq.${shopId}`,
         },
         (payload: any) => {
           queryClient.invalidateQueries({ queryKey: ["my-shop", userId] });
@@ -87,7 +88,7 @@ export function useMyShop(userId?: string) {
             if (oldRecord.payment_status !== newRecord.payment_status) {
               toast(`Your payment status has been updated to ${newRecord.payment_status}`);
             } else if (oldRecord.plan !== newRecord.plan) {
-              toast(`Your plan has been updated to ${newRecord.plan}`);
+              toast.success(`Your plan has been upgraded to ${newRecord.plan}! 🎉`);
             }
           }
         },
@@ -118,7 +119,9 @@ export function useIsAdmin(userId?: string) {
 }
 
 export function useCategories(shopId?: string) {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ["categories", shopId],
     enabled: !!shopId,
     queryFn: async (): Promise<Category[]> => {
@@ -131,10 +134,32 @@ export function useCategories(shopId?: string) {
       return (data ?? []) as Category[];
     },
   });
+
+  useEffect(() => {
+    if (!shopId) return;
+    const channelId = Math.random().toString(36).substring(7);
+    const channel = supabase
+      .channel(`categories-${shopId}-${channelId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "categories", filter: `shop_id=eq.${shopId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["categories", shopId] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [shopId, queryClient]);
+
+  return query;
 }
 
 export function useMenuItems(shopId?: string) {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ["menu-items", shopId],
     enabled: !!shopId,
     queryFn: async (): Promise<MenuItem[]> => {
@@ -151,6 +176,26 @@ export function useMenuItems(shopId?: string) {
       })) as MenuItem[];
     },
   });
+
+  useEffect(() => {
+    if (!shopId) return;
+    const channelId = Math.random().toString(36).substring(7);
+    const channel = supabase
+      .channel(`menu-items-${shopId}-${channelId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "menu_items", filter: `shop_id=eq.${shopId}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["menu-items", shopId] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [shopId, queryClient]);
+
+  return query;
 }
 
 export type AnalyticsRow = {
@@ -169,7 +214,9 @@ export function useAnalytics(shopId?: string, days = 30, resetAt?: string | null
     queryFn: async (): Promise<AnalyticsRow[]> => {
       const thirtyDaysAgo = new Date(Date.now() - days * 86400000).toISOString();
       const since =
-        resetAt && !isNaN(new Date(resetAt).getTime()) && new Date(resetAt).getTime() > new Date(thirtyDaysAgo).getTime()
+        resetAt &&
+        !isNaN(new Date(resetAt).getTime()) &&
+        new Date(resetAt).getTime() > new Date(thirtyDaysAgo).getTime()
           ? new Date(resetAt).toISOString()
           : thirtyDaysAgo;
 
@@ -198,7 +245,9 @@ export async function uploadShopMedia(file: File, shopId: string): Promise<strin
   try {
     const ext = file.name.split(".").pop() ?? "jpg";
     const path = `${shopId}/${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from("shop-media").upload(path, file, { upsert: true });
+    const { error } = await supabase.storage
+      .from("shop-media")
+      .upload(path, file, { upsert: true });
     if (!error) {
       const { data: publicData } = supabase.storage.from("shop-media").getPublicUrl(path);
       if (publicData?.publicUrl) {

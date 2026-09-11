@@ -9,7 +9,7 @@ import { DashboardShell } from "@/components/DashboardShell";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { publicShopUrl } from "@/lib/shop";
+import { publicShopUrl, shopGoogleReviewLink, shopMapUrl } from "@/lib/shop";
 
 export const Route = createFileRoute("/_authenticated/qr")({
   ssr: false,
@@ -62,7 +62,14 @@ function QrPage() {
   const [dark, setDark] = useState("#0F172A");
   const [busy, setBusy] = useState(false);
 
-  const url = shop ? `${publicShopUrl(shop.slug)}?src=qr` : "";
+  const [qrType, setQrType] = useState<"menu" | "map" | "review">("menu");
+
+  const menuUrl = shop ? `${publicShopUrl(shop.slug)}?src=qr` : "";
+  const mapUrl = shop ? shopMapUrl(shop) || "" : "";
+  const reviewUrl = shop ? shopGoogleReviewLink(shop) || "" : "";
+
+  const url =
+    qrType === "menu" ? menuUrl : qrType === "map" ? mapUrl : qrType === "review" ? reviewUrl : "";
 
   const render = useCallback(async () => {
     if (!url || !canvasRef.current) return;
@@ -127,33 +134,80 @@ function QrPage() {
       ) : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_1fr]">
           <div className="flex flex-col items-center justify-center rounded-3xl border bg-card p-8 text-center shadow-sm">
-            <div className="mx-auto rounded-3xl bg-white p-4 shadow-xl shadow-black/5 ring-1 ring-black/5">
-              <canvas ref={canvasRef} className="mx-auto w-full max-w-[280px] h-auto rounded-xl" />
-            </div>
-            <div className="mt-8 space-y-1.5">
-              <p className="break-all text-sm font-medium">{url}</p>
-              <p className="text-xs text-muted-foreground">
-                This link is public — customers can scan and browse without signing in.
-              </p>
-            </div>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Button asChild size="lg" className="rounded-full" disabled={!png}>
-                <a href={png} download={`${shop.slug}-qr.png`}>
-                  <Download className="mr-2 size-4" /> Download PNG
-                </a>
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="rounded-full bg-transparent"
-                onClick={() => {
-                  void navigator.clipboard.writeText(url);
-                  toast.success("Link copied");
-                }}
+            <div className="mb-6 flex w-full max-w-sm rounded-lg bg-muted p-1">
+              <button
+                type="button"
+                className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-all ${qrType === "menu" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setQrType("menu")}
               >
-                <Copy className="mr-2 size-4" /> Copy link
-              </Button>
+                Menu
+              </button>
+              <button
+                type="button"
+                className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-all ${qrType === "map" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setQrType("map")}
+              >
+                Map
+              </button>
+              <button
+                type="button"
+                className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-all ${qrType === "review" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                onClick={() => setQrType("review")}
+              >
+                Review
+              </button>
             </div>
+
+            {url ? (
+              <>
+                <div className="mx-auto rounded-3xl bg-white p-4 shadow-xl shadow-black/5 ring-1 ring-black/5">
+                  <canvas
+                    ref={canvasRef}
+                    className="mx-auto w-full max-w-[280px] h-auto rounded-xl"
+                  />
+                </div>
+                <div className="mt-8 space-y-1.5">
+                  <p className="break-all text-sm font-medium">{url}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {qrType === "menu" &&
+                      "This link is public — customers can scan and browse without signing in."}
+                    {qrType === "map" &&
+                      "Customers scanning this will be redirected to your map location."}
+                    {qrType === "review" &&
+                      "Customers scanning this will be redirected to leave a review."}
+                  </p>
+                </div>
+                <div className="mt-6 flex flex-wrap justify-center gap-3">
+                  <Button asChild size="lg" className="rounded-full" disabled={!png}>
+                    <a href={png} download={`${shop.slug}-${qrType}-qr.png`}>
+                      <Download className="mr-2 size-4" /> Download PNG
+                    </a>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="rounded-full bg-transparent"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(url);
+                      toast.success("Link copied");
+                    }}
+                  >
+                    <Copy className="mr-2 size-4" /> Copy link
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="py-12 flex flex-col items-center justify-center opacity-80">
+                <p className="text-muted-foreground mb-4">
+                  {qrType === "map" && "You haven't set a Map Link in Shop Settings yet."}
+                  {qrType === "review" &&
+                    "You haven't set a Google Review Link in Shop Settings yet."}
+                </p>
+                <Button asChild variant="outline">
+                  <a href="/settings">Go to Shop Settings</a>
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4 rounded-3xl border bg-card p-6">

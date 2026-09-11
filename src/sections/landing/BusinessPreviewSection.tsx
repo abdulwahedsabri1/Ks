@@ -446,7 +446,7 @@ export function BusinessPreviewSection() {
 
             {/* Domain text under phone */}
             <p className="text-center text-white/30 text-xs mt-6 tracking-wider">
-              {activeData.id === "restaurant" ? "royalbiryani" : activeData.id}.myqr.link
+              mylinkqr.in/shop/{activeData.id === "restaurant" ? "royalbiryani" : activeData.id}
             </p>
           </motion.div>
 

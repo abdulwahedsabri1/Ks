@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   MapPin,
@@ -12,6 +12,10 @@ import {
   Link as LinkIcon,
   ChevronRight,
   Star,
+  Instagram,
+  Facebook,
+  Twitter,
+  Globe,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -29,7 +33,7 @@ import {
   money,
   planOf,
   shopTiming,
-  shopSocialLink,
+  shopSocialLinks,
   shopGoogleReviewLink,
   shopDeliveryEnabled,
   shopTakeawayEnabled,
@@ -37,6 +41,7 @@ import {
   shopTheme,
   shopFeatures,
   shopLanguages,
+  shopMapUrl,
   THEME_CONFIG,
   type CartLine,
   type Coupon,
@@ -197,6 +202,8 @@ function PublicMenu() {
     setOrderType(v);
   };
 
+  const router = useRouter();
+
   useEffect(() => {
     const isScan =
       typeof window !== "undefined" &&
@@ -207,17 +214,46 @@ function PublicMenu() {
       .then(() => undefined);
   }, [shop.id]);
 
+  // Real-time: refresh shop menu when owner updates items, categories, or shop settings
+  useEffect(() => {
+    const menuChannel = supabase
+      .channel(`shop-page-${shop.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "menu_items", filter: `shop_id=eq.${shop.id}` },
+        () => {
+          router.invalidate();
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "categories", filter: `shop_id=eq.${shop.id}` },
+        () => {
+          router.invalidate();
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "shops", filter: `id=eq.${shop.id}` },
+        () => {
+          router.invalidate();
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(menuChannel);
+    };
+  }, [shop.id, router]);
+
   useEffect(() => {
     if (!showTranslate) return;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).googleTranslateElementInit = () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       new (window as any).google.translate.TranslateElement(
         {
           pageLanguage: "en",
           includedLanguages: languages.join(","),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
           layout: (window as any).google.translate.TranslateElement.InlineLayout.SIMPLE,
         },
         "google_translate_element",
@@ -233,7 +269,7 @@ function PublicMenu() {
       if (document.body.contains(script)) {
         document.body.removeChild(script);
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
       delete (window as any).googleTranslateElementInit;
     };
   }, [showTranslate, languages]);
@@ -272,13 +308,11 @@ function PublicMenu() {
     setCart((c) => ({ ...c, [id]: Math.max(0, (c[id] ?? 0) + delta) }));
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const container: any = {
     hidden: { opacity: 0 },
     show: { opacity: 1, transition: { staggerChildren: 0.05 } },
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const itemAnim: any = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
@@ -347,7 +381,19 @@ function PublicMenu() {
           <div className={`mt-5 flex flex-wrap gap-x-6 gap-y-3 text-[13px] ${theme.textMuted}`}>
             {shop.address && (
               <span className="inline-flex items-center gap-2">
-                <MapPin className={`size-4 shrink-0 ${theme.accentText}`} /> {shop.address}
+                <MapPin className={`size-4 shrink-0 ${theme.accentText}`} />
+                {shopMapUrl(shop) ? (
+                  <a
+                    href={shopMapUrl(shop)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`transition-colors hover:underline ${theme.textMutedHover}`}
+                  >
+                    {shop.address}
+                  </a>
+                ) : (
+                  shop.address
+                )}
               </span>
             )}
             {shop.phone && (
@@ -363,16 +409,53 @@ function PublicMenu() {
                 <Clock className={`size-4 shrink-0 ${theme.accentText}`} /> {shopTiming(shop)}
               </span>
             )}
-            {shopSocialLink(shop) && (
-              <a
-                href={shopSocialLink(shop)}
-                target="_blank"
-                rel="noreferrer"
-                className={`inline-flex items-center gap-2 transition-colors ${theme.textMutedHover}`}
-              >
-                <LinkIcon className="size-4 shrink-0" /> Social Media
-              </a>
-            )}
+            {(() => {
+              const socials = shopSocialLinks(shop);
+              return (
+                <>
+                  {socials.instagram && (
+                    <a
+                      href={socials.instagram}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`inline-flex items-center gap-2 transition-colors ${theme.textMutedHover}`}
+                    >
+                      <Instagram className="size-4 shrink-0" /> Instagram
+                    </a>
+                  )}
+                  {socials.facebook && (
+                    <a
+                      href={socials.facebook}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`inline-flex items-center gap-2 transition-colors ${theme.textMutedHover}`}
+                    >
+                      <Facebook className="size-4 shrink-0" /> Facebook
+                    </a>
+                  )}
+                  {socials.twitter && (
+                    <a
+                      href={socials.twitter}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`inline-flex items-center gap-2 transition-colors ${theme.textMutedHover}`}
+                    >
+                      <Twitter className="size-4 shrink-0" /> Twitter / X
+                    </a>
+                  )}
+                  {socials.website && (
+                    <a
+                      href={socials.website}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`inline-flex items-center gap-2 transition-colors ${theme.textMutedHover}`}
+                    >
+                      <Globe className="size-4 shrink-0" /> Website
+                    </a>
+                  )}
+                </>
+              );
+            })()}
             {shopGoogleReviewLink(shop) && (
               <button
                 type="button"
@@ -776,10 +859,12 @@ function PublicMenu() {
                         <Button
                           variant="secondary"
                           onClick={() => {
-                            const shopCoupons =
-                              ((shop.features as Record<string, unknown> | null)?.[
-                                "coupons"
-                              ] as Coupon[]) || [];
+                            const rawCoupons = (shop.features as Record<string, unknown> | null)?.[
+                              "coupons"
+                            ];
+                            const shopCoupons = Array.isArray(rawCoupons)
+                              ? (rawCoupons as Coupon[])
+                              : [];
                             const found = shopCoupons.find((c) => c.code === couponCode);
                             if (!found) {
                               setCouponError("Invalid coupon code");
@@ -832,8 +917,14 @@ function PublicMenu() {
                   (Boolean((shop.features as Record<string, unknown> | null)?.["upi_id"]) ||
                     Boolean((shop.features as Record<string, unknown> | null)?.["upi_qr_url"])) && (
                     <UpiPaymentBox
-                      upiId={((shop.features as Record<string, unknown> | null)?.["upi_id"] as string) || ""}
-                      upiQrUrl={(shop.features as Record<string, unknown> | null)?.["upi_qr_url"] as string | null}
+                      upiId={
+                        ((shop.features as Record<string, unknown> | null)?.["upi_id"] as string) ||
+                        ""
+                      }
+                      upiQrUrl={
+                        (shop.features as Record<string, unknown> | null)?.["upi_qr_url"] as
+                          string | null
+                      }
                       shopName={shop.name}
                       amount={total}
                       currency={shop.currency}
@@ -908,7 +999,7 @@ function Chip({
   label: string;
   active: boolean;
   onClick: () => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   theme: any;
 }) {
   return (

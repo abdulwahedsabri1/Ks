@@ -22,6 +22,7 @@ interface RazorpayModalProps {
 
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Razorpay: any;
   }
 }
@@ -134,18 +135,21 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
         }
       }
 
-      // Optimistic instant feedback
-      toast.success(`🎉 ${plan.name} plan activated! Unlocking features…`);
-      onSuccess();
-
       await directActivatePlan({
         data: {
-          plan_name: plan.id || plan.name,
-          amount: price,
+          plan_id: plan.id || "basic",
           transaction_id: `DIRECT-${Date.now()}`,
-          ...(targetShopId ? { shop_id: targetShopId } : {}),
+          shop_id: targetShopId || "",
         },
       });
+
+      // Invalidate cache so Dashboard fetches the new status instantly
+      qc.invalidateQueries({ queryKey: ["my-shop"] });
+      qc.invalidateQueries({ queryKey: ["admin-shops"] });
+
+      // Instant feedback and redirect
+      toast.success(`🎉 ${plan.name} plan activated! Unlocking features…`);
+      onSuccess();
     } catch (err) {
       console.error("Direct activation error:", err);
       setDirectLoading(false);
@@ -259,7 +263,11 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
         // Fast order creation with 1s timeout race
         try {
           const orderPromise = createRazorpayOrder({
-            data: { amount: price, receipt: `rcpt_${plan.id}_${Date.now()}` },
+            data: {
+              plan_id: plan.id || "basic",
+              shop_id: targetShopId || "",
+              receipt: `rcpt_${plan.id}_${Date.now()}`,
+            },
           });
           const timeoutPromise = new Promise<{ order_id?: string }>((resolve) =>
             setTimeout(() => resolve({}), 1000),
@@ -274,6 +282,7 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
           console.warn("Order creation fast timeout/error, opening checkout directly:", orderErr);
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const options: any = {
           key: keyId,
           amount: Math.max(100, Math.round((price || 1) * 100)),
@@ -298,11 +307,15 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_order_id: response.razorpay_order_id || `ORD-${Date.now()}`,
                   razorpay_signature: response.razorpay_signature || "skip_verify",
-                  plan_name: plan.id || plan.name,
-                  amount: price,
-                  ...(targetShopId ? { shop_id: targetShopId } : {}),
+                  plan_id: plan.id || "basic",
+                  shop_id: targetShopId || "",
                 },
               });
+
+              // Invalidate cache so Dashboard fetches the new status instantly
+              qc.invalidateQueries({ queryKey: ["my-shop"] });
+              qc.invalidateQueries({ queryKey: ["admin-shops"] });
+
               toast.success(
                 `🎉 ${plan.name} plan activated! All ${plan.name} features are now unlocked.`,
               );

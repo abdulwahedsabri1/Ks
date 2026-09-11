@@ -91,14 +91,16 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
 
 export const directActivatePlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data: { plan_name: string; amount?: number; transaction_id?: string; shop_id?: string }) => {
-    return {
-      plan_name: data.plan_name,
-      amount: data.amount,
-      transaction_id: data.transaction_id,
-      shop_id: data.shop_id,
-    };
-  })
+  .validator(
+    (data: { plan_name: string; amount?: number; transaction_id?: string; shop_id?: string }) => {
+      return {
+        plan_name: data.plan_name,
+        amount: data.amount,
+        transaction_id: data.transaction_id,
+        shop_id: data.shop_id,
+      };
+    },
+  )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -122,7 +124,7 @@ async function executePlanActivation({
   transactionId,
   orderId,
   targetShopId,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   supabaseAdmin,
 }: {
   userId: string;
@@ -131,13 +133,13 @@ async function executePlanActivation({
   transactionId: string;
   orderId: string;
   targetShopId?: string | undefined;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   supabaseAdmin: any;
 }) {
   let shopId: string | null = targetShopId || null;
   let currentPlan = "trial";
   let planExpiresAt: string | null = null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   let existingFeatures: Record<string, any> = {};
 
   if (shopId) {
@@ -310,10 +312,7 @@ async function executePlanActivation({
 
   // Also update all shops owned by user to ensure consistency
   try {
-    await supabaseAdmin
-      .from("shops")
-      .update(updatePayload)
-      .eq("owner_id", userId);
+    await supabaseAdmin.from("shops").update(updatePayload).eq("owner_id", userId);
   } catch (errAll) {
     console.warn("Non-fatal error updating all user shops:", errAll);
   }
@@ -351,11 +350,21 @@ async function executePlanActivation({
 
   // 4. Log to Payments table (for Admin Payment Logs tab)
   try {
-    const { data: sData } = await supabaseAdmin.from("shops").select("name, slug, niche, phone").eq("id", shopId).single();
+    const { data: sData } = await supabaseAdmin
+      .from("shops")
+      .select("name, slug, niche, phone")
+      .eq("id", shopId)
+      .single();
     const { data: uData } = await supabaseAdmin.auth.admin.getUserById(userId);
 
-    const prefix = (sData?.slug || "BIZ").replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 6);
-    const suffix = (shopId || "0000").replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase();
+    const prefix = (sData?.slug || "BIZ")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toUpperCase()
+      .slice(0, 6);
+    const suffix = (shopId || "0000")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .slice(0, 4)
+      .toUpperCase();
     const bizId = `BIZ-${prefix}-${suffix}`;
 
     await supabaseAdmin.from("payments").insert({
@@ -389,32 +398,3 @@ async function executePlanActivation({
 
   return { success: true, shop_id: shopId };
 }
-
-export const updateShopSettings = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .validator((data: { shop_id: string; updates: Record<string, unknown> }) => {
-    return {
-      shop_id: data.shop_id,
-      updates: data.updates,
-    };
-  })
-  .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const payload = {
-      ...data.updates,
-      owner_id: context.userId,
-    };
-
-    const { data: updated, error } = await supabaseAdmin
-      .from("shops")
-      .update(payload)
-      .eq("id", data.shop_id)
-      .select();
-
-    if (error) {
-      throw new Error(`Failed to update shop settings: ${error.message}`);
-    }
-
-    return { success: true, shop: updated?.[0] };
-  });

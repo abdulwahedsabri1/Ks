@@ -41,9 +41,9 @@ import { getFoodImageUrl } from "@/lib/foodImage";
 export const Route = createFileRoute("/_authenticated/menu")({
   head: () => ({
     meta: [
-      { title: "Menu Builder — MY Link QR" },
+      { title: "Menu & Items — MY Link QR" },
       { name: "description", content: "Add categories and items to your digital menu." },
-      { property: "og:title", content: "Menu Builder — MY Link QR" },
+      { property: "og:title", content: "Menu & Items — MY Link QR" },
       {
         property: "og:description",
         content: "Create categories and items for your digital QR menu.",
@@ -344,7 +344,9 @@ function MenuPage() {
         : scanned;
 
       if (itemsToImport.length === 0) {
-        toast.error("Your current plan item limit has been reached. Please upgrade to add more items.");
+        toast.error(
+          "Your current plan item limit has been reached. Please upgrade to add more items.",
+        );
         setImportBusy(false);
         return;
       }
@@ -402,7 +404,7 @@ function MenuPage() {
 
   if (!shop) {
     return (
-      <DashboardShell title="Menu" isAdmin={isAdmin}>
+      <DashboardShell title="Menu & Items" isAdmin={isAdmin}>
         <p className="text-sm text-muted-foreground">Create your shop on the dashboard first.</p>
       </DashboardShell>
     );
@@ -410,7 +412,7 @@ function MenuPage() {
 
   return (
     <DashboardShell
-      title="Menu Builder"
+      title="Menu & Items"
       description="Build your categories and items."
       isAdmin={isAdmin}
     >

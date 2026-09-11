@@ -41,7 +41,7 @@ export type Shop = {
   plan_expires_at?: string | null;
   payment_status?: string | null;
   amount_paid?: number | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   features?: Record<string, any> | null;
   billing_cycle?: string | null;
   grace_period_days?: number | null;
@@ -53,8 +53,22 @@ export function shopTiming(shop?: Pick<Shop, "features"> | null) {
   return shop?.features?.["timing"] as string | undefined;
 }
 
-export function shopSocialLink(shop?: Pick<Shop, "features"> | null) {
-  return shop?.features?.["social_link"] as string | undefined;
+export function shopSocialLinks(shop?: Pick<Shop, "plan" | "features"> | null) {
+  const feat = shopFeatures(shop);
+  return {
+    instagram: feat.social_link
+      ? ((shop?.features?.["instagram_url"] || shop?.features?.["social_link"] || "") as string)
+      : "",
+    facebook: feat.advanced_social_links
+      ? ((shop?.features?.["facebook_url"] || "") as string)
+      : "",
+    twitter: feat.advanced_social_links ? ((shop?.features?.["twitter_url"] || "") as string) : "",
+    website: feat.advanced_social_links ? ((shop?.features?.["website_url"] || "") as string) : "",
+  };
+}
+
+export function shopMapUrl(shop?: Pick<Shop, "features"> | null) {
+  return shop?.features?.["map_url"] as string | undefined;
 }
 
 export function shopGoogleReviewLink(shop?: Pick<Shop, "plan" | "features"> | null) {
@@ -298,7 +312,7 @@ export const PLANS: PlanItem[] = [
     features: [
       "Digital QR menu page",
       "Business Logo & Cover photo",
-      "Social media link",
+      "Instagram link",
       "Opening hours display",
       "Up to 50 menu items",
       "Basic view counter",
@@ -313,6 +327,7 @@ export const PLANS: PlanItem[] = [
     tagline: "For growing shops",
     features: [
       "Everything in Basic",
+      "All Social media links (Facebook, X, Website)",
       "WhatsApp ordering & cart",
       "On-Table dining",
       "Take-away orders",
@@ -360,6 +375,7 @@ export type PlanFeatures = {
   google_reviews: boolean;
   logo_cover: boolean;
   social_link: boolean;
+  advanced_social_links: boolean;
   opening_hours: boolean;
   multi_language: boolean;
   coupons: boolean;
@@ -383,6 +399,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     google_reviews: false,
     logo_cover: false,
     social_link: false,
+    advanced_social_links: false,
     opening_hours: false,
     multi_language: false,
     coupons: false,
@@ -404,6 +421,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     google_reviews: false,
     logo_cover: true,
     social_link: true,
+    advanced_social_links: false,
     opening_hours: true,
     multi_language: true,
     coupons: false,
@@ -425,6 +443,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     google_reviews: false,
     logo_cover: true,
     social_link: true,
+    advanced_social_links: true,
     opening_hours: true,
     multi_language: true,
     coupons: false,
@@ -446,6 +465,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     google_reviews: true,
     logo_cover: true,
     social_link: true,
+    advanced_social_links: true,
     opening_hours: true,
     multi_language: true,
     coupons: true,
@@ -467,6 +487,7 @@ export type FeatureKey =
   | "google_reviews"
   | "logo_cover"
   | "social_link"
+  | "advanced_social_links"
   | "opening_hours"
   | "multi_language"
   | "coupons"
@@ -474,7 +495,8 @@ export type FeatureKey =
 
 export const FEATURE_LABELS: Record<FeatureKey, string> = {
   logo_cover: "Business logo & cover photo",
-  social_link: "Social media link",
+  social_link: "Instagram link",
+  advanced_social_links: "Facebook, Twitter & Website links",
   opening_hours: "Opening hours display",
   ai: "AI menu generator & photo scan",
   ordering: "WhatsApp ordering & cart",
@@ -571,16 +593,21 @@ export function planProgressPercent(
   return Math.min(100, Math.max(0, Math.round((remaining / total) * 100)));
 }
 
-export function analyticsLastResetDate(shop?: Pick<Shop, "created_at" | "features"> | null): string {
+export function analyticsLastResetDate(
+  shop?: Pick<Shop, "created_at" | "features"> | null,
+): string {
   if (!shop) return new Date().toISOString();
-  const resetAt = (shop.features as Record<string, unknown> | null)?.["analytics_reset_at"] as string | undefined;
+  const resetAt = (shop.features as Record<string, unknown> | null)?.["analytics_reset_at"] as
+    string | undefined;
   if (resetAt && !isNaN(new Date(resetAt).getTime())) {
     return resetAt;
   }
   return shop.created_at || new Date().toISOString();
 }
 
-export function analyticsRemainingDays(shop?: Pick<Shop, "created_at" | "features"> | null): number {
+export function analyticsRemainingDays(
+  shop?: Pick<Shop, "created_at" | "features"> | null,
+): number {
   const lastReset = new Date(analyticsLastResetDate(shop)).getTime();
   const now = Date.now();
   const elapsedMs = Math.max(0, now - lastReset);
@@ -651,23 +678,21 @@ export function planAmount(plan: string, cycle: string, customPlans?: PlanItem[]
 export function shopBusinessId(shop?: Pick<Shop, "id" | "slug" | "business_id"> | null): string {
   if (!shop) return "BIZ-0000";
   if (shop.business_id) return shop.business_id;
-  const prefix = (shop.slug || "BIZ").replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 6);
-  const suffix = (shop.id || "0000").replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase();
+  const prefix = (shop.slug || "BIZ")
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toUpperCase()
+    .slice(0, 6);
+  const suffix = (shop.id || "0000")
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .slice(0, 4)
+    .toUpperCase();
   return `BIZ-${prefix}-${suffix}`;
 }
 
-/** Public, share-safe URL for a shop menu (editor previews require a login). */
+/** Public, share-safe URL for a shop menu. */
 export function publicShopUrl(slug: string) {
   const path = `/shop/${slug}`;
   if (typeof window === "undefined") return path;
-  const host = window.location.hostname;
-  if (
-    host.includes("id-preview--") ||
-    host.includes("lovableproject.com") ||
-    host === "localhost"
-  ) {
-    return `https://myshop-link.lovable.app${path}`;
-  }
   return `${window.location.origin}${path}`;
 }
 

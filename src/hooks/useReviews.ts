@@ -26,7 +26,6 @@ export async function submitReview(review: {
   review_type: "positive" | "negative";
   redirected_to_google?: boolean | null;
 }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any).from("reviews").insert({
     ...review,
     redirected_to_google: review.redirected_to_google ?? false,
@@ -39,7 +38,6 @@ export function useAllReviews(enabled: boolean) {
     queryKey: ["admin-reviews"],
     enabled,
     queryFn: async (): Promise<Review[]> => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("reviews")
         .select("*, shops(name)")
@@ -47,7 +45,7 @@ export function useAllReviews(enabled: boolean) {
       if (error) throw error;
       return ((data ?? []) as unknown[]).map((r: unknown) => ({
         ...(r as Review),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         shop_name: (r as any).shops?.name ?? "Unknown",
       })) as Review[];
     },
@@ -59,7 +57,6 @@ export function useShopReviews(shopId?: string) {
     queryKey: ["shop-reviews", shopId],
     enabled: !!shopId,
     queryFn: async (): Promise<Review[]> => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("reviews")
         .select("*")

@@ -22,7 +22,13 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useAnalytics, useIsAdmin, useMenuItems, useMyShop, useCustomPlans } from "@/hooks/useShopData";
+import {
+  useAnalytics,
+  useIsAdmin,
+  useMenuItems,
+  useMyShop,
+  useCustomPlans,
+} from "@/hooks/useShopData";
 import { DashboardShell } from "@/components/DashboardShell";
 import { RazorpayModal } from "@/components/RazorpayModal";
 import { Button } from "@/components/ui/button";
@@ -73,7 +79,8 @@ function DashboardPage() {
   const { data: isAdmin } = useIsAdmin(user?.id);
   const { data: items } = useMenuItems(shop?.id);
   const { data: plans = PLANS } = useCustomPlans();
-  const resetAt = (shop?.features as Record<string, unknown> | null)?.["analytics_reset_at"] as string | undefined;
+  const resetAt = (shop?.features as Record<string, unknown> | null)?.["analytics_reset_at"] as
+    string | undefined;
   const { data: events } = useAnalytics(shop?.id, 30, resetAt);
   const [selectedPlan, setSelectedPlan] = useState<PlanItem | null>(null);
 
@@ -187,275 +194,312 @@ function DashboardPage() {
                       {shop.name}
                     </h2>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{shop.niche}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                        {shop.niche}
+                      </p>
                       <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-[11px] font-mono font-bold text-primary shrink-0">
                         {shopBusinessId(shop)}
                       </span>
                     </div>
                   </div>
                 </div>
-              <span
-                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold shrink-0 ${
-                  subscriptionState(shop) === "active"
-                    ? "bg-emerald-500/15 text-emerald-600"
-                    : subscriptionState(shop) === "payment_pending"
-                      ? "bg-yellow-500/15 text-yellow-600"
-                      : subscriptionState(shop) === "grace_period"
-                        ? "bg-orange-500/15 text-orange-600"
-                        : subscriptionState(shop) === "suspended"
-                          ? "bg-red-500/15 text-red-600"
-                          : "bg-slate-500/15 text-slate-600"
-                }`}
-              >
-                {subscriptionStateLabel(subscriptionState(shop))}
-              </span>
-            </div>
-
-            <div className="mt-4 grid gap-2.5 grid-cols-2 lg:grid-cols-4">
-              <Meta label="Plan" value={<span className="capitalize">{shop.plan}</span>} />
-              <Meta
-                label="Payment"
-                value={
-                  shop.payment_status === "paid" ? (
-                    <span className="text-primary font-semibold">
-                      Paid {money(Number(shop.amount_paid && Number(shop.amount_paid) > 0 ? shop.amount_paid : planAmount(shop.plan, shop.billing_cycle ?? "monthly", plans)))}
-                    </span>
-                  ) : shop.payment_status === "pending" ? (
-                    <span className="text-yellow-600 font-semibold">Pending</span>
-                  ) : shop.plan === "trial" ? (
-                    <span className="text-muted-foreground">Free Trial</span>
-                  ) : (
-                    <span className="text-muted-foreground">Not Paid</span>
-                  )
-                }
-              />
-              <Meta
-                label="Billing"
-                value={<span className="capitalize">{shop.billing_cycle ?? "monthly"}</span>}
-              />
-              <Meta label="Start Date" value={formatDate(shop.plan_started_at || shop.created_at)} />
-              <Meta label="Expiry" value={formatDate(shop.plan_expires_at)} />
-              <Meta
-                label="Auto Renew"
-                value={
-                  shop.auto_renew !== false ? (
-                    <span className="text-emerald-600 font-semibold">Enabled</span>
-                  ) : (
-                    <span className="text-muted-foreground">Disabled</span>
-                  )
-                }
-              />
-              <Meta label="Grace Period" value={`${shop.grace_period_days ?? 7} days`} />
-            </div>
-
-            {/* Progress Bar - Days Remaining */}
-            {shop.plan_expires_at && daysRemaining(shop) !== Infinity && (
-              <div className="mt-4">
-                <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-                  <span>Subscription Progress</span>
-                  <span className="font-medium">
-                    {daysRemaining(shop) > 0
-                      ? `${daysRemaining(shop)} days remaining (${planProgressPercent(shop)}%)`
-                      : "Expired"}
-                  </span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      planProgressPercent(shop) > 40
-                        ? "bg-emerald-500"
-                        : planProgressPercent(shop) > 15
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
-                    }`}
-                    style={{
-                      width: `${planProgressPercent(shop)}%`,
-                    }}
-                  />
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Your <span className="capitalize font-medium">{shop.plan}</span> plan started on{" "}
-                  <span className="font-medium text-foreground">{formatDate(shop.plan_started_at || shop.created_at)}</span> and is
-                  {daysRemaining(shop) > 0
-                    ? ` active for ${daysRemaining(shop)} more days (expires ${formatDate(shop.plan_expires_at)}).`
-                    : " expired. Please upgrade or renew your plan."}
-                </p>
-              </div>
-            )}
-
-            <ul className="mt-4 flex flex-wrap gap-1.5 text-xs text-muted-foreground">
-              {[
-                {
-                  label: `${Number.isFinite(planOf(shop.plan).items) ? planOf(shop.plan).items : "Unlimited"} items`,
-                  locked: false,
-                },
-                {
-                  label: Boolean((shop.features as Record<string, unknown> | null)?.["ai"] || planOf(shop.plan).ai)
-                    ? "AI tools"
-                    : "AI locked",
-                  locked: !Boolean((shop.features as Record<string, unknown> | null)?.["ai"] || planOf(shop.plan).ai),
-                },
-                {
-                  label: Boolean((shop.features as Record<string, unknown> | null)?.["ordering"] || planOf(shop.plan).ordering)
-                    ? "WhatsApp ordering"
-                    : "Ordering locked",
-                  locked: !Boolean((shop.features as Record<string, unknown> | null)?.["ordering"] || planOf(shop.plan).ordering),
-                },
-                {
-                  label: Boolean((shop.features as Record<string, unknown> | null)?.["analytics"] || planOf(shop.plan).analytics)
-                    ? "Full analytics"
-                    : "Basic views",
-                  locked: !Boolean((shop.features as Record<string, unknown> | null)?.["analytics"] || planOf(shop.plan).analytics),
-                },
-              ].map((f) => (
-                <li
-                  key={f.label}
-                  className={`rounded-full border px-2.5 py-0.5 text-[11px] ${
-                    f.locked
-                      ? "border-red-500/20 text-red-500/80 bg-red-500/5"
-                      : "bg-emerald-500/10 text-emerald-600 font-medium border-emerald-500/20"
+                <span
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold shrink-0 ${
+                    subscriptionState(shop) === "active"
+                      ? "bg-emerald-500/15 text-emerald-600"
+                      : subscriptionState(shop) === "payment_pending"
+                        ? "bg-yellow-500/15 text-yellow-600"
+                        : subscriptionState(shop) === "grace_period"
+                          ? "bg-orange-500/15 text-orange-600"
+                          : subscriptionState(shop) === "suspended"
+                            ? "bg-red-500/15 text-red-600"
+                            : "bg-slate-500/15 text-slate-600"
                   }`}
                 >
-                  {f.locked ? (
-                    <Lock className="inline-block size-3 mr-1 mb-0.5 text-red-500" />
-                  ) : (
-                    <Check className="inline-block size-3 mr-1 mb-0.5 text-emerald-600" />
-                  )}
-                  {f.label}
-                </li>
-              ))}
-            </ul>
+                  {subscriptionStateLabel(subscriptionState(shop))}
+                </span>
+              </div>
 
-            {/* ── 3-Plan Instant Upgrade Cards (Razorpay Integrated) ── */}
-            <div className="mt-6 pt-6 border-t border-border">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-                <div>
-                  <h3 className="font-display text-base sm:text-lg font-bold flex items-center gap-2 text-foreground">
-                    <Sparkles className="size-4 text-amber-500" /> Choose or Upgrade Your Subscription Plan
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Click any plan to open instant Razorpay checkout. Plan updates activate immediately upon payment.
+              <div className="mt-4 grid gap-2.5 grid-cols-2 lg:grid-cols-4">
+                <Meta label="Plan" value={<span className="capitalize">{shop.plan}</span>} />
+                <Meta
+                  label="Payment"
+                  value={
+                    shop.payment_status === "paid" ? (
+                      <span className="text-primary font-semibold">
+                        Paid{" "}
+                        {money(
+                          Number(
+                            shop.amount_paid && Number(shop.amount_paid) > 0
+                              ? shop.amount_paid
+                              : planAmount(shop.plan, shop.billing_cycle ?? "monthly", plans),
+                          ),
+                        )}
+                      </span>
+                    ) : shop.payment_status === "pending" ? (
+                      <span className="text-yellow-600 font-semibold">Pending</span>
+                    ) : shop.plan === "trial" ? (
+                      <span className="text-muted-foreground">Free Trial</span>
+                    ) : (
+                      <span className="text-muted-foreground">Not Paid</span>
+                    )
+                  }
+                />
+                <Meta
+                  label="Billing"
+                  value={<span className="capitalize">{shop.billing_cycle ?? "monthly"}</span>}
+                />
+                <Meta
+                  label="Start Date"
+                  value={formatDate(shop.plan_started_at || shop.created_at)}
+                />
+                <Meta label="Expiry" value={formatDate(shop.plan_expires_at)} />
+                <Meta
+                  label="Auto Renew"
+                  value={
+                    shop.auto_renew !== false ? (
+                      <span className="text-emerald-600 font-semibold">Enabled</span>
+                    ) : (
+                      <span className="text-muted-foreground">Disabled</span>
+                    )
+                  }
+                />
+                <Meta label="Grace Period" value={`${shop.grace_period_days ?? 7} days`} />
+              </div>
+
+              {/* Progress Bar - Days Remaining */}
+              {shop.plan_expires_at && daysRemaining(shop) !== Infinity && (
+                <div className="mt-4">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+                    <span>Subscription Progress</span>
+                    <span className="font-medium">
+                      {daysRemaining(shop) > 0
+                        ? `${daysRemaining(shop)} days remaining (${planProgressPercent(shop)}%)`
+                        : "Expired"}
+                    </span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        planProgressPercent(shop) > 40
+                          ? "bg-emerald-500"
+                          : planProgressPercent(shop) > 15
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                      }`}
+                      style={{
+                        width: `${planProgressPercent(shop)}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Your <span className="capitalize font-medium">{shop.plan}</span> plan started on{" "}
+                    <span className="font-medium text-foreground">
+                      {formatDate(shop.plan_started_at || shop.created_at)}
+                    </span>{" "}
+                    and is
+                    {daysRemaining(shop) > 0
+                      ? ` active for ${daysRemaining(shop)} more days (expires ${formatDate(shop.plan_expires_at)}).`
+                      : " expired. Please upgrade or renew your plan."}
                   </p>
+                </div>
+              )}
+
+              <ul className="mt-4 flex flex-wrap gap-1.5 text-xs text-muted-foreground">
+                {[
+                  {
+                    label: `${Number.isFinite(planOf(shop.plan).items) ? planOf(shop.plan).items : "Unlimited"} items`,
+                    locked: false,
+                  },
+                  {
+                    label:
+                      (shop.features as Record<string, unknown> | null)?.["ai"] ||
+                      planOf(shop.plan).ai
+                        ? "AI tools"
+                        : "AI locked",
+                    locked: !(
+                      (shop.features as Record<string, unknown> | null)?.["ai"] ||
+                      planOf(shop.plan).ai
+                    ),
+                  },
+                  {
+                    label:
+                      (shop.features as Record<string, unknown> | null)?.["ordering"] ||
+                      planOf(shop.plan).ordering
+                        ? "WhatsApp ordering"
+                        : "Ordering locked",
+                    locked: !(
+                      (shop.features as Record<string, unknown> | null)?.["ordering"] ||
+                      planOf(shop.plan).ordering
+                    ),
+                  },
+                  {
+                    label:
+                      (shop.features as Record<string, unknown> | null)?.["analytics"] ||
+                      planOf(shop.plan).analytics
+                        ? "Full analytics"
+                        : "Basic views",
+                    locked: !(
+                      (shop.features as Record<string, unknown> | null)?.["analytics"] ||
+                      planOf(shop.plan).analytics
+                    ),
+                  },
+                ].map((f) => (
+                  <li
+                    key={f.label}
+                    className={`rounded-full border px-2.5 py-0.5 text-[11px] ${
+                      f.locked
+                        ? "border-red-500/20 text-red-500/80 bg-red-500/5"
+                        : "bg-emerald-500/10 text-emerald-600 font-medium border-emerald-500/20"
+                    }`}
+                  >
+                    {f.locked ? (
+                      <Lock className="inline-block size-3 mr-1 mb-0.5 text-red-500" />
+                    ) : (
+                      <Check className="inline-block size-3 mr-1 mb-0.5 text-emerald-600" />
+                    )}
+                    {f.label}
+                  </li>
+                ))}
+              </ul>
+
+              {/* ── 3-Plan Instant Upgrade Cards (Razorpay Integrated) ── */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                  <div>
+                    <h3 className="font-display text-base sm:text-lg font-bold flex items-center gap-2 text-foreground">
+                      <Sparkles className="size-4 text-amber-500" /> Choose or Upgrade Your
+                      Subscription Plan
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Click any plan to open instant Razorpay checkout. Plan updates activate
+                      immediately upon payment.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+                  {paidPlans.map((p) => {
+                    const isCurrent = shop.plan === p.id;
+                    const price = priceOf(p);
+
+                    return (
+                      <div
+                        key={p.id}
+                        className={`relative rounded-2xl border p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 ${
+                          isCurrent
+                            ? "border-emerald-500 bg-emerald-500/5 shadow-sm ring-1 ring-emerald-500/30"
+                            : p.highlight
+                              ? "border-amber-500/60 bg-amber-500/5 shadow-md ring-1 ring-amber-500/20"
+                              : "border-border bg-card hover:border-primary/40 shadow-sm"
+                        }`}
+                      >
+                        {isCurrent ? (
+                          <div className="absolute -top-2.5 right-4 bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider py-0.5 px-2.5 rounded-full shadow">
+                            Current Plan
+                          </div>
+                        ) : p.highlight ? (
+                          <div className="absolute -top-2.5 right-4 bg-amber-500 text-black text-[10px] font-bold uppercase tracking-wider py-0.5 px-2.5 rounded-full shadow">
+                            Most Popular
+                          </div>
+                        ) : null}
+
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <h4 className="font-display text-base font-bold text-foreground">
+                              {p.name}
+                            </h4>
+                            <span className="font-display text-xl font-extrabold text-amber-500">
+                              ₹{price}
+                              <span className="text-xs font-normal text-muted-foreground">/mo</span>
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-3 min-h-[32px]">
+                            {p.tagline}
+                          </p>
+
+                          <ul className="space-y-1.5 mb-4 text-xs text-muted-foreground">
+                            {p.features.map((f) => (
+                              <li key={f} className="flex items-center gap-2">
+                                <div className="size-3.5 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
+                                  <Check className="size-2.5" />
+                                </div>
+                                <span className="truncate">{f}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="pt-3 border-t border-border/50 space-y-1.5">
+                          <Button
+                            onClick={() => handlePlanClick(p)}
+                            size="sm"
+                            className={`w-full h-9 text-xs font-bold rounded-xl transition-all shadow-sm ${
+                              isCurrent
+                                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                : p.highlight
+                                  ? "bg-amber-500 hover:bg-amber-600 text-black"
+                                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+                            }`}
+                          >
+                            <Zap className="size-3.5 mr-1.5 fill-current" />
+                            {isCurrent ? `Renew ${p.name} (₹${price})` : `Upgrade to ${p.name}`}
+                          </Button>
+                          <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
+                            <Lock className="size-2.5 text-muted-foreground" /> Instant Razorpay
+                            Gateway
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-                {paidPlans.map((p) => {
-                  const isCurrent = shop.plan === p.id;
-                  const price = priceOf(p);
-
-                  return (
-                    <div
-                      key={p.id}
-                      className={`relative rounded-2xl border p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 ${
-                        isCurrent
-                          ? "border-emerald-500 bg-emerald-500/5 shadow-sm ring-1 ring-emerald-500/30"
-                          : p.highlight
-                            ? "border-amber-500/60 bg-amber-500/5 shadow-md ring-1 ring-amber-500/20"
-                            : "border-border bg-card hover:border-primary/40 shadow-sm"
-                      }`}
-                    >
-                      {isCurrent ? (
-                        <div className="absolute -top-2.5 right-4 bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider py-0.5 px-2.5 rounded-full shadow">
-                          Current Plan
-                        </div>
-                      ) : p.highlight ? (
-                        <div className="absolute -top-2.5 right-4 bg-amber-500 text-black text-[10px] font-bold uppercase tracking-wider py-0.5 px-2.5 rounded-full shadow">
-                          Most Popular
-                        </div>
-                      ) : null}
-
-                      <div>
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <h4 className="font-display text-base font-bold text-foreground">{p.name}</h4>
-                          <span className="font-display text-xl font-extrabold text-amber-500">
-                            ₹{price}<span className="text-xs font-normal text-muted-foreground">/mo</span>
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-3 min-h-[32px]">
-                          {p.tagline}
-                        </p>
-
-                        <ul className="space-y-1.5 mb-4 text-xs text-muted-foreground">
-                          {p.features.map((f) => (
-                            <li key={f} className="flex items-center gap-2">
-                              <div className="size-3.5 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
-                                <Check className="size-2.5" />
-                              </div>
-                              <span className="truncate">{f}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div className="pt-3 border-t border-border/50 space-y-1.5">
-                        <Button
-                          onClick={() => handlePlanClick(p)}
-                          size="sm"
-                          className={`w-full h-9 text-xs font-bold rounded-xl transition-all shadow-sm ${
-                            isCurrent
-                              ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                              : p.highlight
-                                ? "bg-amber-500 hover:bg-amber-600 text-black"
-                                : "bg-primary text-primary-foreground hover:bg-primary/90"
-                          }`}
-                        >
-                          <Zap className="size-3.5 mr-1.5 fill-current" />
-                          {isCurrent ? `Renew ${p.name} (₹${price})` : `Upgrade to ${p.name}`}
-                        </Button>
-                        <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
-                          <Lock className="size-2.5 text-muted-foreground" /> Instant Razorpay Gateway
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="mt-5 pt-4 border-t border-border flex flex-col sm:flex-row gap-2.5 sm:items-center sm:justify-between">
-              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-                <Button asChild variant="outline" size="sm" className="h-9 text-xs">
-                  <a href={`/shop/${shop.slug}`} target="_blank" rel="noreferrer">
-                    <ExternalLink className="size-3.5 mr-1" /> View Menu
-                  </a>
-                </Button>
-                <Button asChild size="sm" className="h-9 text-xs">
-                  <Link to="/menu">Edit Menu</Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="h-9 text-xs col-span-2 sm:col-span-1"
-                >
-                  <Link to="/qr">Get QR Code</Link>
-                </Button>
-                {shopGoogleReviewLink(shop) && (
+              <div className="mt-5 pt-4 border-t border-border flex flex-col sm:flex-row gap-2.5 sm:items-center sm:justify-between">
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+                  <Button asChild variant="outline" size="sm" className="h-9 text-xs">
+                    <a href={`/shop/${shop.slug}`} target="_blank" rel="noreferrer">
+                      <ExternalLink className="size-3.5 mr-1" /> View Menu
+                    </a>
+                  </Button>
+                  <Button asChild size="sm" className="h-9 text-xs">
+                    <Link to="/menu">Edit Menu</Link>
+                  </Button>
                   <Button
                     asChild
                     variant="outline"
                     size="sm"
-                    className="h-9 text-xs col-span-2 sm:col-span-1 border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
+                    className="h-9 text-xs col-span-2 sm:col-span-1"
                   >
-                    <a href={shopGoogleReviewLink(shop)} target="_blank" rel="noreferrer">
-                      <Star className="size-3.5 mr-1 fill-amber-400 text-amber-400" /> Google Review
-                    </a>
+                    <Link to="/qr">Get QR Code</Link>
+                  </Button>
+                  {shopGoogleReviewLink(shop) && (
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="h-9 text-xs col-span-2 sm:col-span-1 border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
+                    >
+                      <a href={shopGoogleReviewLink(shop)} target="_blank" rel="noreferrer">
+                        <Star className="size-3.5 mr-1 fill-amber-400 text-amber-400" /> Google
+                        Review
+                      </a>
+                    </Button>
+                  )}
+                </div>
+
+                {shop.plan === "trial" && (
+                  <Button
+                    asChild
+                    variant="default"
+                    size="sm"
+                    className="h-9 text-xs bg-emerald-500 hover:bg-emerald-600 text-white font-medium w-full sm:w-auto"
+                  >
+                    <Link to="/pricing">Compare All Features</Link>
                   </Button>
                 )}
               </div>
-
-              {shop.plan === "trial" && (
-                <Button
-                  asChild
-                  variant="default"
-                  size="sm"
-                  className="h-9 text-xs bg-emerald-500 hover:bg-emerald-600 text-white font-medium w-full sm:w-auto"
-                >
-                  <Link to="/pricing">Compare All Features</Link>
-                </Button>
-              )}
-            </div>
             </div>
           </div>
         </div>
@@ -533,7 +577,9 @@ function CreateShop({ userId }: { userId?: string | undefined }) {
       slug,
       niche,
       whatsapp: whatsapp.trim() || null,
-      status: "pending",
+      status: "active",
+      plan: "trial",
+      plan_expires_at: new Date(Date.now() + 7 * 86400000).toISOString(),
     });
     setSaving(false);
     if (error) {
