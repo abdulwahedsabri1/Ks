@@ -48,13 +48,32 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      const rawResponse = await handler.fetch(request, env, ctx);
+      const response = await normalizeCatastrophicSsrResponse(rawResponse);
+
+      const secureHeaders = new Headers(response.headers);
+      secureHeaders.set("X-Content-Type-Options", "nosniff");
+      secureHeaders.set("X-Frame-Options", "SAMEORIGIN");
+      secureHeaders.set("Referrer-Policy", "strict-origin-when-cross-origin");
+      secureHeaders.set(
+        "Permissions-Policy",
+        "camera=(), microphone=(), geolocation=(), payment=*",
+      );
+
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: secureHeaders,
+      });
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {
         status: 500,
-        headers: { "content-type": "text/html; charset=utf-8" },
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+          "X-Content-Type-Options": "nosniff",
+          "X-Frame-Options": "SAMEORIGIN",
+        },
       });
     }
   },

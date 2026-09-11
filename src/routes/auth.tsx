@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NICHES, slugify } from "@/lib/shop";
-import { analyzeEmail } from "@/lib/emailValidation";
+import { analyzeEmail, checkRateLimit } from "@/lib/emailValidation";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -647,6 +647,12 @@ function AuthPage() {
       return;
     }
 
+    const rateCheck = checkRateLimit(`login_${parsed.data.email.toLowerCase().trim()}`, 5, 60000);
+    if (!rateCheck.allowed) {
+      toast.error(`Too many login attempts. Please wait ${rateCheck.retryAfter} seconds.`);
+      return;
+    }
+
     setLoginLoading(true);
     try {
       const cleanEmail = parsed.data.email.toLowerCase().trim();
@@ -726,6 +732,12 @@ function AuthPage() {
     }
     if (!emailAnalysis.isValid) {
       setErrors({ email: emailAnalysis.message ?? "Please enter a valid email." });
+      return;
+    }
+
+    const rateCheck = checkRateLimit(`signup_${signupEmail.toLowerCase().trim()}`, 3, 300000);
+    if (!rateCheck.allowed) {
+      toast.error(`Too many signup attempts. Please wait ${rateCheck.retryAfter} seconds.`);
       return;
     }
 

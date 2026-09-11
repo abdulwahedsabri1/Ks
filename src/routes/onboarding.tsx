@@ -91,8 +91,13 @@ function OnboardingPage() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `logos/${user.id}/logo-${Date.now()}.${ext}`;
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
+      if (!allowedTypes.includes(file.type.toLowerCase())) {
+        throw new Error("Only JPG, PNG, WEBP, and SVG images are allowed.");
+      }
+
+      const cleanExt = (file.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const path = `logos/${user.id}/logo-${Date.now()}.${cleanExt}`;
 
       const { error } = await supabase.storage.from("shop-media").upload(path, file, {
         cacheControl: "3600",
@@ -118,8 +123,9 @@ function OnboardingPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file");
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      toast.error("Invalid file type. Please upload a PNG, JPG, WEBP, or SVG image.");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
