@@ -4,11 +4,17 @@ import { createClient } from "@supabase/supabase-js";
 import { slugify } from "@/lib/shop";
 
 function getPublicClient() {
-  const SUPABASE_URL = process.env["SUPABASE_URL"];
-  const SUPABASE_PUBLISHABLE_KEY = process.env["SUPABASE_PUBLISHABLE_KEY"];
-  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    throw new Error("Missing public Supabase keys");
-  }
+  const SUPABASE_URL =
+    process.env["SUPABASE_URL"] ||
+    process.env["VITE_SUPABASE_URL"] ||
+    import.meta.env["VITE_SUPABASE_URL"] ||
+    "https://qmxrfzvvgwhzhqzhmwrf.supabase.co";
+
+  const SUPABASE_PUBLISHABLE_KEY =
+    process.env["SUPABASE_PUBLISHABLE_KEY"] ||
+    process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+    import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+    "sb_publishable_zsLutER8J1k7E2qpwyE8vw_uVC24oU-";
   return createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
