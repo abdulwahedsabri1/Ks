@@ -163,7 +163,11 @@ interface RateLimitRecord {
 
 const rateLimitMap = new Map<string, RateLimitRecord>();
 
-export function checkRateLimit(key: string, maxRequests = 5, windowMs = 60000): { allowed: boolean; retryAfter: number } {
+export function checkRateLimit(
+  key: string,
+  maxRequests = 5,
+  windowMs = 60000,
+): { allowed: boolean; retryAfter: number } {
   const now = Date.now();
   const record = rateLimitMap.get(key);
 

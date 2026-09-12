@@ -96,7 +96,9 @@ function OnboardingPage() {
         throw new Error("Only JPG, PNG, WEBP, and SVG images are allowed.");
       }
 
-      const cleanExt = (file.name.split(".").pop() ?? "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const cleanExt = (file.name.split(".").pop() ?? "jpg")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
       const path = `logos/${user.id}/logo-${Date.now()}.${cleanExt}`;
 
       const { error } = await supabase.storage.from("shop-media").upload(path, file, {
