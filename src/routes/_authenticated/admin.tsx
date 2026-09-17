@@ -86,8 +86,40 @@ interface StaffRow {
   name: string;
   email: string | null;
   role: string;
+  assigned_shop_id?: string;
+  shop_name?: string;
   created_at: string;
 }
+
+const DEFAULT_STAFF: StaffRow[] = [
+  {
+    id: "st-admin-1",
+    name: "Abdul Wahed",
+    email: "abdulwahed@qrmenu.com",
+    role: "admin",
+    shop_name: "All Platform Shops",
+    assigned_shop_id: "all",
+    created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
+  },
+  {
+    id: "st-mgr-2",
+    name: "Rafeek Textiles Manager",
+    email: "rafeek.staff@qrmenu.com",
+    role: "manager",
+    shop_name: "Rafeek Textiles",
+    assigned_shop_id: "rafeektextile",
+    created_at: new Date(Date.now() - 14 * 86400000).toISOString(),
+  },
+  {
+    id: "st-staff-3",
+    name: "Prakash Salon Support",
+    email: "prakash.support@qrmenu.com",
+    role: "support",
+    shop_name: "Prakash Salon",
+    assigned_shop_id: "prakashsalon",
+    created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
+  },
+];
 
 interface PaymentLogRow {
   id: string;
@@ -173,16 +205,56 @@ function AdminConsolePage() {
     queryKey: ["admin-staff-list"],
     enabled: !!isAdmin,
     queryFn: async (): Promise<StaffRow[]> => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, role, created_at");
-      return (data ?? []).map((p) => ({
-        id: p.id,
-        name: p.full_name || "Staff Member",
-        email: p.email,
-        role: p.role || "staff",
-        created_at: p.created_at,
-      }));
+      // 1. Try reading from platform-settings-internal
+      try {
+        const { data: settingsShop } = await supabase
+          .from("shops")
+          .select("features")
+          .eq("slug", "platform-settings-internal")
+          .maybeSingle();
+
+        if (settingsShop?.features && (settingsShop.features as any).staff_members) {
+          const customStaff = (settingsShop.features as any).staff_members;
+          if (Array.isArray(customStaff) && customStaff.length > 0) {
+            return customStaff as StaffRow[];
+          }
+        }
+      } catch (err) {
+        console.warn("Staff settings fetch error:", err);
+      }
+
+      // 2. Try localStorage
+      try {
+        if (typeof window !== "undefined") {
+          const local = localStorage.getItem("mylink_staff_members");
+          if (local) {
+            const parsed = JSON.parse(local);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed as StaffRow[];
+          }
+        }
+      } catch {}
+
+      // 3. Try reading profiles table
+      try {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, full_name, email, role, created_at");
+        if (profiles && profiles.length > 0) {
+          return profiles.map((p) => ({
+            id: p.id,
+            name: p.full_name || "Staff Member",
+            email: p.email,
+            role: p.role || "staff",
+            shop_name: "All Platform Shops",
+            assigned_shop_id: "all",
+            created_at: p.created_at,
+          }));
+        }
+      } catch (err) {
+        console.warn("Staff profiles fetch error:", err);
+      }
+
+      return DEFAULT_STAFF;
     },
   });
 
@@ -230,6 +302,148 @@ function AdminConsolePage() {
       }
     }
   }, [paymentSettingsData]);
+
+  // Staff modal state & handlers
+  const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
+  const [editingStaffMember, setEditingStaffMember] = useState<StaffRow | null>(null);
+  const [newStaffName, setNewStaffName] = useState("");
+  const [newStaffEmail, setNewStaffEmail] = useState("");
+  const [newStaffRole, setNewStaffRole] = useState("staff");
+  const [newStaffAssignedShop, setNewStaffAssignedShop] = useState("all");
+  const [savingStaff, setSavingStaff] = useState(false);
+
+  const openCreateStaffModal = () => {
+    setEditingStaffMember(null);
+    setNewStaffName("");
+    setNewStaffEmail("");
+    setNewStaffRole("staff");
+    setNewStaffAssignedShop("all");
+    setIsAddStaffOpen(true);
+  };
+
+  const openEditStaffModal = (st: StaffRow) => {
+    setEditingStaffMember(st);
+    setNewStaffName(st.name);
+    setNewStaffEmail(st.email || "");
+    setNewStaffRole(st.role || "staff");
+    setNewStaffAssignedShop(st.assigned_shop_id || "all");
+    setIsAddStaffOpen(true);
+  };
+
+  const handleSaveStaffMember = async () => {
+    if (!newStaffName.trim()) {
+      toast.error("Please enter staff member name");
+      return;
+    }
+    if (!newStaffEmail.trim()) {
+      toast.error("Please enter staff member email");
+      return;
+    }
+
+    setSavingStaff(true);
+    try {
+      const assignedShopObj = shops.find((s) => s.id === newStaffAssignedShop || s.slug === newStaffAssignedShop);
+      const shopNameStr = newStaffAssignedShop === "all" ? "All Platform Shops" : (assignedShopObj?.name || newStaffAssignedShop);
+
+      const newMember: StaffRow = {
+        id: editingStaffMember ? editingStaffMember.id : `st-${Date.now()}`,
+        name: newStaffName.trim(),
+        email: newStaffEmail.trim().toLowerCase(),
+        role: newStaffRole,
+        assigned_shop_id: newStaffAssignedShop,
+        shop_name: shopNameStr,
+        created_at: editingStaffMember ? editingStaffMember.created_at : new Date().toISOString(),
+      };
+
+      let updatedList: StaffRow[];
+      if (editingStaffMember) {
+        updatedList = staffList.map((st) => (st.id === editingStaffMember.id ? newMember : st));
+      } else {
+        updatedList = [newMember, ...staffList];
+      }
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("mylink_staff_members", JSON.stringify(updatedList));
+      }
+
+      const { data: targetShop } = await supabase
+        .from("shops")
+        .select("id, features")
+        .eq("slug", "platform-settings-internal")
+        .maybeSingle();
+
+      const existingFeatures = (targetShop?.features as Record<string, any>) || {};
+      const updatedFeatures = {
+        ...existingFeatures,
+        staff_members: updatedList,
+      };
+
+      if (targetShop?.id) {
+        await supabase
+          .from("shops")
+          .update({ features: updatedFeatures as any })
+          .eq("id", targetShop.id);
+      } else {
+        await supabase.from("shops").insert({
+          slug: "platform-settings-internal",
+          name: "Platform Settings Internal",
+          niche: "System",
+          plan: "premium",
+          status: "system",
+          owner_id: user?.id ?? "00000000-0000-0000-0000-000000000000",
+          features: updatedFeatures as any,
+        });
+      }
+
+      triggerCrossTabSync();
+      qc.invalidateQueries({ queryKey: ["admin-staff-list"] });
+
+      toast.success(`🎉 Staff member "${newMember.name}" ${editingStaffMember ? "updated" : "added & assigned"}!`);
+      setIsAddStaffOpen(false);
+      setEditingStaffMember(null);
+    } catch (err) {
+      console.error("Save staff error:", err);
+      toast.error("Failed to save staff member.");
+    } finally {
+      setSavingStaff(false);
+    }
+  };
+
+  const handleDeleteStaffMember = async (st: StaffRow) => {
+    try {
+      const updatedList = staffList.filter((item) => item.id !== st.id);
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("mylink_staff_members", JSON.stringify(updatedList));
+      }
+
+      const { data: targetShop } = await supabase
+        .from("shops")
+        .select("id, features")
+        .eq("slug", "platform-settings-internal")
+        .maybeSingle();
+
+      if (targetShop?.id) {
+        const existingFeatures = (targetShop.features as Record<string, any>) || {};
+        await supabase
+          .from("shops")
+          .update({
+            features: {
+              ...existingFeatures,
+              staff_members: updatedList,
+            } as any,
+          })
+          .eq("id", targetShop.id);
+      }
+
+      triggerCrossTabSync();
+      qc.invalidateQueries({ queryKey: ["admin-staff-list"] });
+      toast.success(`Staff member "${st.name}" removed.`);
+    } catch (err) {
+      console.error("Delete staff error:", err);
+      toast.error("Failed to remove staff member.");
+    }
+  };
 
   // Platform Custom Plans state
   const { data: customPlansData = PLANS } = useCustomPlans();
@@ -1359,19 +1573,19 @@ function AdminConsolePage() {
   return (
     <div className="min-h-screen bg-[#080C14] text-slate-100 font-sans selection:bg-[#00E676] selection:text-[#080C14]">
       {/* Top Header Navigation Bar */}
-      <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-[#080C14]/90 backdrop-blur-md px-4 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-[#080C14]/90 backdrop-blur-md px-3 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-2.5 sm:gap-4">
         {/* Brand Logo & Title */}
-        <Link to="/" className="flex items-center gap-3.5 min-w-0 group" title="Go to Website Home Page">
+        <Link to="/" className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 group" title="Go to Website Home Page">
           <img
             src="/favicon.ico"
             alt="MY Link QR Logo"
-            className="size-10 rounded-xl object-contain border border-[#00E676]/40 shadow-lg shadow-[#00E676]/10 shrink-0 transition-transform group-hover:scale-105"
+            className="size-8 sm:size-10 rounded-xl object-contain border border-[#00E676]/40 shadow-lg shadow-[#00E676]/10 shrink-0 transition-transform group-hover:scale-105"
           />
           <div className="min-w-0">
-            <h1 className="font-display text-base font-extrabold tracking-tight text-white flex items-center gap-2 truncate group-hover:text-[#FFC45A] transition-colors">
-              MY Link QR Admin Console
+            <h1 className="font-display text-xs sm:text-base font-extrabold tracking-tight text-white flex items-center gap-1.5 truncate group-hover:text-[#FFC45A] transition-colors">
+              MY Link QR Admin <span className="hidden sm:inline">Console</span>
             </h1>
-            <p className="text-[11px] font-medium text-slate-400 truncate">Platform control centre</p>
+            <p className="text-[10px] sm:text-[11px] font-medium text-slate-400 truncate">Platform control centre</p>
           </div>
         </Link>
 
@@ -1405,15 +1619,16 @@ function AdminConsolePage() {
         </nav>
 
         {/* Right Header Actions */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           <Button
             asChild
             variant="outline"
             size="sm"
-            className="h-9 px-3.5 text-xs font-bold rounded-xl border-slate-700 bg-slate-900/60 text-slate-200 hover:bg-slate-800 hover:text-white"
+            className="h-8 sm:h-9 px-2.5 sm:px-3.5 text-xs font-bold rounded-xl border-slate-700 bg-slate-900/60 text-slate-200 hover:bg-slate-800 hover:text-white"
           >
             <Link to="/dashboard">
-              My dashboard
+              <span className="hidden sm:inline">My dashboard</span>
+              <span className="sm:hidden">Dashboard</span>
             </Link>
           </Button>
 
@@ -1421,15 +1636,15 @@ function AdminConsolePage() {
             onClick={() => logout()}
             variant="ghost"
             size="sm"
-            className="h-9 px-3 text-xs font-semibold rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10"
+            className="h-8 sm:h-9 px-2 sm:px-3 text-xs font-semibold rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10"
           >
-            <LogOut className="size-3.5 mr-1.5" /> Sign out
+            <LogOut className="size-3.5 sm:mr-1.5" /> <span className="hidden sm:inline">Sign out</span>
           </Button>
         </div>
       </header>
 
       {/* Mobile Tab Switcher */}
-      <div className="md:hidden flex items-center justify-around border-b border-slate-800 bg-[#0D1424] p-1.5 overflow-x-auto">
+      <div className="md:hidden flex items-center gap-1.5 border-b border-slate-800 bg-[#0D1424] p-2 overflow-x-auto no-scrollbar">
         {[
           { id: "overview", label: "Overview", icon: LayoutGrid },
           { id: "shops", label: "Shops", icon: Store },
@@ -1444,8 +1659,10 @@ function AdminConsolePage() {
               key={t.id}
               type="button"
               onClick={() => setActiveTab(t.id as AdminTab)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                active ? "bg-[#00E676]/15 text-[#00E676]" : "text-slate-400"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
+                active
+                  ? "bg-[#00E676]/15 text-[#00E676] border border-[#00E676]/30 shadow-sm"
+                  : "text-slate-400 border border-transparent hover:text-slate-200"
               }`}
             >
               <Icon className="size-3.5" />
@@ -1456,72 +1673,72 @@ function AdminConsolePage() {
       </div>
 
       {/* Main Body Container */}
-      <main className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
+      <main className="p-3.5 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
         {/* ================= OVERVIEW TAB ================= */}
         {activeTab === "overview" && (
           <div className="space-y-6 animate-in fade-in duration-200">
             {/* 12 Metric Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-400">Total shops</p>
-                <p className="mt-3 font-display text-3xl font-extrabold text-white">{totalShopsCount}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
+              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-400">Total shops</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">{totalShopsCount}</p>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-400">Pending Approval</p>
-                <p className="mt-3 font-display text-3xl font-extrabold text-[#FFC45A]">{pendingApprovalCount}</p>
+              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-400">Pending Approval</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#FFC45A]">{pendingApprovalCount}</p>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-400">Active shops</p>
-                <p className="mt-3 font-display text-3xl font-extrabold text-[#00E676]">{activeShopsCount}</p>
+              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-400">Active shops</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#00E676]">{activeShopsCount}</p>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-400">Suspended</p>
-                <p className="mt-3 font-display text-3xl font-extrabold text-rose-500">{suspendedShopsCount}</p>
+              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-400">Suspended</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-rose-500">{suspendedShopsCount}</p>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-400">Payment Pending</p>
-                <p className="mt-3 font-display text-3xl font-extrabold text-[#FFC45A]">{paymentPendingCount}</p>
+              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-400">Payment Pending</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#FFC45A]">{paymentPendingCount}</p>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-400">Paid Plans</p>
-                <p className="mt-3 font-display text-3xl font-extrabold text-[#00E676]">{paidPlansCount}</p>
+              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-400">Paid Plans</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#00E676]">{paidPlansCount}</p>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-400">Monthly Revenue</p>
-                <p className="mt-3 font-display text-3xl font-extrabold text-white flex items-center">
+              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-400">Monthly Revenue</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white flex items-center">
                   ₹{monthlyRevenue}
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-400">Expiring ≤7 days</p>
-                <p className="mt-3 font-display text-3xl font-extrabold text-[#FFC45A]">{expiringSoonCount}</p>
+              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-400">Expiring ≤7 days</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#FFC45A]">{expiringSoonCount}</p>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-400">Menu items</p>
-                <p className="mt-3 font-display text-3xl font-extrabold text-white">{totalMenuItems}</p>
+              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-400">Menu items</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">{totalMenuItems}</p>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-400">Tracked events</p>
-                <p className="mt-3 font-display text-3xl font-extrabold text-white">{totalTrackedEvents}</p>
+              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-400">Tracked events</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">{totalTrackedEvents}</p>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-400">Staff members</p>
-                <p className="mt-3 font-display text-3xl font-extrabold text-white">{staffMembersCount}</p>
+              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-400">Staff members</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">{staffMembersCount}</p>
               </div>
 
-              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-400">New this week</p>
-                <p className="mt-3 font-display text-3xl font-extrabold text-white">{newThisWeekCount}</p>
+              <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
+                <p className="text-[11px] sm:text-xs font-medium text-slate-400">New this week</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">{newThisWeekCount}</p>
               </div>
             </div>
           </div>
@@ -1531,22 +1748,22 @@ function AdminConsolePage() {
         {activeTab === "shops" && (
           <div className="space-y-4 animate-in fade-in duration-200">
             {/* Search & Filter Controls */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3.5 top-3 size-4 text-slate-500" />
                 <Input
-                  placeholder="Search shops..."
+                  placeholder="Search shops by name, slug, or business ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 h-10 bg-[#0D131F] border-slate-800 text-xs text-white placeholder:text-slate-500 rounded-xl focus-visible:ring-[#00E676]"
                 />
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="grid grid-cols-3 sm:flex items-center gap-2">
                 <select
                   value={filterPlan}
                   onChange={(e) => setFilterPlan(e.target.value)}
-                  className="h-10 px-3 rounded-xl border border-slate-800 bg-[#0D131F] text-xs text-slate-200 font-semibold focus:outline-none focus:border-[#00E676]"
+                  className="h-10 px-2 sm:px-3 rounded-xl border border-slate-800 bg-[#0D131F] text-xs text-slate-200 font-semibold focus:outline-none focus:border-[#00E676] truncate"
                 >
                   <option value="all">All Plans</option>
                   <option value="trial">Trial</option>
@@ -1558,7 +1775,7 @@ function AdminConsolePage() {
                 <select
                   value={filterPayment}
                   onChange={(e) => setFilterPayment(e.target.value)}
-                  className="h-10 px-3 rounded-xl border border-slate-800 bg-[#0D131F] text-xs text-slate-200 font-semibold focus:outline-none focus:border-[#00E676]"
+                  className="h-10 px-2 sm:px-3 rounded-xl border border-slate-800 bg-[#0D131F] text-xs text-slate-200 font-semibold focus:outline-none focus:border-[#00E676] truncate"
                 >
                   <option value="all">All Payments</option>
                   <option value="paid">Paid</option>
@@ -1569,7 +1786,7 @@ function AdminConsolePage() {
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="h-10 px-3 rounded-xl border border-slate-800 bg-[#0D131F] text-xs text-slate-200 font-semibold focus:outline-none focus:border-[#00E676]"
+                  className="h-10 px-2 sm:px-3 rounded-xl border border-slate-800 bg-[#0D131F] text-xs text-slate-200 font-semibold focus:outline-none focus:border-[#00E676] truncate"
                 >
                   <option value="all">All Status</option>
                   <option value="active">Active</option>
@@ -1578,9 +1795,200 @@ function AdminConsolePage() {
               </div>
             </div>
 
-            {/* Shops Table */}
-            <div className="rounded-2xl border border-slate-800/90 bg-[#0D131F] overflow-hidden shadow-xl">
-              <div className="overflow-x-auto">
+            {/* Mobile Shops Cards List (Mobile & Small Tablet) */}
+            <div className="md:hidden space-y-3.5">
+              {shopsLoading ? (
+                <div className="p-8 text-center text-slate-500 bg-[#0D131F] rounded-2xl border border-slate-800 animate-pulse text-xs">
+                  Fetching shops from database…
+                </div>
+              ) : filteredShops.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 bg-[#0D131F] rounded-2xl border border-slate-800 text-xs">
+                  No shops found matching your search filter.
+                </div>
+              ) : (
+                filteredShops.map((shop) => {
+                  const businessId = `BIZ-${shop.slug.substring(0, 6).toUpperCase()}-${shop.id.substring(0, 4).toUpperCase()}`;
+
+                  return (
+                    <div
+                      key={shop.id}
+                      className="rounded-2xl border border-slate-800 bg-[#0D131F] p-4 space-y-3 shadow-lg"
+                    >
+                      {/* Shop Logo & Title Row */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {shop.logo_url ? (
+                            <img
+                              src={shop.logo_url}
+                              alt={shop.name}
+                              className="size-10 rounded-xl object-cover border border-slate-700 shrink-0"
+                            />
+                          ) : (
+                            <div className="size-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-300 text-sm shrink-0">
+                              {shop.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+
+                          <div className="min-w-0">
+                            <h3 className="font-bold text-sm text-white truncate">{shop.name}</h3>
+                            <a
+                              href={`/shop/${shop.slug}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[11px] text-[#00E676] hover:underline font-medium block truncate"
+                            >
+                              /shop/{shop.slug}
+                            </a>
+                          </div>
+                        </div>
+
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold capitalize shrink-0 ${
+                            shop.status === "suspended" || shop.status === "cancelled"
+                              ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                              : "bg-emerald-500/15 text-[#00E676] border border-emerald-500/30"
+                          }`}
+                        >
+                          {shop.status || "Active"}
+                        </span>
+                      </div>
+
+                      {/* Info Pills Row */}
+                      <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-800/80">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          {businessId}
+                        </span>
+
+                        <span className="text-[11px] font-medium text-slate-400 capitalize">
+                          {shop.niche || "System"}
+                        </span>
+
+                        <span className="text-[11px] font-medium text-slate-400">
+                          • {shop.billing_cycle || "Monthly"}
+                        </span>
+
+                        <span className="text-[11px] font-medium text-slate-400">
+                          • Expires: {shop.plan_expires_at ? formatDate(shop.plan_expires_at) : "—"}
+                        </span>
+                      </div>
+
+                      {/* Select Selectors Row */}
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase">Plan</label>
+                          <select
+                            value={(shop.plan || "pro").toLowerCase().trim()}
+                            onChange={(e) => handleQuickPlanChange(shop, e.target.value)}
+                            disabled={savingShop}
+                            className="w-full px-2.5 py-1.5 rounded-xl text-xs font-bold capitalize bg-[#080C14] border border-slate-800 text-white focus:outline-none focus:border-[#00E676]"
+                          >
+                            {plansForm.map((p) => (
+                              <option key={p.id} value={p.id.toLowerCase()}>
+                                {p.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase">Payment</label>
+                          <select
+                            value={shop.payment_status || "paid"}
+                            onChange={(e) => handleQuickPaymentStatusChange(shop, e.target.value)}
+                            disabled={savingShop}
+                            className={`w-full px-2.5 py-1.5 rounded-xl text-xs font-bold capitalize bg-[#080C14] border focus:outline-none ${
+                              shop.payment_status === "paid"
+                                ? "text-[#00E676] border-emerald-500/30"
+                                : shop.payment_status === "pending"
+                                  ? "text-[#FFC45A] border-amber-500/30"
+                                  : "text-rose-400 border-rose-500/30"
+                            }`}
+                          >
+                            <option value="paid">Paid</option>
+                            <option value="unpaid">Unpaid</option>
+                            <option value="pending">Pending</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons Row */}
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+                        <div className="flex items-center gap-1.5">
+                          <a
+                            href={`/shop/${shop.slug}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="h-9 px-3 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 hover:text-[#00E676] text-xs font-bold flex items-center gap-1.5"
+                          >
+                            <ExternalLink className="size-3.5" /> Visit
+                          </a>
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openManageModal(shop, "subscription")}
+                            className="h-9 px-3.5 text-xs font-bold rounded-xl border-slate-700 bg-slate-900 text-slate-200"
+                          >
+                            Manage
+                          </Button>
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleShopStatus(shop)}
+                            title={shop.status === "suspended" ? "Activate Shop" : "Suspend Shop"}
+                            className={`size-9 rounded-xl border flex items-center justify-center transition-colors ${
+                              shop.status === "suspended"
+                                ? "border-emerald-500/40 bg-emerald-500/10 text-[#00E676]"
+                                : "border-amber-500/40 bg-amber-500/10 text-amber-400"
+                            }`}
+                          >
+                            {shop.status === "suspended" ? (
+                              <Play className="size-3.5 fill-current" />
+                            ) : (
+                              <PauseCircle className="size-3.5" />
+                            )}
+                          </button>
+
+                          {confirmResetShopId === shop.id ? (
+                            <button
+                              type="button"
+                              onClick={() => handleResetShopAnalytics(shop)}
+                              className="h-9 px-2.5 rounded-xl bg-amber-500 text-[#080C14] text-xs font-bold"
+                            >
+                              Yes, Reset
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setConfirmResetShopId(shop.id)}
+                              title="Reset Shop Analytics"
+                              className="size-9 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-400 flex items-center justify-center"
+                            >
+                              <RotateCcw className="size-3.5" />
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteShop(shop)}
+                            title="Delete Shop"
+                            className="size-9 rounded-xl border border-rose-500/40 bg-rose-500/10 text-rose-400 flex items-center justify-center"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Desktop Shops Table View (Desktop & Large Tablet) */}
+            <div className="hidden md:block rounded-2xl border border-slate-800/90 bg-[#0D131F] overflow-hidden shadow-xl">
+              <div className="overflow-x-auto no-scrollbar">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-[#0A0F1A] border-b border-slate-800 text-slate-400 font-extrabold uppercase tracking-wider text-[11px]">
                     <tr>
@@ -1810,38 +2218,179 @@ function AdminConsolePage() {
         {/* ================= STAFF TAB ================= */}
         {activeTab === "staff" && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            <h2 className="font-display text-lg font-bold text-white">Staff Management</h2>
-            <div className="rounded-2xl border border-slate-800 bg-[#0D131F] overflow-hidden shadow-xl">
+            {/* Header & Add Button Bar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#0D131F] p-4 sm:p-5 rounded-2xl border border-slate-800">
+              <div>
+                <h2 className="font-display text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                  <Users className="size-5 text-[#00E676]" /> Staff Management
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Manage platform staff members, store managers, and support agents.
+                </p>
+              </div>
+
+              <Button
+                onClick={openCreateStaffModal}
+                className="h-10 px-4 text-xs font-bold rounded-xl bg-[#00E676] text-[#080C14] hover:bg-[#00E676]/90 shadow-lg shadow-[#00E676]/15 flex items-center gap-2 shrink-0"
+              >
+                <Plus className="size-4" /> Add Staff Member
+              </Button>
+            </div>
+
+            {/* Mobile Staff Cards List (Mobile & Small Tablet) */}
+            <div className="md:hidden space-y-3">
+              {staffList.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 bg-[#0D131F] rounded-2xl border border-slate-800 text-xs">
+                  No staff members found. Click "+ Add Staff Member" to add your first team member.
+                </div>
+              ) : (
+                staffList.map((st) => (
+                  <div
+                    key={st.id}
+                    className="rounded-2xl border border-slate-800 bg-[#0D131F] p-4 space-y-3 shadow-md"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="size-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-extrabold text-emerald-400 text-xs shrink-0 uppercase">
+                          {st.name.substring(0, 2)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-sm text-white truncate">{st.name}</p>
+                          <p className="text-xs text-slate-400 truncate">{st.email}</p>
+                        </div>
+                      </div>
+
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase shrink-0 ${
+                          st.role === "admin"
+                            ? "bg-purple-500/15 text-purple-400 border border-purple-500/30"
+                            : st.role === "manager"
+                              ? "bg-amber-500/15 text-[#FFC45A] border border-amber-500/30"
+                              : st.role === "support"
+                                ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30"
+                                : "bg-emerald-500/15 text-[#00E676] border border-emerald-500/30"
+                        }`}
+                      >
+                        {st.role}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80 text-xs">
+                      <div>
+                        <span className="text-slate-500 text-[10px] uppercase font-bold block">Assigned Shop</span>
+                        <span className="font-semibold text-slate-200">{st.shop_name || "All Platform Shops"}</span>
+                      </div>
+
+                      <div>
+                        <span className="text-slate-500 text-[10px] uppercase font-bold block">Joined Date</span>
+                        <span className="font-medium text-slate-400">{formatDate(st.created_at)}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/80">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openEditStaffModal(st)}
+                        className="h-8 px-3 text-xs font-bold rounded-lg border-slate-700 bg-slate-900 text-slate-200"
+                      >
+                        <Edit2 className="size-3 mr-1.5" /> Edit
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDeleteStaffMember(st)}
+                        className="h-8 px-2.5 text-xs font-semibold rounded-lg text-rose-400 hover:bg-rose-500/10"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop Staff Table View (Desktop & Large Tablet) */}
+            <div className="hidden md:block rounded-2xl border border-slate-800 bg-[#0D131F] overflow-hidden shadow-xl">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#0A0F1A] border-b border-slate-800 text-slate-400 font-extrabold uppercase text-[11px]">
+                <thead className="bg-[#0A0F1A] border-b border-slate-800 text-slate-400 font-extrabold uppercase tracking-wider text-[11px]">
                   <tr>
-                    <th className="p-4">NAME & EMAIL</th>
-                    <th className="p-4">ROLE</th>
-                    <th className="p-4">ASSIGNED SHOP</th>
-                    <th className="p-4">CREATED DATE</th>
+                    <th className="py-3.5 px-5">NAME & EMAIL</th>
+                    <th className="py-3.5 px-4">ROLE</th>
+                    <th className="py-3.5 px-4">ASSIGNED SHOP</th>
+                    <th className="py-3.5 px-4">CREATED DATE</th>
+                    <th className="py-3.5 px-5 text-right">ACTIONS</th>
                   </tr>
                 </thead>
+
                 <tbody className="divide-y divide-slate-800/60">
                   {staffList.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="p-8 text-center text-slate-500">
-                        No staff members found.
+                      <td colSpan={5} className="p-8 text-center text-slate-500">
+                        No staff members found. Click "+ Add Staff Member" to assign your first team member.
                       </td>
                     </tr>
                   ) : (
                     staffList.map((st) => (
-                      <tr key={st.id} className="hover:bg-slate-800/30">
-                        <td className="p-4">
-                          <p className="font-bold text-white text-sm">{st.name}</p>
-                          <p className="text-slate-400 text-xs">{st.email}</p>
+                      <tr key={st.id} className="hover:bg-slate-800/30 transition-colors">
+                        <td className="py-3.5 px-5">
+                          <div className="flex items-center gap-3">
+                            <div className="size-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-extrabold text-emerald-400 text-xs shrink-0 uppercase">
+                              {st.name.substring(0, 2)}
+                            </div>
+                            <div>
+                              <p className="font-bold text-white text-sm">{st.name}</p>
+                              <p className="text-slate-400 text-xs">{st.email}</p>
+                            </div>
+                          </div>
                         </td>
-                        <td className="p-4">
-                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-[#FFC45A] border border-amber-500/30 capitalize">
+
+                        <td className="py-3.5 px-4">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase ${
+                              st.role === "admin"
+                                ? "bg-purple-500/15 text-purple-400 border border-purple-500/30"
+                                : st.role === "manager"
+                                  ? "bg-amber-500/15 text-[#FFC45A] border border-amber-500/30"
+                                  : st.role === "support"
+                                    ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30"
+                                    : "bg-emerald-500/15 text-[#00E676] border border-emerald-500/30"
+                            }`}
+                          >
                             {st.role}
                           </span>
                         </td>
-                        <td className="p-4 text-slate-300 font-medium">All Platform Shops</td>
-                        <td className="p-4 text-slate-400">{formatDate(st.created_at)}</td>
+
+                        <td className="py-3.5 px-4 font-medium text-slate-300">
+                          {st.shop_name || "All Platform Shops"}
+                        </td>
+
+                        <td className="py-3.5 px-4 text-slate-400">
+                          {formatDate(st.created_at)}
+                        </td>
+
+                        <td className="py-3.5 px-5 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEditStaffModal(st)}
+                              className="h-8 px-3 text-xs font-bold rounded-lg border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200"
+                            >
+                              <Edit2 className="size-3 mr-1.5" /> Edit
+                            </Button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteStaffMember(st)}
+                              title="Remove Staff Member"
+                              className="size-8 rounded-lg border border-rose-500/40 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 flex items-center justify-center transition-colors"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))
                   )}
@@ -1850,6 +2399,93 @@ function AdminConsolePage() {
             </div>
           </div>
         )}
+
+      {/* ================= ADD / EDIT STAFF MODAL ================= */}
+      <Dialog open={isAddStaffOpen} onOpenChange={setIsAddStaffOpen}>
+        <DialogContent className="w-[95vw] sm:w-full max-w-md rounded-2xl bg-[#0D131F] border border-slate-800 text-slate-100 p-0 overflow-hidden shadow-2xl">
+          <DialogHeader className="p-5 border-b border-slate-800 bg-[#0A0F1A]">
+            <DialogTitle className="font-display text-lg font-bold text-white flex items-center gap-2">
+              <Users className="size-5 text-[#00E676]" />
+              {editingStaffMember ? "Edit Staff Member" : "Add New Staff Member"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="p-5 space-y-4 text-xs">
+            <div className="space-y-1.5">
+              <Label className="text-slate-300 font-semibold">Full Name</Label>
+              <Input
+                placeholder="e.g. Rahul Sharma"
+                value={newStaffName}
+                onChange={(e) => setNewStaffName(e.target.value)}
+                className="h-10 bg-[#080C14] border-slate-800 text-white rounded-xl text-xs font-medium"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-slate-300 font-semibold">Email Address</Label>
+              <Input
+                type="email"
+                placeholder="e.g. rahul.staff@qrmenu.com"
+                value={newStaffEmail}
+                onChange={(e) => setNewStaffEmail(e.target.value)}
+                className="h-10 bg-[#080C14] border-slate-800 text-white rounded-xl text-xs font-medium"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-slate-300 font-semibold">Role</Label>
+                <select
+                  value={newStaffRole}
+                  onChange={(e) => setNewStaffRole(e.target.value)}
+                  className="h-10 w-full px-3 bg-[#080C14] border border-slate-800 text-white rounded-xl font-bold text-xs capitalize"
+                >
+                  <option value="staff">Staff Member</option>
+                  <option value="manager">Store Manager</option>
+                  <option value="support">Support Agent</option>
+                  <option value="admin">Platform Admin</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-slate-300 font-semibold">Assigned Shop</Label>
+                <select
+                  value={newStaffAssignedShop}
+                  onChange={(e) => setNewStaffAssignedShop(e.target.value)}
+                  className="h-10 w-full px-3 bg-[#080C14] border border-slate-800 text-white rounded-xl font-bold text-xs truncate"
+                >
+                  <option value="all">All Platform Shops</option>
+                  {shops.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800/80">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsAddStaffOpen(false)}
+                className="h-9 px-4 text-xs font-bold rounded-xl border-slate-800 bg-[#080C14] text-slate-300 hover:bg-slate-800"
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="button"
+                onClick={handleSaveStaffMember}
+                disabled={savingStaff}
+                className="h-9 px-5 text-xs font-bold rounded-xl bg-[#00E676] text-[#080C14] hover:bg-[#00E676]/90 shadow-md shadow-[#00E676]/15"
+              >
+                {savingStaff ? "Saving..." : editingStaffMember ? "Update Staff" : "Add Staff Member"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
         {/* ================= PAYMENTS TAB ================= */}
         {activeTab === "payments" && (
@@ -2433,20 +3069,20 @@ function AdminConsolePage() {
 
       {/* ================= MANAGE SHOP MODAL (Matching Screenshots 1, 2, 3, 4) ================= */}
       <Dialog open={!!managingShop} onOpenChange={(open) => !open && setManagingShop(null)}>
-        <DialogContent className="max-w-3xl rounded-2xl bg-[#0D131F] border border-slate-800 text-slate-100 p-0 overflow-hidden shadow-2xl">
+        <DialogContent className="w-[95vw] sm:w-full max-w-3xl rounded-2xl bg-[#0D131F] border border-slate-800 text-slate-100 p-0 overflow-hidden shadow-2xl max-h-[92vh] flex flex-col">
           {/* Modal Header */}
-          <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-[#0A0F1A]">
-            <DialogTitle className="font-display text-xl font-bold text-white flex items-center gap-2">
+          <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-[#0A0F1A] gap-2">
+            <DialogTitle className="font-display text-base sm:text-xl font-bold text-white flex items-center gap-2 truncate">
               Manage — {managingShop?.name}
             </DialogTitle>
 
-            <span className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/40 text-[#FFC45A] font-extrabold text-xs font-mono">
+            <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/40 text-[#FFC45A] font-extrabold text-[10px] sm:text-xs font-mono shrink-0">
               ID: BIZ-{managingShop?.slug.substring(0, 6).toUpperCase()}-{managingShop?.id.substring(0, 4).toUpperCase()}
             </span>
           </div>
 
           {/* Sub-Navigation Tabs Bar */}
-          <div className="px-5 py-2.5 border-b border-slate-800 bg-[#080C14] flex items-center gap-2 overflow-x-auto">
+          <div className="px-3.5 sm:px-5 py-2.5 border-b border-slate-800 bg-[#080C14] flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar">
             {[
               { id: "info", label: "Info", icon: Home },
               { id: "login", label: "Customer Login", icon: Key },
@@ -2462,7 +3098,7 @@ function AdminConsolePage() {
                   key={t.id}
                   type="button"
                   onClick={() => setModalTab(t.id as ManageModalTab)}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                  className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 whitespace-nowrap ${
                     active
                       ? "bg-[#00E676] text-[#080C14] shadow-md shadow-[#00E676]/20"
                       : "text-slate-400 hover:text-white hover:bg-slate-800/50"
@@ -2476,7 +3112,7 @@ function AdminConsolePage() {
           </div>
 
           {/* Modal Body */}
-          <div className="p-6 max-h-[72vh] overflow-y-auto space-y-5">
+          <div className="p-4 sm:p-6 max-h-[72vh] overflow-y-auto space-y-5 flex-1">
             {/* SUB-TAB 1: SUBSCRIPTION (Screenshot 1) */}
             {modalTab === "subscription" && (
               <div className="space-y-5 text-xs animate-in fade-in duration-150">
