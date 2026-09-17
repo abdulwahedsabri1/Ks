@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { Check, Copy, ExternalLink, QrCode as QrIcon, Sparkles } from "lucide-react";
+import { Check, Copy, QrCode as QrIcon, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
@@ -67,16 +67,6 @@ export function UpiPaymentBox({
   const displayQr = upiQrUrl || qrCodeDataUrl;
   const payAmountStr = amount && amount > 0 ? `${currency}${amount.toFixed(2)}` : null;
 
-  // Generate payment links
-  const getUpiUrl = (scheme: string) => {
-    const base = scheme === "tez" ? "tez://upi/pay" : `${scheme}://pay`;
-    let url = `${base}?pa=${encodeURIComponent(cleanUpiId)}&pn=${encodeURIComponent(shopName)}&cu=INR`;
-    if (amount && amount > 0) {
-      url += `&am=${amount.toFixed(2)}`;
-    }
-    return url;
-  };
-
   if (!cleanUpiId && !upiQrUrl) return null;
 
   return (
@@ -100,7 +90,7 @@ export function UpiPaymentBox({
               )}
             </div>
             <p className="text-xs text-muted-foreground font-medium mt-0.5">
-              Scan QR code below or pay directly via app
+              Scan QR code below or copy Merchant UPI ID to pay
             </p>
           </div>
         </div>
@@ -136,7 +126,7 @@ export function UpiPaymentBox({
 
       {/* Merchant UPI ID Section */}
       {cleanUpiId && (
-        <div className="space-y-1.5 mb-4">
+        <div className="space-y-1.5">
           <label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
             Merchant UPI ID
           </label>
@@ -166,48 +156,6 @@ export function UpiPaymentBox({
           </div>
         </div>
       )}
-
-      {/* Pay Directly Via App Buttons */}
-      <div className="space-y-1.5">
-        <label className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
-          Pay Directly via App
-        </label>
-        <div className="grid grid-cols-2 gap-2.5 w-full">
-          <a
-            href={getUpiUrl("tez")}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-center gap-1.5 h-10 px-3 bg-muted/30 hover:bg-muted border border-border/80 text-foreground rounded-lg text-xs font-semibold transition-colors shadow-2xs text-center"
-          >
-            <span>Google Pay</span>
-          </a>
-          <a
-            href={getUpiUrl("phonepe")}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-center gap-1.5 h-10 px-3 bg-muted/30 hover:bg-muted border border-border/80 text-foreground rounded-lg text-xs font-semibold transition-colors shadow-2xs text-center"
-          >
-            <span>PhonePe</span>
-          </a>
-          <a
-            href={getUpiUrl("paytmmp")}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-center gap-1.5 h-10 px-3 bg-muted/30 hover:bg-muted border border-border/80 text-foreground rounded-lg text-xs font-semibold transition-colors shadow-2xs text-center"
-          >
-            <span>Paytm</span>
-          </a>
-          <a
-            href={getUpiUrl("upi")}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center justify-center gap-1 h-10 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-colors shadow-2xs text-center"
-          >
-            <span>Any UPI</span>
-            <ExternalLink className="size-3.5 opacity-90 flex-shrink-0" />
-          </a>
-        </div>
-      </div>
 
       {/* Lightbox / Zoom Modal for QR Code */}
       {isZoomed && displayQr && (

@@ -20,10 +20,10 @@ export const Route = createFileRoute("/about")({
 });
 
 const stats = [
-  { value: "5,000+", label: "Active Businesses" },
-  { value: "10M+", label: "QR Scans Delivered" },
+  { value: "100+", label: "Active Businesses" },
+  { value: "100+", label: "QR Menus Delivered" },
   { value: "99.9%", label: "Platform Uptime" },
-  { value: "< 5 Min", label: "Average Setup Time" },
+  { value: "< 2 Min", label: "Average Setup Time" },
 ];
 
 const values = [

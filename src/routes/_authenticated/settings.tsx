@@ -6,7 +6,7 @@ import { UpiPaymentBox } from "@/components/UpiPaymentBox";
 import { supabase } from "@/integrations/supabase/client";
 import { updateShopSettings } from "@/lib/shop.functions";
 import { useAuth } from "@/hooks/useAuth";
-import { useIsAdmin, useMyShop, uploadShopMedia } from "@/hooks/useShopData";
+import { useIsAdmin, useMyShop, uploadShopMedia, triggerCrossTabSync } from "@/hooks/useShopData";
 import { DashboardShell } from "@/components/DashboardShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,10 @@ import {
   shopDeliveryEnabled,
   shopTakeawayEnabled,
   shopOnTableEnabled,
+  shopEnquiryEnabled,
+  shopOrderLabels,
+  shopCatalogLabel,
+  shopItemLabel,
   shopTheme,
   shopFeatures,
   shopLanguages,
@@ -29,6 +33,7 @@ import {
   AVAILABLE_LANGUAGES,
   type ThemeId,
   type Coupon,
+  type Shop,
 } from "@/lib/shop";
 
 function safeStr(val: unknown): string {
@@ -36,6 +41,52 @@ function safeStr(val: unknown): string {
   if (typeof val === "number") return String(val).trim();
   return "";
 }
+
+function computeLiveShop(shop: Shop, form: any): Shop {
+  const currentFeatures = (shop.features as Record<string, any>) || {};
+  const updatedFeatures = {
+    ...currentFeatures,
+    timing: safeStr(form["timing"]),
+    map_url: safeStr(form["map_url"]),
+    social_link: safeStr(form["instagram_url"]),
+    instagram_url: safeStr(form["instagram_url"]),
+    facebook_url: safeStr(form["facebook_url"]),
+    twitter_url: safeStr(form["twitter_url"]),
+    website_url: safeStr(form["website_url"]),
+    google_review_link: safeStr(form["google_review_link"]),
+    delivery: form["delivery"],
+    takeaway: form["takeaway"],
+    take_away: form["takeaway"],
+    on_table: form["on_table"],
+    enquiry: form["enquiry"],
+    label_enquiry: safeStr(form["label_enquiry"]),
+    catalog_label: safeStr(form["catalog_label"]),
+    item_label: safeStr(form["item_label"]),
+    theme: form["theme"],
+    languages: form["languages"],
+    multi_language_enabled: form["multi_language_enabled"],
+    coupons: form["coupons"],
+    upi_enabled: form["upi_enabled"],
+    upi_id: safeStr(form["upi_id"]),
+    upi_qr_url: safeStr(form["upi_qr_url"]),
+  };
+
+  return {
+    ...shop,
+    name: safeStr(form["name"]) || shop.name,
+    tagline: safeStr(form["tagline"]) || null,
+    niche: safeStr(form["niche"]) || shop.niche,
+    whatsapp: safeStr(form["whatsapp"]) || null,
+    phone: safeStr(form["phone"]) || null,
+    address: safeStr(form["address"]) || null,
+    currency: safeStr(form["currency"]) || "₹",
+    logo_url: safeStr(form["logo_url"]) || null,
+    cover_url: safeStr(form["cover_url"]) || null,
+    features: updatedFeatures,
+  };
+}
+
+
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -77,6 +128,10 @@ function SettingsPage() {
     delivery: true,
     takeaway: true,
     on_table: true,
+    enquiry: true,
+    label_enquiry: "General Enquiry / Quote",
+    catalog_label: "Menu",
+    item_label: "Item",
     theme: "luxury_dark" as ThemeId,
     languages: ["en"],
     multi_language_enabled: true,
@@ -106,9 +161,13 @@ function SettingsPage() {
     expires_at: "",
   });
 
+  const updateForm = (updater: React.SetStateAction<typeof form>) => {
+    setForm((prev) => (typeof updater === "function" ? updater(prev) : updater));
+  };
+
   const syncCoupons = async (newCoupons: Coupon[]) => {
     if (!shop) return;
-    setForm((f) => ({ ...f, coupons: newCoupons }));
+    updateForm((f) => ({ ...f, coupons: newCoupons }));
 
     const currentFeatures = shop.features || {};
     const updatedFeatures = {
@@ -124,7 +183,7 @@ function SettingsPage() {
     if (error) {
       toast.error("Failed to save coupon: " + error.message);
     } else {
-      toast.success("Coupons updated instantly!");
+      toast.success("Coupons updated!");
       qc.invalidateQueries({ queryKey: ["my-shop"] });
     }
   };
@@ -148,6 +207,7 @@ function SettingsPage() {
 
   useEffect(() => {
     if (!shop) return;
+    const labels = shopOrderLabels(shop);
     setForm({
       name: safeStr(shop.name),
       tagline: safeStr(shop.tagline),
@@ -167,6 +227,10 @@ function SettingsPage() {
       delivery: shopDeliveryEnabled(shop),
       takeaway: shopTakeawayEnabled(shop),
       on_table: shopOnTableEnabled(shop),
+      enquiry: shopEnquiryEnabled(shop),
+      label_enquiry: labels.enquiry,
+      catalog_label: shopCatalogLabel(shop),
+      item_label: shopItemLabel(shop),
       theme: shopTheme(shop),
       languages: shopLanguages(shop),
       multi_language_enabled:
@@ -192,34 +256,30 @@ function SettingsPage() {
       const currentFeatures = shop.features || {};
       const updatedFeatures = {
         ...currentFeatures,
-        timing: safeStr(form.timing) || undefined,
-        map_url: safeStr(form.map_url) || undefined,
-        social_link: safeStr(form.instagram_url) || undefined,
-        instagram_url: safeStr(form.instagram_url) || undefined,
-        facebook_url: safeStr(form.facebook_url) || undefined,
-        twitter_url: safeStr(form.twitter_url) || undefined,
-        website_url: safeStr(form.website_url) || undefined,
-        google_review_link: safeStr(form.google_review_link) || undefined,
+        timing: safeStr(form.timing),
+        map_url: safeStr(form.map_url),
+        social_link: safeStr(form.instagram_url),
+        instagram_url: safeStr(form.instagram_url),
+        facebook_url: safeStr(form.facebook_url),
+        twitter_url: safeStr(form.twitter_url),
+        website_url: safeStr(form.website_url),
+        google_review_link: safeStr(form.google_review_link),
         delivery: form.delivery,
         takeaway: form.takeaway,
         take_away: form.takeaway,
         on_table: form.on_table,
+        enquiry: form.enquiry,
+        label_enquiry: safeStr(form.label_enquiry),
+        catalog_label: safeStr(form.catalog_label),
+        item_label: safeStr(form.item_label),
         theme: form.theme,
         languages: form.languages,
         multi_language_enabled: form.multi_language_enabled,
         coupons: form.coupons,
         upi_enabled: form.upi_enabled,
-        upi_id: safeStr(form.upi_id) || undefined,
-        upi_qr_url: safeStr(form.upi_qr_url) || undefined,
+        upi_id: safeStr(form.upi_id),
+        upi_qr_url: safeStr(form.upi_qr_url),
       };
-
-      // Clean up undefined properties from features before saving
-      Object.keys(updatedFeatures).forEach((key) => {
-        const k = key as keyof typeof updatedFeatures;
-        if (updatedFeatures[k] === undefined) {
-          delete updatedFeatures[k];
-        }
-      });
 
       const updates = {
         name: safeStr(form.name) || shop.name,
@@ -234,27 +294,34 @@ function SettingsPage() {
         features: updatedFeatures,
       };
 
-      try {
-        await updateShopSettings({
-          data: {
-            shop_id: shop.id,
-            updates,
-          },
-        });
-      } catch (serverErr) {
-        console.warn("Server update fallback to client update:", serverErr);
-        const { error } = await supabase
-          .from("shops")
-          .update({
-            ...updates,
-            ...(user?.id ? { owner_id: user.id } : {}),
-          })
-          .eq("id", shop.id);
-        if (error) throw error;
+      // 1. INSTANT (0ms) Optimistic Update in UI & Cache
+      const optimisticShop: Shop = { ...shop, ...updates };
+      qc.setQueryData(["my-shop", user?.id], optimisticShop);
+      qc.setQueryData(["my-shop", shop.id], optimisticShop);
+      triggerCrossTabSync(shop.id, user?.id);
+
+      // 2. Immediate user feedback (0ms)
+      toast.success("✨ Settings saved!");
+
+      // 3. Fast direct Supabase DB write in background
+      const { data: updatedShops, error } = await supabase
+        .from("shops")
+        .update({
+          ...updates,
+          ...(user?.id ? { owner_id: user.id } : {}),
+        })
+        .eq("id", shop.id)
+        .select();
+
+      if (error) {
+        console.error("Direct update error:", error);
+      } else if (updatedShops && updatedShops[0]) {
+        const persistedShop = updatedShops[0] as Shop;
+        qc.setQueryData(["my-shop", user?.id], persistedShop);
+        qc.setQueryData(["my-shop", shop.id], persistedShop);
       }
 
-      toast.success("✨ Settings saved & synced across website!");
-      await qc.invalidateQueries();
+      await qc.invalidateQueries({ queryKey: ["my-shop"] });
     } catch (err) {
       console.error("Failed to save shop settings:", err);
       toast.error("Failed to save settings: " + (err instanceof Error ? err.message : String(err)));
@@ -285,7 +352,7 @@ function SettingsPage() {
         const { error } = await supabase.from("shops").update(patch).eq("id", shop.id);
         if (error) throw error;
         toast.success(
-          kind === "logo_url" ? "Shop logo uploaded & synced!" : "Cover banner uploaded & synced!",
+          kind === "logo_url" ? "Shop logo uploaded!" : "Cover banner uploaded!",
         );
       }
       await qc.invalidateQueries();
@@ -355,13 +422,13 @@ function SettingsPage() {
             id="s-name"
             label="Shop name"
             value={form.name}
-            onChange={(v) => setForm({ ...form, name: v })}
+            onChange={(v) => updateForm((prev) => ({ ...prev, name: v }))}
           />
           <Text
             id="s-tag"
             label="Tagline"
             value={form.tagline}
-            onChange={(v) => setForm({ ...form, tagline: v })}
+            onChange={(v) => updateForm((prev) => ({ ...prev, tagline: v }))}
           />
           <div className="space-y-2">
             <Label htmlFor="s-niche">Business type</Label>
@@ -369,7 +436,7 @@ function SettingsPage() {
               id="s-niche"
               className="h-10 w-full rounded-md border bg-background px-3 text-sm"
               value={form.niche}
-              onChange={(e) => setForm({ ...form, niche: e.target.value })}
+              onChange={(e) => updateForm((prev) => ({ ...prev, niche: e.target.value }))}
             >
               {NICHES.map((n) => (
                 <option key={n} value={n}>
@@ -378,35 +445,50 @@ function SettingsPage() {
               ))}
             </select>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Text
+              id="s-catalog-label"
+              label="Catalog / Menu Title (e.g. Menu, Services, Catalog)"
+              value={form.catalog_label}
+              onChange={(v) => updateForm((prev) => ({ ...prev, catalog_label: v }))}
+            />
+            <Text
+              id="s-item-label"
+              label="Single Item Title (e.g. Item, Service, Product)"
+              value={form.item_label}
+              onChange={(v) => updateForm((prev) => ({ ...prev, item_label: v }))}
+            />
+          </div>
           <Text
             id="s-wa"
             label="WhatsApp number"
             value={form.whatsapp}
-            onChange={(v) => setForm({ ...form, whatsapp: v })}
+            onChange={(v) => updateForm((prev) => ({ ...prev, whatsapp: v }))}
           />
           <Text
             id="s-phone"
             label="Phone"
             value={form.phone}
-            onChange={(v) => setForm({ ...form, phone: v })}
+            onChange={(v) => updateForm((prev) => ({ ...prev, phone: v }))}
           />
           <Text
             id="s-addr"
             label="Address"
             value={form.address}
-            onChange={(v) => setForm({ ...form, address: v })}
+            onChange={(v) => updateForm((prev) => ({ ...prev, address: v }))}
           />
           <Text
             id="s-map-url"
             label="Map Link (Google Maps URL)"
             value={form.map_url}
-            onChange={(v) => setForm({ ...form, map_url: v })}
+            onChange={(v) => updateForm((prev) => ({ ...prev, map_url: v }))}
           />
           <Text
             id="s-timing"
             label="Opening Hours (e.g. Mon-Sun, 9am-10pm)"
             value={form.timing}
-            onChange={(v) => setForm({ ...form, timing: v })}
+            onChange={(v) => updateForm((prev) => ({ ...prev, timing: v }))}
           />
           <div className="space-y-4 pt-4 border-t border-border">
             <h3 className="font-medium text-lg pb-2">Social Media Links</h3>
@@ -414,7 +496,7 @@ function SettingsPage() {
               id="s-instagram"
               label="Instagram URL"
               value={form.instagram_url}
-              onChange={(v) => setForm({ ...form, instagram_url: v })}
+              onChange={(v) => updateForm((prev) => ({ ...prev, instagram_url: v }))}
             />
             {!feat.advanced_social_links ? (
               <div className="rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/5 p-4 mt-2">
@@ -441,19 +523,19 @@ function SettingsPage() {
                   id="s-facebook"
                   label="Facebook URL"
                   value={form.facebook_url}
-                  onChange={(v) => setForm({ ...form, facebook_url: v })}
+                  onChange={(v) => updateForm((prev) => ({ ...prev, facebook_url: v }))}
                 />
                 <Text
                   id="s-twitter"
                   label="Twitter / X URL"
                   value={form.twitter_url}
-                  onChange={(v) => setForm({ ...form, twitter_url: v })}
+                  onChange={(v) => updateForm((prev) => ({ ...prev, twitter_url: v }))}
                 />
                 <Text
                   id="s-website"
                   label="Website URL"
                   value={form.website_url}
-                  onChange={(v) => setForm({ ...form, website_url: v })}
+                  onChange={(v) => updateForm((prev) => ({ ...prev, website_url: v }))}
                 />
               </>
             )}
@@ -483,7 +565,7 @@ function SettingsPage() {
               id="s-google-review"
               label="Google Review Link"
               value={form.google_review_link}
-              onChange={(v) => setForm({ ...form, google_review_link: v })}
+              onChange={(v) => updateForm((prev) => ({ ...prev, google_review_link: v }))}
             />
           )}
 
@@ -491,7 +573,7 @@ function SettingsPage() {
             id="s-cur"
             label="Currency symbol"
             value={form.currency}
-            onChange={(v) => setForm({ ...form, currency: v })}
+            onChange={(v) => updateForm((prev) => ({ ...prev, currency: v }))}
           />
 
           <div className="space-y-4 pt-4 border-t border-border">
@@ -500,7 +582,7 @@ function SettingsPage() {
               {feat.upi && (
                 <Switch
                   checked={form.upi_enabled}
-                  onCheckedChange={(v) => setForm({ ...form, upi_enabled: v })}
+                  onCheckedChange={(v) => updateForm((prev) => ({ ...prev, upi_enabled: v }))}
                 />
               )}
             </div>
@@ -529,7 +611,7 @@ function SettingsPage() {
                         id="s-upi"
                         placeholder="e.g. sabriabdulwahed-2@okhdfcbank"
                         value={form.upi_id}
-                        onChange={(e) => setForm({ ...form, upi_id: e.target.value })}
+                        onChange={(e) => updateForm((prev) => ({ ...prev, upi_id: e.target.value }))}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
                         It will be automatically included in the WhatsApp order message.
@@ -575,7 +657,9 @@ function SettingsPage() {
               {feat.multi_language && (
                 <Switch
                   checked={form.multi_language_enabled}
-                  onCheckedChange={(v) => setForm({ ...form, multi_language_enabled: v })}
+                  onCheckedChange={(v) =>
+                    updateForm((prev) => ({ ...prev, multi_language_enabled: v }))
+                  }
                 />
               )}
             </div>
@@ -753,7 +837,7 @@ function SettingsPage() {
                   {/* Luxury Dark */}
                   <div
                     className={`cursor-pointer rounded-xl border-2 p-3 transition-all ${form.theme === "luxury_dark" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
-                    onClick={() => setForm({ ...form, theme: "luxury_dark" })}
+                    onClick={() => updateForm((prev) => ({ ...prev, theme: "luxury_dark" }))}
                   >
                     <div className="aspect-[3/4] w-full bg-[#100C09] rounded-lg mb-3 p-3 flex flex-col items-center overflow-hidden border border-border/50">
                       <div className="w-full bg-[#18120D] h-6 rounded-md mb-2 flex items-center px-2">
@@ -775,7 +859,7 @@ function SettingsPage() {
                   {/* Minimalist Light */}
                   <div
                     className={`cursor-pointer rounded-xl border-2 p-3 transition-all ${form.theme === "minimalist_light" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
-                    onClick={() => setForm({ ...form, theme: "minimalist_light" })}
+                    onClick={() => updateForm((prev) => ({ ...prev, theme: "minimalist_light" }))}
                   >
                     <div className="aspect-[3/4] w-full bg-[#F5F0E7] rounded-lg mb-3 p-3 flex flex-col items-center overflow-hidden border border-border/50">
                       <div className="w-full bg-white h-6 rounded-md mb-2 flex items-center px-2 shadow-sm border border-black/5">
@@ -797,7 +881,7 @@ function SettingsPage() {
                   {/* Warm Amber */}
                   <div
                     className={`cursor-pointer rounded-xl border-2 p-3 transition-all ${form.theme === "warm_amber" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
-                    onClick={() => setForm({ ...form, theme: "warm_amber" })}
+                    onClick={() => updateForm((prev) => ({ ...prev, theme: "warm_amber" }))}
                   >
                     <div className="aspect-[3/4] w-full bg-[#FFFAF5] rounded-lg mb-3 p-3 flex flex-col items-center overflow-hidden border border-border/50 shadow-sm">
                       <div className="w-full bg-white h-6 rounded-full mb-2 flex items-center px-2 border border-[#D99A2B]/15">
@@ -819,7 +903,7 @@ function SettingsPage() {
                   {/* Royal Emerald */}
                   <div
                     className={`cursor-pointer rounded-xl border-2 p-3 transition-all ${form.theme === "emerald_bistro" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
-                    onClick={() => setForm({ ...form, theme: "emerald_bistro" })}
+                    onClick={() => updateForm((prev) => ({ ...prev, theme: "emerald_bistro" }))}
                   >
                     <div className="aspect-[3/4] w-full bg-[#062319] rounded-lg mb-3 p-3 flex flex-col items-center overflow-hidden border border-emerald-500/20">
                       <div className="w-full bg-[#0B3325] h-6 rounded-md mb-2 flex items-center px-2">
@@ -841,7 +925,7 @@ function SettingsPage() {
                   {/* Cyber Neon */}
                   <div
                     className={`cursor-pointer rounded-xl border-2 p-3 transition-all ${form.theme === "neon_cyber" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
-                    onClick={() => setForm({ ...form, theme: "neon_cyber" })}
+                    onClick={() => updateForm((prev) => ({ ...prev, theme: "neon_cyber" }))}
                   >
                     <div className="aspect-[3/4] w-full bg-[#0D0E15] rounded-lg mb-3 p-3 flex flex-col items-center overflow-hidden border border-cyan-500/20">
                       <div className="w-full bg-[#161926] h-6 rounded-md mb-2 flex items-center px-2">
@@ -863,7 +947,7 @@ function SettingsPage() {
                   {/* Rose Gold */}
                   <div
                     className={`cursor-pointer rounded-xl border-2 p-3 transition-all ${form.theme === "rose_gold" ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
-                    onClick={() => setForm({ ...form, theme: "rose_gold" })}
+                    onClick={() => updateForm((prev) => ({ ...prev, theme: "rose_gold" }))}
                   >
                     <div className="aspect-[3/4] w-full bg-[#FFF5F5] rounded-lg mb-3 p-3 flex flex-col items-center overflow-hidden border border-[#E11D48]/15">
                       <div className="w-full bg-white h-6 rounded-md mb-2 flex items-center px-2 shadow-sm">
@@ -910,7 +994,7 @@ function SettingsPage() {
                 id="delivery-toggle"
                 checked={form.delivery && feat.delivery}
                 disabled={!feat.delivery}
-                onCheckedChange={(v) => setForm({ ...form, delivery: v })}
+                onCheckedChange={(v) => updateForm((prev) => ({ ...prev, delivery: v }))}
               />
             </div>
 
@@ -932,7 +1016,7 @@ function SettingsPage() {
                 id="takeaway-toggle"
                 checked={form.takeaway && feat.take_away}
                 disabled={!feat.take_away}
-                onCheckedChange={(v) => setForm({ ...form, takeaway: v })}
+                onCheckedChange={(v) => updateForm((prev) => ({ ...prev, takeaway: v }))}
               />
             </div>
 
@@ -954,8 +1038,46 @@ function SettingsPage() {
                 id="ontable-toggle"
                 checked={form.on_table && feat.on_table}
                 disabled={!feat.on_table}
-                onCheckedChange={(v) => setForm({ ...form, on_table: v })}
+                onCheckedChange={(v) => updateForm((prev) => ({ ...prev, on_table: v }))}
               />
+            </div>
+
+            <div className="space-y-3 rounded-lg border p-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="enquiry-toggle" className="text-base flex items-center gap-2 font-semibold">
+                    General Enquiry
+                    {!feat.enquiry && (
+                      <span className="text-[10px] bg-[#F5A623]/15 text-[#D99A2B] px-2 py-0.5 rounded-full font-normal">
+                        Pro Plan
+                      </span>
+                    )}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Allow customers to send general enquiries or request price quotes.
+                  </p>
+                </div>
+                <Switch
+                  id="enquiry-toggle"
+                  checked={form.enquiry && feat.enquiry}
+                  disabled={!feat.enquiry}
+                  onCheckedChange={(v) => updateForm((prev) => ({ ...prev, enquiry: v }))}
+                />
+              </div>
+              {form.enquiry && feat.enquiry && (
+                <div className="pt-2 border-t space-y-1.5">
+                  <Label htmlFor="enquiry-label" className="text-xs text-muted-foreground font-medium">
+                    Display Title / Label in Shop Link
+                  </Label>
+                  <Input
+                    id="enquiry-label"
+                    placeholder="e.g. General Enquiry / Quote"
+                    value={form.label_enquiry}
+                    onChange={(e) => updateForm((prev) => ({ ...prev, label_enquiry: e.target.value }))}
+                    className="h-9 text-sm"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

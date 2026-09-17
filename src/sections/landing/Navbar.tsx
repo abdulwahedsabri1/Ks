@@ -28,9 +28,11 @@ export function Navbar() {
         >
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow">
-                <QrCode className="size-5" />
-              </div>
+              <img
+                src="/favicon.ico"
+                alt="MY Link QR Logo"
+                className="size-10 rounded-xl object-contain shadow-md transition-transform group-hover:scale-105"
+              />
               <span className="font-display text-xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary">
                 MY Link QR
               </span>

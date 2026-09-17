@@ -16,6 +16,7 @@ import { UpiPaymentBox } from "@/components/UpiPaymentBox";
 interface RazorpayModalProps {
   plan: PlanItem;
   price: number;
+  billingCycle?: "monthly" | "yearly";
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -36,9 +37,15 @@ if (typeof window !== "undefined" && !document.getElementById("razorpay-sdk")) {
 }
 
 import { shopBusinessId } from "@/lib/shop";
-import { usePaymentSettings } from "@/hooks/usePaymentSettings";
+import { usePaymentSettings, recordCouponUsage, type Coupon } from "@/hooks/usePaymentSettings";
+import { Tag, Sparkles as SparklesIcon, CheckCircle2 as CheckCircleIcon } from "lucide-react";
 
-export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModalProps) {
+export function RazorpayModal({ plan, price, billingCycle = "monthly", onClose, onSuccess }: RazorpayModalProps) {
+  const isYearly = billingCycle === "yearly";
+  const extraMonths = typeof plan.extraMonths === "number" ? plan.extraMonths : 2;
+  const totalMonths = 12 + extraMonths;
+  const basePrice = isYearly ? (plan.yearlyPriceNumber || plan.priceNumber * 10 || price) : price;
+
   const [loading, setLoading] = useState(false);
   const [directLoading, setDirectLoading] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -49,9 +56,74 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
   const [bizId, setBizId] = useState("");
   const [targetShopId, setTargetShopId] = useState<string | undefined>(undefined);
 
+  // Coupon state
+  const [couponCodeInput, setCouponCodeInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+  const [couponError, setCouponError] = useState("");
+  const [couponSuccessMsg, setCouponSuccessMsg] = useState("");
+
   const { data: paymentSettings } = usePaymentSettings();
   const isRazorpayEnabled = paymentSettings?.razorpay_enabled ?? true;
   const upiId = paymentSettings?.upi_id ?? "9392318135-2@axl";
+  const availableCoupons = paymentSettings?.coupons || [];
+
+  // Calculate final price based on applied coupon
+  let discountAmount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.discount_type === "percent") {
+      discountAmount = basePrice * (appliedCoupon.discount_value / 100);
+    } else {
+      discountAmount = appliedCoupon.discount_value;
+    }
+  }
+  const finalPrice = Math.max(0, Math.round((basePrice - discountAmount) * 100) / 100);
+
+  function handleApplyCoupon() {
+    setCouponError("");
+    setCouponSuccessMsg("");
+    const trimmed = couponCodeInput.trim().toUpperCase();
+    if (!trimmed) {
+      setCouponError("Please enter a coupon code.");
+      return;
+    }
+
+    const found = availableCoupons.find((c) => c.code.toUpperCase() === trimmed);
+    if (!found) {
+      setCouponError("Invalid coupon code. Try WELCOME50 or OFF100.");
+      return;
+    }
+
+    if (!found.is_active) {
+      setCouponError("This coupon code is currently inactive.");
+      return;
+    }
+
+    if (found.max_uses && (found.used_count || 0) >= found.max_uses) {
+      setCouponError("This coupon code limit has been reached.");
+      return;
+    }
+
+    if (found.expires_at && new Date(found.expires_at).getTime() < Date.now()) {
+      setCouponError("This coupon code has expired.");
+      return;
+    }
+
+    const calcDiscount =
+      found.discount_type === "percent" ? (price * found.discount_value) / 100 : found.discount_value;
+
+    setAppliedCoupon(found);
+    setCouponSuccessMsg(
+      `Coupon "${found.code}" applied! You saved ₹${Math.min(price, Math.round(calcDiscount))}.`,
+    );
+    toast.success(`🎉 Coupon "${found.code}" applied! Saved ₹${Math.min(price, Math.round(calcDiscount))}`);
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null);
+    setCouponCodeInput("");
+    setCouponError("");
+    setCouponSuccessMsg("");
+  }
 
   useEffect(() => {
     // Fallback script load check on mount
@@ -134,6 +206,10 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
         }
       }
 
+      if (appliedCoupon) {
+        await recordCouponUsage(appliedCoupon.code);
+      }
+
       // Optimistic instant feedback
       toast.success(`🎉 ${plan.name} plan activated! Unlocking features…`);
       onSuccess();
@@ -141,8 +217,9 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
       await directActivatePlan({
         data: {
           plan_name: plan.id || plan.name,
-          amount: price,
+          amount: finalPrice,
           transaction_id: `DIRECT-${Date.now()}`,
+          billing_cycle: billingCycle,
           ...(targetShopId ? { shop_id: targetShopId } : {}),
         },
       });
@@ -184,11 +261,15 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
         }
       }
 
+      if (appliedCoupon) {
+        await recordCouponUsage(appliedCoupon.code);
+      }
+
       const payload = {
         business_name: bizName || "Business",
         owner_name: user.email?.split("@")[0] || "Owner",
         plan_name: plan.id || plan.name,
-        amount: price,
+        amount: finalPrice,
         mobile: bizPhone || user.phone || "-",
         email: user.email || "",
         whatsapp: bizPhone || user.phone || "-",
@@ -205,7 +286,8 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
 
       // WhatsApp redirect logic
       const whatsappNumber = "9392318135";
-      const message = `*Payment Confirmation*\n\nBusiness Name: ${bizName || "Business"}\nBusiness ID: ${bizId}\nPlan: ${plan.name}\nAmount: ₹${price}\nContact: ${bizPhone || user.phone || "-"}\n\nI have successfully made the payment of ₹${price} via UPI. Please activate my plan.`;
+      const couponText = appliedCoupon ? ` (Coupon: ${appliedCoupon.code})` : "";
+      const message = `*Payment Confirmation*\n\nBusiness Name: ${bizName || "Business"}\nBusiness ID: ${bizId}\nPlan: ${plan.name}${couponText}\nAmount Paid: ₹${finalPrice}\nContact: ${bizPhone || user.phone || "-"}\n\nI have successfully made the payment of ₹${finalPrice} via UPI. Please activate my plan.`;
       const encodedMessage = encodeURIComponent(message);
       window.open(`https://wa.me/91${whatsappNumber}?text=${encodedMessage}`, "_blank");
 
@@ -250,6 +332,10 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
         }
       }
 
+      if (appliedCoupon) {
+        await recordCouponUsage(appliedCoupon.code);
+      }
+
       const keyId = import.meta.env["VITE_RAZORPAY_KEY_ID"] || "rzp_live_Ta4juTNtUmcLxK";
 
       // 1. Fast path: If Razorpay SDK is loaded, launch popup instantly
@@ -259,7 +345,7 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
         // Fast order creation with 1s timeout race
         try {
           const orderPromise = createRazorpayOrder({
-            data: { amount: price, receipt: `rcpt_${plan.id}_${Date.now()}` },
+            data: { amount: finalPrice, receipt: `rcpt_${plan.id}_${Date.now()}` },
           });
           const timeoutPromise = new Promise<{ order_id?: string }>((resolve) =>
             setTimeout(() => resolve({}), 1000),
@@ -276,7 +362,7 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
 
         const options: any = {
           key: keyId,
-          amount: Math.max(100, Math.round((price || 1) * 100)),
+          amount: Math.max(100, Math.round((finalPrice || 1) * 100)),
           currency: "INR",
           name: "MY Link QR",
           description: `${plan.name} Plan — Monthly`,
@@ -299,7 +385,8 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
                   razorpay_order_id: response.razorpay_order_id || `ORD-${Date.now()}`,
                   razorpay_signature: response.razorpay_signature || "skip_verify",
                   plan_name: plan.id || plan.name,
-                  amount: price,
+                  amount: finalPrice,
+                  billing_cycle: billingCycle,
                   ...(targetShopId ? { shop_id: targetShopId } : {}),
                 },
               });
@@ -362,19 +449,41 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
             Upgrading to
           </p>
           <h2 className="text-2xl font-bold text-white">{plan.name} Plan</h2>
-          <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-4xl font-extrabold text-[#F5A623]">₹{price}</span>
-            <span className="text-white/50 text-sm">/month</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            {appliedCoupon ? (
+              <>
+                <span className="text-4xl font-extrabold text-[#F5A623]">₹{finalPrice}</span>
+                <span className="text-white/50 text-sm line-through">₹{basePrice}</span>
+                <span className="text-white/50 text-sm">/{isYearly ? "year" : "month"}</span>
+                <span className="text-emerald-400 text-xs font-bold bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                  {appliedCoupon.discount_type === "percent"
+                    ? `${appliedCoupon.discount_value}% OFF`
+                    : `₹${appliedCoupon.discount_value} OFF`}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-4xl font-extrabold text-[#F5A623]">₹{price}</span>
+                <span className="text-white/50 text-sm">/{isYearly ? "year" : "month"}</span>
+              </>
+            )}
           </div>
+          {isYearly && (
+            <p className="mt-2 text-xs font-bold text-[#F5A623] flex items-center gap-1">
+              <span>
+                🎁 Annual Billing: Includes {totalMonths} Months Access ({extraMonths > 0 ? `12 Mos + ${extraMonths} ${extraMonths === 1 ? "Mo" : "Mos"} Free` : "12 Months Access"})
+              </span>
+            </p>
+          )}
         </div>
 
         {/* Features summary */}
-        <div className="p-6 border-b border-black/5">
+        <div className="p-5 border-b border-black/5">
           <p className="text-xs font-semibold text-[#3A2818]/60 uppercase tracking-wider mb-3">
             What you get
           </p>
           <ul className="space-y-2">
-            {plan.features.slice(0, 5).map((f) => (
+            {plan.features.slice(0, 4).map((f) => (
               <li key={f} className="flex items-center gap-2 text-sm text-[#3A2818]/80">
                 <div className="size-4 rounded-full bg-[#F5A623]/20 text-[#D99A2B] flex items-center justify-center shrink-0">
                   <Check className="size-2.5" />
@@ -382,16 +491,74 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
                 {f}
               </li>
             ))}
-            {plan.features.length > 5 && (
-              <li className="text-xs text-[#3A2818]/50 pl-6">
-                + {plan.features.length - 5} more features
-              </li>
-            )}
           </ul>
         </div>
 
+        {/* Coupon Code Section */}
+        <div className="p-5 border-b border-black/5 bg-[#F5F0E7]/60 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-[#100C09] uppercase tracking-wider flex items-center gap-1.5">
+              <Tag className="size-3.5 text-[#F5A623]" />
+              Have a Coupon Code?
+            </label>
+            {appliedCoupon && (
+              <button
+                type="button"
+                onClick={handleRemoveCoupon}
+                className="text-[11px] font-bold text-rose-600 hover:underline"
+              >
+                Remove Coupon
+              </button>
+            )}
+          </div>
+
+          {!appliedCoupon ? (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={couponCodeInput}
+                onChange={(e) => {
+                  setCouponCodeInput(e.target.value.toUpperCase());
+                  setCouponError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleApplyCoupon();
+                  }
+                }}
+                placeholder="Enter promo code (e.g. WELCOME50)"
+                className="flex-1 h-9 px-3 text-xs uppercase font-mono font-bold tracking-wider rounded-xl border border-black/15 bg-white text-[#100C09] focus:outline-none focus:ring-1 focus:ring-[#F5A623]"
+              />
+              <Button
+                type="button"
+                onClick={handleApplyCoupon}
+                className="h-9 px-4 text-xs font-bold bg-[#100C09] text-white hover:bg-black rounded-xl shadow-sm"
+              >
+                Apply
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5">
+              <div className="flex items-center gap-2">
+                <CheckCircleIcon className="size-4 text-emerald-600 shrink-0" />
+                <div>
+                  <span className="font-mono font-bold text-xs text-emerald-900 uppercase">
+                    {appliedCoupon.code}
+                  </span>
+                  <p className="text-[10px] text-emerald-700 font-medium">
+                    Saved ₹{Math.round(discountAmount)} on your subscription!
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {couponError && <p className="text-[11px] font-semibold text-rose-600">{couponError}</p>}
+        </div>
+
         {/* Business Details Form */}
-        <div className="p-5 border-b border-black/5 bg-[#F5F0E7]/40 space-y-3">
+        <div className="p-5 border-b border-black/5 bg-white space-y-3">
           <div className="flex items-center justify-between">
             <label className="text-xs font-bold text-[#100C09] uppercase tracking-wider">
               Business Details
@@ -443,7 +610,7 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
               ) : (
                 <span className="flex items-center gap-2">
                   <Lock className="size-4" />
-                  Pay ₹{price} via Razorpay
+                  Pay ₹{finalPrice} via Razorpay
                 </span>
               )}
             </Button>
@@ -451,13 +618,13 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
             <div className="space-y-4">
               <UpiPaymentBox
                 upiId={upiId || "9392318135-2@axl"}
-                amount={price}
+                amount={finalPrice}
                 shopName="MY Link QR"
                 showTitle={true}
               />
               <div className="text-center">
                 <p className="text-[10px] text-[#3A2818]/50 mt-2">
-                  After making the payment of ₹{price}, click the button below to send proof via
+                  After making the payment of ₹{finalPrice}, click the button below to send proof via
                   WhatsApp.
                 </p>
               </div>
@@ -474,7 +641,7 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
                 ) : (
                   <span className="flex items-center gap-2">
                     <Check className="size-4" />
-                    Confirm Payment Sent
+                    Confirm Payment Sent (₹{finalPrice})
                   </span>
                 )}
               </Button>
@@ -495,7 +662,7 @@ export function RazorpayModal({ plan, price, onClose, onSuccess }: RazorpayModal
             ) : (
               <span className="flex items-center gap-1.5">
                 <Zap className="size-3.5 fill-[#D99A2B]" />
-                Instant Activate Plan (Direct Unlock)
+                Instant Activate Plan (Direct Unlock) — ₹{finalPrice}
               </span>
             )}
           </Button>

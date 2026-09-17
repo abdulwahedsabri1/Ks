@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import type React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AnimatePresence } from "framer-motion";
@@ -45,6 +44,7 @@ import {
   subscriptionState,
   subscriptionStateLabel,
   daysRemaining,
+  shopCatalogLabel,
   PAYMENT_STATUSES,
   shopGoogleReviewLink,
   PLANS,
@@ -55,6 +55,7 @@ import {
   parsePriceNumber,
   type PlanItem,
   shopBusinessId,
+  shopFeatures,
 } from "@/lib/shop";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -83,11 +84,23 @@ function DashboardPage() {
     string | undefined;
   const { data: events } = useAnalytics(shop?.id, 30, resetAt);
   const [selectedPlan, setSelectedPlan] = useState<PlanItem | null>(null);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
+
+  const [, setNowTick] = useState(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNowTick(Date.now()), 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   const views = (events ?? []).filter((e) => e.event_type === "view").length;
   const scans = (events ?? []).filter((e) => e.event_type === "scan").length;
 
-  const priceOf = (p: PlanItem) => p.priceNumber ?? parsePriceNumber(p.price);
+  const priceOf = (p: PlanItem) => {
+    if (billingCycle === "yearly") {
+      return p.yearlyPriceNumber || (p.priceNumber ? p.priceNumber * 10 : 0);
+    }
+    return p.priceNumber ?? parsePriceNumber(p.price);
+  };
 
   const handlePlanClick = (p: PlanItem) => {
     setSelectedPlan(p);
@@ -109,7 +122,7 @@ function DashboardPage() {
         <CreateShop userId={user?.id} />
       ) : (
         <div className="space-y-4 sm:space-y-6">
-          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3">
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
             <Stat
               label="Menu views"
               sublabel={`30d cycle (${resetRemainingDays}d left)`}
@@ -122,9 +135,18 @@ function DashboardPage() {
               value={scans}
               icon={QrCode}
             />
-            <div className="col-span-2 sm:col-span-1">
-              <Stat label="Menu items" value={items?.length ?? 0} icon={UtensilsCrossed} />
-            </div>
+            <Stat
+              label={`${shopCatalogLabel(shop)} items`}
+              sublabel="Active catalog"
+              value={items?.length ?? 0}
+              icon={UtensilsCrossed}
+            />
+            <Stat
+              label="Current plan"
+              sublabel={daysRemaining(shop) !== Infinity && daysRemaining(shop) > 0 ? `${daysRemaining(shop)}d left` : "Active"}
+              value={shop.plan}
+              icon={Sparkles}
+            />
           </div>
 
           {/* ── Payment Warning Banners ─── */}
@@ -165,9 +187,9 @@ function DashboardPage() {
             </div>
           )}
 
-          <div className="relative overflow-hidden rounded-2xl border bg-card shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl border bg-card shadow-sm">
             {shop.cover_url && (
-              <div className="h-28 w-full overflow-hidden border-b border-border/40">
+              <div className="h-32 sm:h-40 w-full overflow-hidden border-b border-border/40">
                 <img
                   src={shop.cover_url}
                   alt={`${shop.name} cover`}
@@ -176,57 +198,57 @@ function DashboardPage() {
               </div>
             )}
             <div className="p-4 sm:p-6">
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
                   {shop.logo_url ? (
                     <img
                       src={shop.logo_url}
                       alt={`${shop.name} logo`}
-                      className="size-12 sm:size-14 rounded-xl object-cover border border-border shadow-sm shrink-0"
+                      className="size-12 sm:size-16 rounded-2xl object-cover border border-border shadow-sm shrink-0"
                     />
                   ) : (
-                    <div className="size-12 sm:size-14 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-lg shrink-0">
+                    <div className="size-12 sm:size-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-extrabold text-xl shrink-0">
                       {shop.name.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <h2 className="font-display text-base sm:text-lg font-bold truncate">
+                    <h2 className="font-display text-base sm:text-xl font-bold truncate">
                       {shop.name}
                     </h2>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                    <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                      <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate">
                         {shop.niche}
                       </p>
-                      <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-[11px] font-mono font-bold text-primary shrink-0">
+                      <span className="rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 text-[11px] font-mono font-bold text-amber-500 shrink-0">
                         {shopBusinessId(shop)}
                       </span>
                     </div>
                   </div>
                 </div>
                 <span
-                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold shrink-0 ${
+                  className={`rounded-full px-3 py-1 text-[11px] font-bold shrink-0 ${
                     subscriptionState(shop) === "active"
-                      ? "bg-emerald-500/15 text-emerald-600"
+                      ? "bg-emerald-500/15 text-emerald-600 border border-emerald-500/20"
                       : subscriptionState(shop) === "payment_pending"
-                        ? "bg-yellow-500/15 text-yellow-600"
+                        ? "bg-yellow-500/15 text-yellow-600 border border-yellow-500/20"
                         : subscriptionState(shop) === "grace_period"
-                          ? "bg-orange-500/15 text-orange-600"
+                          ? "bg-orange-500/15 text-orange-600 border border-orange-500/20"
                           : subscriptionState(shop) === "suspended"
-                            ? "bg-red-500/15 text-red-600"
-                            : "bg-slate-500/15 text-slate-600"
+                            ? "bg-red-500/15 text-red-600 border border-red-500/20"
+                            : "bg-slate-500/15 text-slate-600 border border-slate-500/20"
                   }`}
                 >
                   {subscriptionStateLabel(subscriptionState(shop))}
                 </span>
               </div>
 
-              <div className="mt-4 grid gap-2.5 grid-cols-2 lg:grid-cols-4">
+              <div className="mt-5 grid gap-2.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                 <Meta label="Plan" value={<span className="capitalize">{shop.plan}</span>} />
                 <Meta
                   label="Payment"
                   value={
                     shop.payment_status === "paid" ? (
-                      <span className="text-primary font-semibold">
+                      <span className="text-emerald-500 font-bold">
                         Paid{" "}
                         {money(
                           Number(
@@ -269,16 +291,16 @@ function DashboardPage() {
 
               {/* Progress Bar - Days Remaining */}
               {shop.plan_expires_at && daysRemaining(shop) !== Infinity && (
-                <div className="mt-4">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-                    <span>Subscription Progress</span>
-                    <span className="font-medium">
+                <div className="mt-5 rounded-2xl border bg-muted/30 p-3.5 sm:p-4">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+                    <span className="font-semibold">Subscription Progress</span>
+                    <span className="font-bold text-foreground">
                       {daysRemaining(shop) > 0
                         ? `${daysRemaining(shop)} days remaining (${planProgressPercent(shop)}%)`
                         : "Expired"}
                     </span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                  <div className="h-2.5 overflow-hidden rounded-full bg-muted border">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
                         planProgressPercent(shop) > 40
@@ -293,64 +315,62 @@ function DashboardPage() {
                     />
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Your <span className="capitalize font-medium">{shop.plan}</span> plan started on{" "}
-                    <span className="font-medium text-foreground">
+                    Your <span className="capitalize font-bold text-foreground">{shop.plan}</span> plan started on{" "}
+                    <span className="font-semibold text-foreground">
                       {formatDate(shop.plan_started_at || shop.created_at)}
                     </span>{" "}
                     and is
                     {daysRemaining(shop) > 0
                       ? ` active for ${daysRemaining(shop)} more days (expires ${formatDate(shop.plan_expires_at)}).`
-                      : " expired. Please upgrade or renew your plan."}
+                      : " expired. Please upgrade or renew your plan below."}
                   </p>
                 </div>
               )}
 
               <ul className="mt-4 flex flex-wrap gap-1.5 text-xs text-muted-foreground">
-                {[
-                  {
-                    label: `${Number.isFinite(planOf(shop.plan).items) ? planOf(shop.plan).items : "Unlimited"} items`,
-                    locked: false,
-                  },
-                  {
-                    label:
-                      (shop.features as Record<string, unknown> | null)?.["ai"] ||
-                      planOf(shop.plan).ai
-                        ? "AI tools"
-                        : "AI locked",
-                    locked: !(
-                      (shop.features as Record<string, unknown> | null)?.["ai"] ||
-                      planOf(shop.plan).ai
-                    ),
-                  },
-                  {
-                    label:
-                      (shop.features as Record<string, unknown> | null)?.["ordering"] ||
-                      planOf(shop.plan).ordering
-                        ? "WhatsApp ordering"
-                        : "Ordering locked",
-                    locked: !(
-                      (shop.features as Record<string, unknown> | null)?.["ordering"] ||
-                      planOf(shop.plan).ordering
-                    ),
-                  },
-                  {
-                    label:
-                      (shop.features as Record<string, unknown> | null)?.["analytics"] ||
-                      planOf(shop.plan).analytics
-                        ? "Full analytics"
-                        : "Basic views",
-                    locked: !(
-                      (shop.features as Record<string, unknown> | null)?.["analytics"] ||
-                      planOf(shop.plan).analytics
-                    ),
-                  },
-                ].map((f) => (
+                {(() => {
+                  const feat = shopFeatures(shop);
+                  return [
+                    {
+                      label: `${Number.isFinite(feat.items) ? feat.items : "Unlimited"} items`,
+                      locked: false,
+                    },
+                    {
+                      label: feat.ai ? "AI tools" : "AI locked",
+                      locked: !feat.ai,
+                    },
+                    {
+                      label: feat.ordering ? "WhatsApp ordering" : "Ordering locked",
+                      locked: !feat.ordering,
+                    },
+                    {
+                      label: feat.analytics ? "Full analytics" : "Basic views",
+                      locked: !feat.analytics,
+                    },
+                    {
+                      label: feat.themes ? "18 Custom themes" : "Standard themes",
+                      locked: !feat.themes,
+                    },
+                    {
+                      label: feat.delivery ? "Delivery mode" : "Delivery locked",
+                      locked: !feat.delivery,
+                    },
+                    {
+                      label: feat.google_reviews ? "Google Reviews" : "Reviews locked",
+                      locked: !feat.google_reviews,
+                    },
+                    {
+                      label: feat.upi ? "UPI Payments" : "UPI locked",
+                      locked: !feat.upi,
+                    },
+                  ];
+                })().map((f) => (
                   <li
                     key={f.label}
-                    className={`rounded-full border px-2.5 py-0.5 text-[11px] ${
+                    className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${
                       f.locked
                         ? "border-red-500/20 text-red-500/80 bg-red-500/5"
-                        : "bg-emerald-500/10 text-emerald-600 font-medium border-emerald-500/20"
+                        : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                     }`}
                   >
                     {f.locked ? (
@@ -365,16 +385,43 @@ function DashboardPage() {
 
               {/* ── 3-Plan Instant Upgrade Cards (Razorpay Integrated) ── */}
               <div className="mt-6 pt-6 border-t border-border">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
                   <div>
                     <h3 className="font-display text-base sm:text-lg font-bold flex items-center gap-2 text-foreground">
-                      <Sparkles className="size-4 text-amber-500" /> Choose or Upgrade Your
-                      Subscription Plan
+                      <Sparkles className="size-4 text-amber-500" /> Subscription Plans & Instant Upgrade
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Click any plan to open instant Razorpay checkout. Plan updates activate
-                      immediately upon payment.
+                      Click any plan to open Razorpay checkout. Get 2 months extra free on annual subscriptions!
                     </p>
+                  </div>
+
+                  {/* Monthly / Yearly Toggle */}
+                  <div className="inline-flex items-center p-1 rounded-xl bg-muted border border-border/80 shadow-2xs self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setBillingCycle("monthly")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        billingCycle === "monthly"
+                          ? "bg-background text-foreground shadow-2xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBillingCycle("yearly")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        billingCycle === "yearly"
+                          ? "bg-amber-500 text-black shadow-2xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <span>Yearly</span>
+                      <span className="px-1.5 py-0.2 rounded bg-black/20 text-[9px] font-extrabold uppercase">
+                        2 Mos Free
+                      </span>
+                    </button>
                   </div>
                 </div>
 
@@ -382,25 +429,28 @@ function DashboardPage() {
                   {paidPlans.map((p) => {
                     const isCurrent = shop.plan === p.id;
                     const price = priceOf(p);
+                    const isPopular = Boolean(p.highlight || p.badge === "MOST POPULAR");
+                    const extraMonths = typeof p.extraMonths === "number" ? p.extraMonths : 2;
+                    const totalMonths = 12 + extraMonths;
 
                     return (
                       <div
                         key={p.id}
-                        className={`relative rounded-2xl border p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 ${
+                        className={`relative rounded-3xl border p-5 flex flex-col justify-between transition-all duration-200 ${
                           isCurrent
-                            ? "border-emerald-500 bg-emerald-500/5 shadow-sm ring-1 ring-emerald-500/30"
-                            : p.highlight
-                              ? "border-amber-500/60 bg-amber-500/5 shadow-md ring-1 ring-amber-500/20"
-                              : "border-border bg-card hover:border-primary/40 shadow-sm"
+                            ? "border-emerald-500 bg-emerald-500/5 shadow-md ring-1 ring-emerald-500/30"
+                            : isPopular
+                              ? "border-amber-500/80 bg-amber-500/5 shadow-md ring-1 ring-amber-500/30"
+                              : "border-border bg-card hover:border-amber-500/40 shadow-sm"
                         }`}
                       >
                         {isCurrent ? (
-                          <div className="absolute -top-2.5 right-4 bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider py-0.5 px-2.5 rounded-full shadow">
+                          <div className="absolute -top-2.5 right-4 bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider py-0.5 px-2.5 rounded-full shadow-sm">
                             Current Plan
                           </div>
-                        ) : p.highlight ? (
-                          <div className="absolute -top-2.5 right-4 bg-amber-500 text-black text-[10px] font-bold uppercase tracking-wider py-0.5 px-2.5 rounded-full shadow">
-                            Most Popular
+                        ) : isPopular ? (
+                          <div className="absolute -top-2.5 right-4 bg-amber-500 text-black text-[10px] font-bold uppercase tracking-wider py-0.5 px-2.5 rounded-full shadow-sm">
+                            MOST POPULAR
                           </div>
                         ) : null}
 
@@ -411,33 +461,42 @@ function DashboardPage() {
                             </h4>
                             <span className="font-display text-xl font-extrabold text-amber-500">
                               ₹{price}
-                              <span className="text-xs font-normal text-muted-foreground">/mo</span>
+                              <span className="text-xs font-normal text-muted-foreground">
+                                /{billingCycle === "yearly" ? "yr" : "mo"}
+                              </span>
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground mb-3 min-h-[32px]">
+
+                          {billingCycle === "yearly" && (
+                            <p className="text-[10px] font-bold text-amber-500 mb-2">
+                              🎁 Includes {totalMonths} Months Access ({extraMonths > 0 ? `12 Mos + ${extraMonths} ${extraMonths === 1 ? "Mo" : "Mos"} Free` : "12 Months Access"})
+                            </p>
+                          )}
+
+                          <p className="text-xs text-muted-foreground mb-4 min-h-[32px] leading-relaxed">
                             {p.tagline}
                           </p>
 
-                          <ul className="space-y-1.5 mb-4 text-xs text-muted-foreground">
+                          <ul className="space-y-2 mb-4 text-xs text-muted-foreground">
                             {p.features.map((f) => (
                               <li key={f} className="flex items-center gap-2">
-                                <div className="size-3.5 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
+                                <div className="size-4 rounded-full bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0">
                                   <Check className="size-2.5" />
                                 </div>
-                                <span className="truncate">{f}</span>
+                                <span className="truncate font-medium">{f}</span>
                               </li>
                             ))}
                           </ul>
                         </div>
 
-                        <div className="pt-3 border-t border-border/50 space-y-1.5">
+                        <div className="pt-4 border-t border-border/50 space-y-2">
                           <Button
                             onClick={() => handlePlanClick(p)}
                             size="sm"
-                            className={`w-full h-9 text-xs font-bold rounded-xl transition-all shadow-sm ${
+                            className={`w-full h-10 text-xs font-bold rounded-xl transition-all shadow-sm ${
                               isCurrent
                                 ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                                : p.highlight
+                                : isPopular
                                   ? "bg-amber-500 hover:bg-amber-600 text-black"
                                   : "bg-primary text-primary-foreground hover:bg-primary/90"
                             }`}
@@ -446,8 +505,7 @@ function DashboardPage() {
                             {isCurrent ? `Renew ${p.name} (₹${price})` : `Upgrade to ${p.name}`}
                           </Button>
                           <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
-                            <Lock className="size-2.5 text-muted-foreground" /> Instant Razorpay
-                            Gateway
+                            <Lock className="size-2.5 text-muted-foreground" /> Instant Razorpay Gateway
                           </p>
                         </div>
                       </div>
@@ -456,21 +514,22 @@ function DashboardPage() {
                 </div>
               </div>
 
-              <div className="mt-5 pt-4 border-t border-border flex flex-col sm:flex-row gap-2.5 sm:items-center sm:justify-between">
-                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-                  <Button asChild variant="outline" size="sm" className="h-9 text-xs">
+              {/* Quick Action Navigation Bar */}
+              <div className="mt-6 pt-5 border-t border-border flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2.5 w-full sm:w-auto">
+                  <Button asChild variant="outline" size="sm" className="h-10 text-xs font-bold rounded-xl">
                     <a href={`/shop/${shop.slug}`} target="_blank" rel="noreferrer">
-                      <ExternalLink className="size-3.5 mr-1" /> View Menu
+                      <ExternalLink className="size-3.5 mr-1.5" /> View Public Shop
                     </a>
                   </Button>
-                  <Button asChild size="sm" className="h-9 text-xs">
-                    <Link to="/menu">Edit Menu</Link>
+                  <Button asChild size="sm" className="h-10 text-xs font-bold rounded-xl bg-amber-500 text-black hover:bg-amber-600">
+                    <Link to="/menu">Edit {shopCatalogLabel(shop)}</Link>
                   </Button>
                   <Button
                     asChild
                     variant="outline"
                     size="sm"
-                    className="h-9 text-xs col-span-2 sm:col-span-1"
+                    className="h-10 text-xs font-bold rounded-xl col-span-2 sm:col-span-1"
                   >
                     <Link to="/qr">Get QR Code</Link>
                   </Button>
@@ -479,11 +538,10 @@ function DashboardPage() {
                       asChild
                       variant="outline"
                       size="sm"
-                      className="h-9 text-xs col-span-2 sm:col-span-1 border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
+                      className="h-10 text-xs font-bold rounded-xl col-span-2 sm:col-span-1 border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
                     >
                       <a href={shopGoogleReviewLink(shop)} target="_blank" rel="noreferrer">
-                        <Star className="size-3.5 mr-1 fill-amber-400 text-amber-400" /> Google
-                        Review
+                        <Star className="size-3.5 mr-1.5 fill-amber-400 text-amber-400" /> Google Review
                       </a>
                     </Button>
                   )}
@@ -494,7 +552,7 @@ function DashboardPage() {
                     asChild
                     variant="default"
                     size="sm"
-                    className="h-9 text-xs bg-emerald-500 hover:bg-emerald-600 text-white font-medium w-full sm:w-auto"
+                    className="h-10 text-xs bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl w-full sm:w-auto"
                   >
                     <Link to="/pricing">Compare All Features</Link>
                   </Button>
@@ -511,6 +569,7 @@ function DashboardPage() {
           <RazorpayModal
             plan={selectedPlan}
             price={priceOf(selectedPlan)}
+            billingCycle={billingCycle}
             onClose={() => setSelectedPlan(null)}
             onSuccess={handlePaymentSuccess}
           />
@@ -522,9 +581,9 @@ function DashboardPage() {
 
 function Meta({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-xl border bg-muted/40 p-2.5 sm:p-3">
-      <p className="text-[11px] sm:text-xs text-muted-foreground">{label}</p>
-      <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm font-semibold truncate">{value}</p>
+    <div className="rounded-2xl border bg-muted/30 p-3">
+      <p className="text-[11px] text-muted-foreground font-medium">{label}</p>
+      <p className="mt-0.5 text-xs sm:text-sm font-bold truncate">{value}</p>
     </div>
   );
 }
@@ -537,21 +596,23 @@ function Stat({
 }: {
   label: string;
   sublabel?: string;
-  value: number;
+  value: React.ReactNode;
   icon: typeof BarChart3;
 }) {
   return (
-    <div className="rounded-2xl border bg-card p-3.5 sm:p-5 shadow-sm">
+    <div className="rounded-3xl border bg-card p-4 sm:p-5 shadow-sm hover:shadow-md transition-all">
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
           <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate">{label}</p>
           {sublabel && (
-            <p className="text-[10px] text-amber-500 font-medium truncate">{sublabel}</p>
+            <p className="text-[10px] text-amber-500 font-semibold truncate">{sublabel}</p>
           )}
         </div>
-        <Icon className="size-4 text-muted-foreground shrink-0" />
+        <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500 shrink-0 border border-amber-500/20">
+          <Icon className="size-4" />
+        </div>
       </div>
-      <p className="mt-1.5 sm:mt-2 font-display text-2xl sm:text-3xl font-bold">{value}</p>
+      <p className="mt-2 font-display text-xl sm:text-3xl font-extrabold capitalize">{value}</p>
     </div>
   );
 }

@@ -35,7 +35,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { money, planOf, type MenuItem } from "@/lib/shop";
+import { Switch } from "@/components/ui/switch";
+import { money, planOf, shopCatalogLabel, shopItemLabel, shopFeatures, type MenuItem } from "@/lib/shop";
 import { getFoodImageUrl } from "@/lib/foodImage";
 
 export const Route = createFileRoute("/_authenticated/menu")({
@@ -58,11 +59,13 @@ function MenuPage() {
   const { user } = useAuth();
   const { data: isAdmin } = useIsAdmin(user?.id);
   const { data: shop } = useMyShop(user?.id);
+  const catalogLabel = shopCatalogLabel(shop);
+  const itemLabel = shopItemLabel(shop);
   const { data: categories } = useCategories(shop?.id);
   const { data: items } = useMenuItems(shop?.id);
   const runAi = useServerFn(generateMenu);
   const runScan = useServerFn(scanMenuPhoto);
-  const features = planOf(shop?.plan);
+  const features = shopFeatures(shop);
   const itemsLeft = features.items - (items?.length ?? 0);
   const catsLeft = features.categories - (categories?.length ?? 0);
 
@@ -91,6 +94,7 @@ function MenuPage() {
     description: "",
     category_id: "",
     image_url: "",
+    is_available: true,
   });
   const [editBusy, setEditBusy] = useState(false);
 
@@ -102,6 +106,7 @@ function MenuPage() {
       description: item.description ?? "",
       category_id: item.category_id ?? "",
       image_url: item.image_url ?? "",
+      is_available: item.is_available !== false,
     });
   }
 
@@ -150,6 +155,7 @@ function MenuPage() {
         price,
         category_id: editForm.category_id || null,
         image_url: editForm.image_url || null,
+        is_available: editForm.is_available,
       })
       .eq("id", editingItem.id);
 
@@ -161,6 +167,22 @@ function MenuPage() {
     }
     toast.success("Item updated");
     setEditingItem(null);
+    refresh();
+  }
+
+  async function toggleAvailability(item: MenuItem) {
+    const nextAvailable = item.is_available === false ? true : false;
+    const { error } = await supabase
+      .from("menu_items")
+      .update({ is_available: nextAvailable })
+      .eq("id", item.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(
+      nextAvailable ? `"${item.name}" marked as In Stock` : `"${item.name}" marked as Sold Out`,
+    );
     refresh();
   }
 
@@ -259,7 +281,7 @@ function MenuPage() {
           })),
         );
       }
-      toast.success("Menu generated");
+      toast.success(`${catalogLabel} generated`);
       refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "AI generation failed");
@@ -271,11 +293,11 @@ function MenuPage() {
   async function scanPhoto(file: File | undefined) {
     if (!file) return;
     if (!features.ai) {
-      toast.error("Menu photo scanning is available on Pro and Premium plans.");
+      toast.error(`${catalogLabel} photo scanning is available on Pro and Premium plans.`);
       return;
     }
     if (!file.type.startsWith("image/")) {
-      toast.error("Choose a menu photo in JPG, PNG or WebP format.");
+      toast.error(`Choose a ${catalogLabel.toLowerCase()} photo in JPG, PNG or WebP format.`);
       return;
     }
     if (file.size > 5_000_000) {
@@ -288,11 +310,11 @@ function MenuPage() {
     try {
       const image = await readImage(file);
       const result = await runScan({ data: { image } });
-      if (result.items.length === 0) throw new Error("No readable menu items were found.");
+      if (result.items.length === 0) throw new Error(`No readable ${catalogLabel.toLowerCase()} items were found.`);
       setScanned(result.items);
-      toast.success(`Found ${result.items.length} menu items`);
+      toast.success(`Found ${result.items.length} ${itemLabel.toLowerCase()}s`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not scan that menu photo");
+      toast.error(err instanceof Error ? err.message : `Could not scan that ${catalogLabel.toLowerCase()} photo`);
     } finally {
       setScanBusy(false);
     }
@@ -381,7 +403,7 @@ function MenuPage() {
           if (!singleErr) successCount++;
         }
         if (successCount > 0) {
-          toast.success(`🎉 ${successCount} menu items imported successfully!`);
+          toast.success(`🎉 ${successCount} ${itemLabel.toLowerCase()}s imported successfully!`);
           setScanned([]);
           setScanName("");
           refresh();
@@ -390,13 +412,13 @@ function MenuPage() {
         throw error;
       }
 
-      toast.success(`🎉 All ${itemsToImport.length} menu items imported successfully!`);
+      toast.success(`🎉 All ${itemsToImport.length} ${itemLabel.toLowerCase()}s imported successfully!`);
       setScanned([]);
       setScanName("");
       refresh();
     } catch (err) {
       console.error("Import error:", err);
-      toast.error(err instanceof Error ? err.message : "Could not add the scanned menu");
+      toast.error(err instanceof Error ? err.message : `Could not add the scanned ${catalogLabel.toLowerCase()}`);
     } finally {
       setImportBusy(false);
     }
@@ -404,7 +426,7 @@ function MenuPage() {
 
   if (!shop) {
     return (
-      <DashboardShell title="Menu & Items" isAdmin={isAdmin}>
+      <DashboardShell title={`${catalogLabel} & ${itemLabel}s`} isAdmin={isAdmin}>
         <p className="text-sm text-muted-foreground">Create your shop on the dashboard first.</p>
       </DashboardShell>
     );
@@ -412,8 +434,8 @@ function MenuPage() {
 
   return (
     <DashboardShell
-      title="Menu & Items"
-      description="Build your categories and items."
+      title={`${catalogLabel} & ${itemLabel}s`}
+      description={`Build your categories and ${itemLabel.toLowerCase()}s.`}
       isAdmin={isAdmin}
     >
       <div className="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-2 sm:gap-3 rounded-2xl border bg-card p-3.5 sm:p-4 text-xs sm:text-sm shadow-sm">
@@ -422,7 +444,7 @@ function MenuPage() {
         </span>
         <div className="flex items-center gap-3 text-xs sm:text-sm text-muted-foreground">
           <span>
-            Items {items?.length ?? 0}
+            {itemLabel}s {items?.length ?? 0}
             {Number.isFinite(features.items) ? ` / ${features.items}` : " (unlimited)"}
           </span>
           <span>
@@ -437,7 +459,7 @@ function MenuPage() {
         <div className="space-y-4 sm:space-y-6">
           <section className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="font-bold text-sm sm:text-base">AI menu generator</h2>
+              <h2 className="font-bold text-sm sm:text-base">AI {catalogLabel.toLowerCase()} generator</h2>
               {!features.ai && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                   <Lock className="size-3" /> Pro
@@ -447,7 +469,7 @@ function MenuPage() {
             <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
               {features.ai
                 ? "Describe your business and get a full draft."
-                : "Upgrade to Pro to generate a full menu from one line of text."}
+                : `Upgrade to Pro to generate a full ${catalogLabel.toLowerCase()} from one line of text.`}
             </p>
             <Input
               className="mt-3 text-xs h-10"
@@ -461,14 +483,14 @@ function MenuPage() {
               onClick={aiGenerate}
               disabled={busy || !features.ai}
             >
-              <Sparkles className="size-4" /> {busy ? "Generating…" : "Generate menu"}
+              <Sparkles className="size-4" /> {busy ? "Generating…" : `Generate ${catalogLabel.toLowerCase()}`}
             </Button>
           </section>
 
           <section className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
             <div className="flex items-center justify-between gap-2">
               <h2 className="flex items-center gap-2 font-bold text-sm sm:text-base">
-                <ImageUp className="size-4 text-primary" /> Scan menu photo
+                <ImageUp className="size-4 text-primary" /> Scan {catalogLabel.toLowerCase()} photo
               </h2>
               {!features.ai && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
@@ -477,7 +499,7 @@ function MenuPage() {
               )}
             </div>
             <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Upload a clear photo to extract item names, prices and categories.
+              Upload a clear photo to extract {itemLabel.toLowerCase()} names, prices and categories.
             </p>
             <Label
               htmlFor="menu-photo"
@@ -485,7 +507,7 @@ function MenuPage() {
             >
               <Upload className="mb-1.5 size-5 text-primary" />
               <span className="text-xs font-semibold">
-                {scanBusy ? "Reading menu…" : scanName || "Choose menu photo"}
+                {scanBusy ? `Reading ${catalogLabel.toLowerCase()}…` : scanName || `Choose ${catalogLabel.toLowerCase()} photo`}
               </span>
               <span className="mt-1 text-[11px] text-muted-foreground">
                 JPG, PNG or WebP · max 5 MB
@@ -553,7 +575,7 @@ function MenuPage() {
                   size="sm"
                   className="h-9 text-xs font-bold w-full sm:w-auto"
                 >
-                  {importBusy ? "Adding…" : `Add all ${scanned.length} items`}
+                  {importBusy ? "Adding…" : `Add all ${scanned.length} ${itemLabel.toLowerCase()}s`}
                 </Button>
               </div>
               <div className="overflow-hidden rounded-xl border">
@@ -598,7 +620,7 @@ function MenuPage() {
 
           {/* Add Item Card */}
           <section className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
-            <h2 className="font-bold text-sm sm:text-base">Add New Item</h2>
+            <h2 className="font-bold text-sm sm:text-base">Add New {itemLabel}</h2>
             <div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="i-name" className="text-xs font-semibold">
@@ -608,7 +630,7 @@ function MenuPage() {
                   id="i-name"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Chicken Biryani"
+                  placeholder={`e.g. ${shop.niche.includes("Salon") ? "Haircut & Styling" : "Chicken Biryani"}`}
                   className="text-xs h-10"
                 />
               </div>
@@ -633,7 +655,7 @@ function MenuPage() {
                   id="i-desc"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Short dish description"
+                  placeholder={`Short ${itemLabel.toLowerCase()} description`}
                   className="text-xs h-10"
                 />
               </div>
@@ -657,7 +679,7 @@ function MenuPage() {
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="i-photo" className="text-xs font-semibold">
-                  Item Photo (Optional)
+                  {itemLabel} Photo (Optional)
                 </Label>
                 <div className="flex items-center gap-3">
                   {form.image_url ? (
@@ -681,20 +703,22 @@ function MenuPage() {
                       className="cursor-pointer text-xs h-9"
                     />
                     <p className="mt-1 text-[10px] text-muted-foreground truncate">
-                      Leave blank for automatic food photo matching
+                      Leave blank for automatic photo matching
                     </p>
                   </div>
                 </div>
               </div>
             </div>
             <Button className="mt-4 w-full sm:w-auto h-10 text-xs font-bold px-6" onClick={addItem}>
-              Add Item
+              Add {itemLabel}
             </Button>
           </section>
 
           {/* Existing Items List - Fully Mobile Optimized */}
           <section className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
-            <h2 className="font-bold text-sm sm:text-base">Menu Items ({items?.length ?? 0})</h2>
+            <h2 className="font-bold text-sm sm:text-base">
+              {catalogLabel} {itemLabel}s ({items?.length ?? 0})
+            </h2>
             <ul className="mt-3 divide-y divide-border/60">
               {(items ?? []).map((i) => (
                 <li
@@ -729,6 +753,18 @@ function MenuPage() {
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
+                        onClick={() => toggleAvailability(i as unknown as MenuItem)}
+                        title={i.is_available === false ? "Click to mark In Stock" : "Click to mark Sold Out"}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
+                          i.is_available === false
+                            ? "bg-red-500/15 border-red-500/30 text-red-500 hover:bg-red-500/25"
+                            : "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-red-500/15 hover:text-red-500 hover:border-red-500/30"
+                        }`}
+                      >
+                        {i.is_available === false ? "Sold Out" : "In Stock"}
+                      </button>
+                      <button
+                        type="button"
                         aria-label={`Edit ${i.name}`}
                         onClick={() => openEdit(i as unknown as MenuItem)}
                         className="p-1.5 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:text-primary hover:border-primary/40 transition-all"
@@ -749,7 +785,7 @@ function MenuPage() {
               ))}
               {(items?.length ?? 0) === 0 && (
                 <p className="py-4 text-xs text-center text-muted-foreground">
-                  No menu items added yet.
+                  No {itemLabel.toLowerCase()}s added yet.
                 </p>
               )}
             </ul>
@@ -760,7 +796,7 @@ function MenuPage() {
       <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
         <DialogContent className="max-w-[92vw] sm:max-w-md rounded-2xl p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-base sm:text-lg font-bold">Edit Menu Item</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg font-bold">Edit {itemLabel}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-3 py-2 sm:py-4">
             <div className="space-y-1.5">
@@ -844,6 +880,22 @@ function MenuPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl border p-3 bg-muted/20 sm:col-span-2">
+                <div className="space-y-0.5">
+                  <Label htmlFor="e-avail" className="text-xs font-semibold">
+                    Item Availability
+                  </Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    {editForm.is_available ? "In Stock (Available to order)" : "Sold Out (Out of stock)"}
+                  </p>
+                </div>
+                <Switch
+                  id="e-avail"
+                  checked={editForm.is_available}
+                  onCheckedChange={(v) => setEditForm({ ...editForm, is_available: v })}
+                />
               </div>
             </div>
           </div>

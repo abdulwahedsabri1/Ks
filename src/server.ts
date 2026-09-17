@@ -8,7 +8,7 @@ type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
 
-const serverEntry = ((serverEntryModule as Record<string, unknown>).default ??
+const serverEntry = ((serverEntryModule as Record<string, unknown>)["default"] ??
   serverEntryModule) as ServerEntry;
 
 // h3 swallows in-handler throws into a normal 500 Response with body
@@ -50,8 +50,15 @@ export default {
       secureHeaders.set("Referrer-Policy", "strict-origin-when-cross-origin");
       secureHeaders.set(
         "Permissions-Policy",
-        "camera=(), microphone=(), geolocation=(), payment=*",
+        "camera=self, microphone=(), geolocation=self, payment=*",
       );
+
+      const url = new URL(request.url);
+      if (request.method === "GET" && url.pathname.startsWith("/shop/") && response.status === 200) {
+        if (!secureHeaders.has("Cache-Control")) {
+          secureHeaders.set("Cache-Control", "public, max-age=15, s-maxage=30, stale-while-revalidate=60");
+        }
+      }
 
       return new Response(response.body, {
         status: response.status,

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { QrCode } from "lucide-react";
+import { QrCode, Instagram } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -10,17 +10,27 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-12">
           <div className="col-span-2 lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-6">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <QrCode className="size-4" />
-              </div>
+              <img
+                src="/favicon.ico"
+                alt="MY Link QR Logo"
+                className="size-8 rounded-lg object-contain shadow-md shrink-0"
+              />
               <span className="font-display text-lg font-semibold tracking-tight text-foreground">
                 MY Link QR
               </span>
             </Link>
-            <p className="text-muted-foreground max-w-sm mb-6 text-sm leading-relaxed">
+            <p className="text-muted-foreground max-w-sm mb-4 text-sm leading-relaxed">
               The premium digital experience platform for local businesses, restaurants, cafes,
               salons, and creators.
             </p>
+            <a
+              href="https://instagram.com/mylinkqr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-pink-500 hover:text-pink-400 bg-pink-500/10 border border-pink-500/20 px-3 py-1.5 rounded-full transition-colors"
+            >
+              <Instagram className="size-3.5" /> instagram/mylinkqr
+            </a>
           </div>
 
           <div>

@@ -51,6 +51,7 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
       plan_name: string;
       amount?: number;
       shop_id?: string;
+      billing_cycle?: string;
     }) => {
       return {
         razorpay_order_id: data.razorpay_order_id,
@@ -59,6 +60,7 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
         plan_name: data.plan_name,
         amount: data.amount,
         shop_id: data.shop_id,
+        billing_cycle: data.billing_cycle,
       };
     },
   )
@@ -85,6 +87,7 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
       transactionId: data.razorpay_payment_id || `TXN-${Date.now()}`,
       orderId: data.razorpay_order_id || `ORD-${Date.now()}`,
       targetShopId: data.shop_id,
+      billingCycle: data.billing_cycle,
       supabaseAdmin,
     });
   });
@@ -92,12 +95,13 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
 export const directActivatePlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(
-    (data: { plan_name: string; amount?: number; transaction_id?: string; shop_id?: string }) => {
+    (data: { plan_name: string; amount?: number; transaction_id?: string; shop_id?: string; billing_cycle?: string }) => {
       return {
         plan_name: data.plan_name,
         amount: data.amount,
         transaction_id: data.transaction_id,
         shop_id: data.shop_id,
+        billing_cycle: data.billing_cycle,
       };
     },
   )
@@ -111,6 +115,7 @@ export const directActivatePlan = createServerFn({ method: "POST" })
       transactionId: data.transaction_id || `DIRECT-${Date.now()}`,
       orderId: `DIRECT-ORD-${Date.now()}`,
       targetShopId: data.shop_id,
+      billingCycle: data.billing_cycle,
       supabaseAdmin,
     });
   });
@@ -124,7 +129,7 @@ async function executePlanActivation({
   transactionId,
   orderId,
   targetShopId,
-
+  billingCycle,
   supabaseAdmin,
 }: {
   userId: string;
@@ -133,7 +138,7 @@ async function executePlanActivation({
   transactionId: string;
   orderId: string;
   targetShopId?: string | undefined;
-
+  billingCycle?: string | undefined;
   supabaseAdmin: any;
 }) {
   let shopId: string | null = targetShopId || null;
@@ -225,18 +230,40 @@ async function executePlanActivation({
   else if (pName.includes("premium")) pName = "premium";
   else pName = "pro";
 
+  let bonusExtra = 2;
+  try {
+    const { data: ps } = await supabaseAdmin
+      .from("platform_settings")
+      .select("custom_plans")
+      .eq("id", "platform-settings-internal")
+      .maybeSingle();
+    if (ps?.custom_plans && Array.isArray(ps.custom_plans)) {
+      const matchPlan = ps.custom_plans.find(
+        (cp: any) => cp.id && cp.id.toLowerCase() === pName
+      );
+      if (matchPlan && typeof matchPlan.extraMonths === "number") {
+        bonusExtra = matchPlan.extraMonths;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not fetch extraMonths from platform_settings:", err);
+  }
+
+  const isYearly = (billingCycle || "").toLowerCase() === "yearly";
+  const monthsToAdd = isYearly ? 12 + bonusExtra : 1;
+
   let amount = amountPaid ?? 0;
   if (!amount || amount <= 0) {
-    if (pName === "basic") amount = 249;
-    else if (pName === "pro") amount = 499;
-    else if (pName === "premium") amount = 799;
-    else amount = 499;
+    if (pName === "basic") amount = isYearly ? 2490 : 249;
+    else if (pName === "pro") amount = isYearly ? 4990 : 499;
+    else if (pName === "premium") amount = isYearly ? 7990 : 799;
+    else amount = isYearly ? 4990 : 499;
   }
 
   const now = new Date();
   const nowIso = now.toISOString();
   const newExpiry = new Date(now);
-  newExpiry.setMonth(newExpiry.getMonth() + 1);
+  newExpiry.setMonth(newExpiry.getMonth() + monthsToAdd);
 
   // Features list to unlock for paid plans
   const ALL_FEATURES = {
@@ -260,29 +287,80 @@ async function executePlanActivation({
   };
 
   const unlockedFeatureMap: Record<string, Record<string, boolean>> = {
+    trial: {
+      logo_cover: false,
+      social_link: false,
+      advanced_social_links: false,
+      opening_hours: false,
+      multi_language: false,
+      ai: false,
+      ordering: false,
+      enquiry: false,
+      analytics: false,
+      qr_downloads: false,
+      custom_domain: false,
+      priority_support: false,
+      on_table: false,
+      take_away: false,
+      delivery: false,
+      themes: false,
+      google_reviews: false,
+      coupons: false,
+      upi: false,
+    },
     basic: {
       logo_cover: true,
       social_link: true,
       opening_hours: true,
       multi_language: true,
+      advanced_social_links: false,
+      ai: false,
+      ordering: false,
+      enquiry: false,
+      analytics: false,
+      qr_downloads: false,
+      custom_domain: false,
+      priority_support: false,
+      on_table: false,
+      take_away: false,
+      delivery: false,
+      themes: false,
+      google_reviews: false,
+      coupons: false,
+      upi: false,
     },
     pro: {
       logo_cover: true,
       social_link: true,
+      advanced_social_links: true,
       opening_hours: true,
       multi_language: true,
       ai: true,
       ordering: true,
-      analytics: true,
+      enquiry: true,
       qr_downloads: true,
       on_table: true,
       take_away: true,
+      analytics: false,
+      delivery: false,
+      themes: false,
+      google_reviews: false,
+      custom_domain: false,
+      priority_support: false,
+      coupons: false,
+      upi: false,
     },
     premium: ALL_FEATURES,
   };
 
   const unlockedForPlan = unlockedFeatureMap[pName] ?? ALL_FEATURES;
-  const updatedFeatures = { ...existingFeatures, ...unlockedForPlan };
+  const cleanedFeatures: Record<string, any> = { ...existingFeatures };
+  for (const fKey of Object.keys(ALL_FEATURES)) {
+    delete cleanedFeatures[fKey];
+    delete cleanedFeatures[`admin_disabled_${fKey}`];
+    delete cleanedFeatures[`admin_override_${fKey}`];
+  }
+  const updatedFeatures = { ...cleanedFeatures, ...unlockedForPlan };
 
   // 1. Update Target Shop Record with plan, status, dates & unlocked features
   const updatePayload = {
@@ -292,7 +370,7 @@ async function executePlanActivation({
     plan_started_at: nowIso,
     plan_expires_at: newExpiry.toISOString(),
     next_billing_date: newExpiry.toISOString(),
-    billing_cycle: "monthly",
+    billing_cycle: isYearly ? "yearly" : "monthly",
     amount_paid: amount,
     auto_renew: true,
     grace_period_days: 7,

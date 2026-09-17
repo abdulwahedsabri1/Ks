@@ -15,6 +15,7 @@ import {
 import { Navbar } from "@/sections/landing/Navbar";
 import { Footer } from "@/sections/landing/Footer";
 import { Button } from "@/components/ui/button";
+import { BusinessVideoSeries } from "@/components/BusinessVideoSeries";
 
 export const Route = createFileRoute("/showcase")({
   head: () => ({
@@ -149,6 +150,11 @@ function ShowcaseRoute() {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* Business Video Series Section */}
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-20 md:mt-28">
+          <BusinessVideoSeries initialVideoId="restaurant-kj" showTitle={true} />
         </section>
 
         {/* Print Studio Features Section */}

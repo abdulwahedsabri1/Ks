@@ -446,43 +446,51 @@ function FeaturesRoute() {
     <div className="min-h-screen bg-[#FDFBF7] font-sans text-[#100C09] selection:bg-[#F5A623]/30">
       <Navbar />
 
-      <main className="pt-28 pb-24 md:pt-36">
-        {/* Hero Banner */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-4xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#F5A623]/30 bg-[#F5A623]/15 px-4 py-1.5 text-xs font-bold text-[#D99A2B] uppercase tracking-widest mb-6">
-            <Zap className="size-3.5 text-[#D99A2B]" /> All 16+ Platform Features
-          </div>
+      <main>
+        {/* Upper Side Hero Section - Dark Background (#100C09) */}
+        <section className="relative bg-[#100C09] text-white pt-32 pb-20 md:pt-44 md:pb-28 border-b border-white/10 overflow-hidden">
+          {/* Ambient Glows */}
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 size-96 rounded-full bg-[#FFC45A]/10 blur-[120px] pointer-events-none" />
+          <div className="absolute -top-10 left-10 size-72 rounded-full bg-emerald-500/10 blur-[100px] pointer-events-none" />
 
-          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-tight text-[#100C09]">
-            Everything You Need to <br />
-            <span className="text-[#F5A623] italic">Succeed & Multiply Profits</span>
-          </h1>
+          <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-4xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#FFC45A]/30 bg-[#FFC45A]/10 px-4 py-1.5 text-xs font-bold text-[#FFC45A] uppercase tracking-widest mb-6">
+              <Zap className="size-3.5 text-[#FFC45A]" /> All 16+ Platform Features
+            </div>
 
-          <p className="text-base sm:text-lg text-[#3A2818]/80 max-w-2xl mx-auto leading-relaxed mb-8 font-medium">
-            From direct WhatsApp ordering and instant UPI payments to AI menu generation, 6 luxury
-            themes, and live analytics — explore all 16+ powerful features built for your store.
-          </p>
+            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 leading-tight text-white">
+              Everything You Need to <br />
+              <span className="text-[#FFC45A] italic">Succeed & Multiply Profits</span>
+            </h1>
 
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Button
-              asChild
-              size="lg"
-              className="rounded-full bg-[#100C09] hover:bg-[#F5A623] text-white font-bold h-12 px-8 text-sm shadow-xl transition-all hover:scale-105"
-            >
-              <Link to="/auth">
-                Start Free 7-Day Trial <ArrowRight className="ml-2 size-4" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="rounded-full border-black/20 bg-white text-[#100C09] hover:bg-black/5 font-bold h-12 px-8 text-sm shadow-sm transition-all hover:scale-105"
-            >
-              <Link to="/pricing">View Pricing Plans</Link>
-            </Button>
+            <p className="text-base sm:text-lg text-white/80 max-w-2xl mx-auto leading-relaxed mb-8 font-medium">
+              From direct WhatsApp ordering and instant UPI payments to AI menu generation, 6 luxury
+              themes, and live analytics — explore all 16+ powerful features built for your store.
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <Button
+                asChild
+                size="lg"
+                className="rounded-full bg-[#FFC45A] hover:bg-[#FFC45A]/90 text-[#100C09] font-bold h-12 px-8 text-sm shadow-xl transition-all hover:scale-105"
+              >
+                <Link to="/auth">
+                  Start Free 7-Day Trial <ArrowRight className="ml-2 size-4" />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="rounded-full border-white/20 bg-white/10 hover:bg-white/20 text-white font-bold h-12 px-8 text-sm backdrop-blur shadow-sm transition-all hover:scale-105"
+              >
+                <Link to="/pricing">View Pricing Plans</Link>
+              </Button>
+            </div>
           </div>
         </section>
+
+        <div className="pb-24">
 
         {/* Highlight Banner: Most Profitable Feature */}
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-14 md:mt-20">
@@ -691,6 +699,7 @@ function FeaturesRoute() {
             </div>
           </div>
         </section>
+        </div>
       </main>
 
       <Footer />

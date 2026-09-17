@@ -16,6 +16,7 @@ import {
   Facebook,
   Twitter,
   Globe,
+  AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -27,17 +28,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import {
   buildWhatsAppOrder,
   detectDevice,
   money,
   planOf,
+  subscriptionState,
   shopTiming,
   shopSocialLinks,
   shopGoogleReviewLink,
   shopDeliveryEnabled,
   shopTakeawayEnabled,
   shopOnTableEnabled,
+  shopEnquiryEnabled,
+  shopOrderLabels,
+  shopCatalogLabel,
+  shopItemLabel,
   shopTheme,
   shopFeatures,
   shopLanguages,
@@ -65,9 +72,10 @@ export const Route = createFileRoute("/shop/$slug")({
       };
     }
     const { shop } = loaderData;
-    const title = `${shop.name} — Menu`;
+    const catalogLabel = shopCatalogLabel(shop as unknown as Shop);
+    const title = `${shop.name} — ${catalogLabel}`;
     const description =
-      shop.tagline ?? `Browse the live menu of ${shop.name} and order on WhatsApp.`;
+      shop.tagline ?? `Browse the live ${catalogLabel.toLowerCase()} of ${shop.name} and order on WhatsApp.`;
     return {
       meta: [
         { title },
@@ -100,9 +108,112 @@ function Fallback({ text }: { text: string }) {
 
 function PublicMenu() {
   const data = Route.useLoaderData();
-  const shop = data.shop as unknown as Shop;
-  const items = data.items as unknown as MenuItem[];
-  const categories = data.categories;
+  const [shop, setShop] = useState<Shop>(data.shop as unknown as Shop);
+  const [items, setItems] = useState<MenuItem[]>(data.items as unknown as MenuItem[]);
+  const [categories, setCategories] = useState(data.categories);
+
+  useEffect(() => {
+    if (data.shop) setShop(data.shop as unknown as Shop);
+    if (data.items) setItems(data.items as unknown as MenuItem[]);
+    if (data.categories) setCategories(data.categories);
+  }, [data]);
+
+  // Multi-tier real-time synchronization for public shop page
+  useEffect(() => {
+    if (!shop?.id) return;
+
+    const handleSync = async () => {
+      try {
+        const { data: updated } = await supabase
+          .from("shops")
+          .select("*")
+          .eq("id", shop.id)
+          .maybeSingle();
+        if (updated) {
+          setShop(updated as unknown as Shop);
+        }
+      } catch (err) {
+        console.error("Realtime public shop refetch error:", err);
+      }
+    };
+
+    // 1. BroadcastChannel (0ms instant cross-tab sync)
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel("mylink_realtime_sync");
+      bc.onmessage = (e) => {
+        if (!e.data?.shopId || e.data.shopId === shop.id) {
+          handleSync();
+        }
+      };
+    } catch {}
+
+    // 2. Storage event listener
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "mylink_last_shop_update" || !e.key) {
+        handleSync();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+
+    // 3. Supabase Realtime channel push
+    const topic = `realtime-public-shop-${shop.id}-${Math.random().toString(36).substring(2, 7)}`;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    try {
+      channel = supabase
+        .channel(topic)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "shops",
+            filter: `id=eq.${shop.id}`,
+          },
+          (payload) => {
+            if (payload.new && typeof payload.new === "object") {
+              setShop(payload.new as unknown as Shop);
+            } else {
+              handleSync();
+            }
+          },
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("Realtime public shop subscription error:", err);
+    }
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener("storage", onStorage);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [shop?.id]);
+
+
+
+  const subState = subscriptionState(shop);
+  const isSuspendedOrExpired = shop.status === "suspended" || subState === "expired" || subState === "suspended";
+
+  if (isSuspendedOrExpired) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#080C14] px-6 text-center text-white">
+        <div className="max-w-md rounded-2xl border border-rose-500/20 bg-[#0F1626] p-8 shadow-2xl space-y-4">
+          <AlertTriangle className="size-12 text-rose-500 mx-auto" />
+          <h1 className="font-display text-2xl font-bold">Shop Menu Unavailable</h1>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            This shop menu is currently inactive or temporarily suspended. Please contact the business owner or platform administrator.
+          </p>
+          <Button asChild className="bg-[#00E676] text-[#080C14] font-bold hover:bg-[#00E676]/90 rounded-xl">
+            <Link to="/">Go Home</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
   const features = shopFeatures(shop);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [active, setActive] = useState<string>("all");
@@ -122,6 +233,8 @@ function PublicMenu() {
   const isDelivery = shopDeliveryEnabled(shop);
   const isTakeaway = shopTakeawayEnabled(shop);
   const isOnTable = shopOnTableEnabled(shop);
+  const isEnquiry = shopEnquiryEnabled(shop);
+  const orderLabels = shopOrderLabels(shop);
 
   const languages = shopLanguages(shop);
   const isMultiLanguageEnabled =
@@ -138,8 +251,10 @@ function PublicMenu() {
       ? "takeaway"
       : isOnTable
         ? "on_table"
-        : "delivery";
-  const [orderType, setOrderType] = useState<"delivery" | "takeaway" | "on_table">(
+        : isEnquiry
+          ? "enquiry"
+          : "delivery";
+  const [orderType, setOrderType] = useState<"delivery" | "takeaway" | "on_table" | "enquiry">(
     defaultOrderType,
   );
 
@@ -149,56 +264,145 @@ function PublicMenu() {
   const [isLocating, setIsLocating] = useState(false);
 
   const fetchLocation = () => {
-    if ("geolocation" in navigator) {
-      setIsLocating(true);
+    setIsLocating(true);
+
+    const tryIpLocation = async (message: string) => {
+      try {
+        const res = await fetch("https://freeipapi.com/api/json");
+        if (res.ok) {
+          const data = await res.json();
+          if (data && (data.cityName || data.regionName)) {
+            const city = data.cityName || "";
+            const region = data.regionName || "";
+            const pincode = data.zipCode || "";
+            const address = [city, region].filter(Boolean).join(", ");
+
+            if (city) setDeliveryCity(city);
+            if (pincode) setDeliveryPincode(pincode);
+            if (address) setDeliveryAddress(address);
+
+            toast.success(message);
+            setIsLocating(false);
+            return true;
+          }
+        }
+      } catch (err) {
+        console.warn("IP Geolocation 1 error:", err);
+      }
+
+      try {
+        const res = await fetch(
+          "https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=en",
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data) {
+            const city = data.city || data.locality || data.principalSubdivision || "";
+            const pincode = data.postcode || "";
+            const parts = [data.locality, data.city, data.principalSubdivision].filter(Boolean);
+            const streetAddress = parts.length > 0 ? parts.join(", ") : "";
+
+            if (city) setDeliveryCity(city);
+            if (pincode) setDeliveryPincode(pincode);
+            if (streetAddress) setDeliveryAddress(streetAddress);
+
+            toast.success(message);
+            setIsLocating(false);
+            return true;
+          }
+        }
+      } catch (err) {
+        console.warn("IP Geolocation 2 error:", err);
+      }
+
+      setIsLocating(false);
+      toast.error("Could not auto-detect location. Please enter your address manually.");
+      return false;
+    };
+
+    if (typeof window !== "undefined" && "geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
+          let foundAddress = false;
+
+          // 1. Try BigDataCloud reverse geocoding (CORS friendly, fast)
           try {
             const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
             );
-            const data = await res.json();
+            if (res.ok) {
+              const data = await res.json();
+              if (data) {
+                const city = data.city || data.locality || data.principalSubdivision || "";
+                const pincode = data.postcode || "";
+                const parts = [data.locality, data.city, data.principalSubdivision].filter(Boolean);
+                const streetAddress = parts.length > 0 ? parts.join(", ") : "";
 
-            if (data && data.address) {
-              const addr = data.address;
-              setDeliveryCity(addr.city || addr.town || addr.village || addr.county || "");
-              setDeliveryPincode(addr.postcode || "");
-
-              const streetParts = [
-                addr.house_number,
-                addr.road || addr.street,
-                addr.suburb || addr.neighbourhood || addr.residential,
-              ].filter(Boolean);
-
-              const streetAddress =
-                streetParts.length > 0 ? streetParts.join(", ") : data.display_name;
-              setDeliveryAddress(streetAddress);
-            } else {
-              const link = `https://maps.google.com/?q=${latitude},${longitude}`;
-              setDeliveryAddress(`GPS: ${link}`);
+                if (city) setDeliveryCity(city);
+                if (pincode) setDeliveryPincode(pincode);
+                if (streetAddress) {
+                  setDeliveryAddress(streetAddress);
+                  foundAddress = true;
+                }
+              }
             }
-          } catch (error) {
-            console.error("Reverse geocoding error", error);
-            const link = `https://maps.google.com/?q=${latitude},${longitude}`;
-            setDeliveryAddress(`GPS: ${link}`);
-          } finally {
-            setIsLocating(false);
+          } catch (err) {
+            console.warn("BigDataCloud reverse geocode error:", err);
           }
-        },
-        (error) => {
-          console.error("Error getting location", error);
+
+          // 2. Fallback to Nominatim if needed
+          if (!foundAddress) {
+            try {
+              const res = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+              );
+              if (res.ok) {
+                const data = await res.json();
+                if (data && data.address) {
+                  const addr = data.address;
+                  if (addr.city || addr.town || addr.village || addr.county) {
+                    setDeliveryCity(addr.city || addr.town || addr.village || addr.county || "");
+                  }
+                  if (addr.postcode) setDeliveryPincode(addr.postcode);
+                  const streetParts = [
+                    addr.house_number,
+                    addr.road || addr.street,
+                    addr.suburb || addr.neighbourhood || addr.residential,
+                  ].filter(Boolean);
+                  const streetAddress =
+                    streetParts.length > 0 ? streetParts.join(", ") : data.display_name;
+                  if (streetAddress) {
+                    setDeliveryAddress(streetAddress);
+                    foundAddress = true;
+                  }
+                }
+              }
+            } catch (err) {
+              console.warn("Nominatim reverse geocode error:", err);
+            }
+          }
+
+          // 3. Final fallback: set readable GPS location string
+          if (!foundAddress) {
+            setDeliveryAddress(`GPS Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+          }
+
           setIsLocating(false);
-          alert("Could not get your location. Please type your address manually.");
+          toast.success("Location retrieved via GPS!");
         },
-        { timeout: 10000 },
+        async (error) => {
+          console.warn("GPS Geolocation error/denied:", error);
+          void tryIpLocation("Location detected via Network / IP!");
+        },
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 },
       );
     } else {
-      alert("Geolocation is not supported by your browser.");
+      void tryIpLocation("Location detected via Network / IP!");
     }
   };
 
-  const handleOrderTypeChange = (v: "delivery" | "takeaway" | "on_table") => {
+  const handleOrderTypeChange = (v: "delivery" | "takeaway" | "on_table" | "enquiry") => {
     setOrderType(v);
   };
 
@@ -214,36 +418,19 @@ function PublicMenu() {
       .then(() => undefined);
   }, [shop.id]);
 
-  // Real-time: refresh shop menu when owner updates items, categories, or shop settings
-  useEffect(() => {
-    const menuChannel = supabase
-      .channel(`shop-page-${shop.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "menu_items", filter: `shop_id=eq.${shop.id}` },
-        () => {
-          router.invalidate();
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "categories", filter: `shop_id=eq.${shop.id}` },
-        () => {
-          router.invalidate();
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "shops", filter: `id=eq.${shop.id}` },
-        () => {
-          router.invalidate();
-        },
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(menuChannel);
-    };
-  }, [shop.id, router]);
+function mergeShop(prev: Shop, updated: Partial<Shop>): Shop {
+  const mergedFeatures =
+    updated.features !== undefined
+      ? (updated.features as Record<string, any> | null)
+      : (prev.features ?? null);
+  return {
+    ...prev,
+    ...updated,
+    features: mergedFeatures,
+  };
+}
+
+
 
   useEffect(() => {
     if (!showTranslate) return;
@@ -350,31 +537,33 @@ function PublicMenu() {
           animate={{ opacity: 1, y: 0 }}
           className={`rounded-xl border ${theme.border} ${theme.card} p-5 backdrop-blur-lg transition-colors duration-500`}
         >
-          <div className="flex items-center gap-4">
-            <div
-              className={`size-16 shrink-0 overflow-hidden rounded-xl border ${theme.border} ${theme.bg}`}
-            >
-              {shop.logo_url ? (
-                <img
-                  src={shop.logo_url}
-                  alt={`${shop.name} logo`}
-                  className="size-full object-cover"
-                />
-              ) : (
-                <span className={`grid size-full place-items-center ${theme.textMuted}`}>
-                  <Store className="size-6" />
-                </span>
-              )}
-            </div>
-            <div className="min-w-0">
-              <h1
-                className={`truncate font-display text-2xl font-bold leading-tight ${theme.text}`}
+          <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4 min-w-0">
+              <div
+                className={`size-16 shrink-0 overflow-hidden rounded-xl border ${theme.border} ${theme.bg}`}
               >
-                {shop.name}
-              </h1>
-              <p className={`mt-1 truncate text-sm ${theme.textMuted}`}>
-                {shop.tagline ?? shop.niche}
-              </p>
+                {shop.logo_url ? (
+                  <img
+                    src={shop.logo_url}
+                    alt={`${shop.name} logo`}
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <span className={`grid size-full place-items-center ${theme.textMuted}`}>
+                    <Store className="size-6" />
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <h1
+                  className={`truncate font-display text-2xl font-bold leading-tight ${theme.text}`}
+                >
+                  {shop.name}
+                </h1>
+                <p className={`mt-1 truncate text-sm ${theme.textMuted}`}>
+                  {shop.tagline ?? shop.niche}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -478,7 +667,7 @@ function PublicMenu() {
             onClick={() => setActive("all")}
             theme={theme}
           />
-          {categories.map((c) => (
+          {categories.map((c: any) => (
             <Chip
               key={c.id}
               label={c.name}
@@ -508,15 +697,22 @@ function PublicMenu() {
             <motion.article
               variants={itemAnim}
               key={item.id}
-              className={`flex flex-col overflow-hidden rounded-xl border ${theme.border} ${theme.card} transition-all`}
+              className={`flex flex-col overflow-hidden rounded-xl border ${theme.border} ${theme.card} transition-all ${item.is_available === false ? "opacity-75" : ""}`}
             >
               <div className={`relative aspect-square w-full ${theme.bg}`}>
                 <img
                   src={item.image_url || getFoodImageUrl(item.name, "")}
                   alt={item.name}
                   loading="lazy"
-                  className="size-full object-cover transition-transform duration-500 hover:scale-105"
+                  className={`size-full object-cover transition-transform duration-500 hover:scale-105 ${item.is_available === false ? "opacity-50 grayscale" : ""}`}
                 />
+                {item.is_available === false && (
+                  <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px] flex items-center justify-center p-2">
+                    <span className="bg-red-600 text-white text-[11px] font-extrabold uppercase px-3 py-1 rounded-full shadow-lg tracking-wider">
+                      Sold Out
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-1 flex-col p-4">
@@ -539,7 +735,11 @@ function PublicMenu() {
                     )}
                   </div>
 
-                  {canOrder ? (
+                  {item.is_available === false ? (
+                    <span className="h-8 rounded-md px-3 text-[11px] font-bold uppercase tracking-wider bg-red-500/10 border border-red-500/30 text-red-500 flex items-center justify-center cursor-not-allowed select-none">
+                      Sold Out
+                    </span>
+                  ) : canOrder ? (
                     (cart[item.id] ?? 0) > 0 ? (
                       <div
                         className={`flex h-8 items-center rounded-md border ${theme.border} ${theme.cartBtn} overflow-hidden text-sm`}
@@ -596,7 +796,12 @@ function PublicMenu() {
           className={`border-t ${theme.border} mt-10 pt-6 pb-4 text-center text-xs ${theme.textMuted}`}
         >
           <span className="text-gray-400">Powered by</span>{" "}
-          <Link to="/" className={`text-amber-500 font-display font-medium hover:underline`}>
+          <Link
+            to="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-amber-500 font-display font-semibold hover:underline"
+          >
             MY Link QR
           </Link>
         </div>
@@ -687,17 +892,17 @@ function PublicMenu() {
 
             {lines.length > 0 && (
               <div className={`pt-4 border-t ${theme.border}`}>
-                {(isDelivery || isTakeaway || isOnTable) && (
+                {(isDelivery || isTakeaway || isOnTable || isEnquiry) && (
                   <div className="space-y-3 mb-6">
                     <Label
                       className={`${theme.textMuted} uppercase text-xs tracking-wider font-bold`}
                     >
-                      Order Type
+                      Order / Enquiry Type
                     </Label>
                     <RadioGroup
                       value={orderType}
                       onValueChange={handleOrderTypeChange}
-                      className="flex gap-4"
+                      className="flex flex-wrap gap-4"
                     >
                       {isDelivery && (
                         <div className="flex items-center space-x-2">
@@ -706,8 +911,8 @@ function PublicMenu() {
                             id="delivery"
                             className={`${theme.border} ${theme.accentText}`}
                           />
-                          <Label htmlFor="delivery" className="font-medium">
-                            Delivery
+                          <Label htmlFor="delivery" className="font-medium cursor-pointer">
+                            {orderLabels.delivery}
                           </Label>
                         </div>
                       )}
@@ -718,8 +923,8 @@ function PublicMenu() {
                             id="takeaway"
                             className={`${theme.border} ${theme.accentText}`}
                           />
-                          <Label htmlFor="takeaway" className="font-medium">
-                            Take Away
+                          <Label htmlFor="takeaway" className="font-medium cursor-pointer">
+                            {orderLabels.takeaway}
                           </Label>
                         </div>
                       )}
@@ -730,8 +935,20 @@ function PublicMenu() {
                             id="on_table"
                             className={`${theme.border} ${theme.accentText}`}
                           />
-                          <Label htmlFor="on_table" className="font-medium">
-                            On Table
+                          <Label htmlFor="on_table" className="font-medium cursor-pointer">
+                            {orderLabels.on_table}
+                          </Label>
+                        </div>
+                      )}
+                      {isEnquiry && (
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem
+                            value="enquiry"
+                            id="enquiry"
+                            className={`${theme.border} ${theme.accentText}`}
+                          />
+                          <Label htmlFor="enquiry" className="font-medium cursor-pointer">
+                            {orderLabels.enquiry}
                           </Label>
                         </div>
                       )}
@@ -964,7 +1181,7 @@ function PublicMenu() {
                       }}
                     >
                       <MessageCircle className="mr-2 size-5" />
-                      Send Order ({money(total, shop.currency)})
+                      {orderType === "enquiry" ? "Send Enquiry" : "Send Order"} ({money(total, shop.currency)})
                     </a>
                   </Button>
                 </div>

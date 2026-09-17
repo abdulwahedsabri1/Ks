@@ -5,6 +5,7 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
+  Instagram,
   MapPin,
   MessageSquare,
   Phone,
@@ -24,6 +25,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { BusinessVideoSeries } from "@/components/BusinessVideoSeries";
+import { InstagramProfileFeed } from "@/components/InstagramProfileFeed";
 
 export const Route = createFileRoute("/demo")({
   head: () => ({
@@ -101,201 +104,69 @@ function DemoWatchRoute() {
               Explore how customers order effortlessly from their mobile phones and how restaurant
               owners manage menus, AI tools, and scan analytics in real-time.
             </p>
+
+            {/* Instagram Link Pill */}
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <a
+                href="https://instagram.com/mylinkqr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2.5 rounded-full border border-pink-500/30 bg-gradient-to-r from-purple-600/10 via-pink-600/10 to-amber-500/10 px-5 py-2.5 text-xs sm:text-sm font-semibold text-foreground hover:border-pink-500/60 hover:shadow-lg hover:shadow-pink-500/20 hover:scale-[1.02] transition-all duration-300 group"
+              >
+                <div className="size-6 rounded-full bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 p-0.5 flex items-center justify-center text-white shrink-0 group-hover:scale-110 transition-transform">
+                  <Instagram className="size-3.5 text-white" />
+                </div>
+                <span>
+                  Official Instagram:{" "}
+                  <strong className="text-pink-500 font-bold group-hover:underline">
+                    instagram/mylinkqr
+                  </strong>
+                </span>
+              </a>
+            </div>
           </div>
         </section>
 
         {/* Video Player & Tab Switcher Section */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-12 md:mt-16">
-          <div className="max-w-5xl mx-auto">
-            {/* Tab Buttons */}
-            <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
-              <button
-                type="button"
-                onClick={() => setActiveTab("customer")}
-                className={`flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-bold transition-all ${
-                  activeTab === "customer"
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105"
-                    : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
-                }`}
-              >
-                <UtensilsCrossed className="size-4" /> Customer Ordering Experience
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("owner")}
-                className={`flex items-center gap-2.5 rounded-full px-6 py-3 text-sm font-bold transition-all ${
-                  activeTab === "owner"
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105"
-                    : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/50"
-                }`}
-              >
-                <Video className="size-4" /> Restaurant Owner Dashboard
-              </button>
-            </div>
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-10 md:mt-14">
+          <BusinessVideoSeries initialVideoId="restaurant-kj" showTitle={false} />
+        </section>
 
-            {/* Video Cards Grid */}
-            <div className="grid gap-8 lg:grid-cols-12 items-center">
-              {/* Main Video Screen */}
-              <div className="lg:col-span-8">
-                <div className="relative overflow-hidden rounded-3xl border border-border bg-card shadow-2xl">
-                  {activeTab === "customer" ? (
-                    <div className="relative group">
-                      <div className="bg-card/90 px-4 py-3 border-b border-border flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="size-3 rounded-full bg-emerald-500 inline-block animate-pulse" />
-                          <span className="text-xs font-bold text-foreground">
-                            Customer QR Ordering Experience
-                          </span>
-                        </div>
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-emerald-500/10 text-emerald-500 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-                          Mobile View
-                        </span>
-                      </div>
-                      <video
-                        key="customer-video"
-                        controls
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        preload="auto"
-                        className="w-full aspect-video object-cover bg-black"
-                        poster="/hero_qr.jpg"
-                      >
-                        <source src="/mock/Mylinkqr.mp4" type="video/mp4" />
-                        Your browser does not support HTML5 video.
-                      </video>
-                    </div>
-                  ) : (
-                    <div className="relative group">
-                      <div className="bg-card/90 px-4 py-3 border-b border-border flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="size-3 rounded-full bg-amber-500 inline-block animate-pulse" />
-                          <span className="text-xs font-bold text-foreground">
-                            Restaurant Order Management & Dashboard
-                          </span>
-                        </div>
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-amber-500/10 text-amber-500 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                          Owner & Staff View
-                        </span>
-                      </div>
-                      <video
-                        key="owner-video"
-                        controls
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        preload="auto"
-                        className="w-full aspect-video object-cover bg-black"
-                        poster="/hero_qr.jpg"
-                      >
-                        <source src="/mock/dsf.mp4" type="video/mp4" />
-                        Your browser does not support HTML5 video.
-                      </video>
-                    </div>
-                  )}
+        {/* Instagram Featured Callout Banner */}
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+          <div className="max-w-4xl mx-auto rounded-3xl border border-pink-500/30 bg-card/80 p-5 sm:p-7 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-5 text-center sm:text-left transition-all hover:border-pink-500/50">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className="size-14 rounded-2xl bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 p-0.5 shadow-lg shrink-0">
+                <div className="w-full h-full bg-card rounded-[14px] flex items-center justify-center">
+                  <Instagram className="size-7 text-pink-500" />
                 </div>
               </div>
-
-              {/* Video Explainer Side Card */}
-              <div className="lg:col-span-4 space-y-6">
-                {activeTab === "customer" ? (
-                  <motion.div
-                    key="customer-info"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="rounded-3xl border border-border bg-card/60 p-6 backdrop-blur-md"
-                  >
-                    <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500 mb-4">
-                      <QrCode className="size-5" />
-                    </div>
-                    <h3 className="font-bold text-xl mb-2">Customer Experience</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed mb-6">
-                      Watch how diner guests scan your table QR code, browse interactive categorized
-                      menus with dish photos, and place instant orders directly via WhatsApp.
-                    </p>
-
-                    <ul className="space-y-3 text-xs">
-                      <li className="flex items-start gap-2.5">
-                        <CheckCircle2 className="size-4 text-emerald-500 shrink-0 mt-0.5" />
-                        <span>
-                          <strong>Zero App Downloads</strong> — Works instantly on any iOS & Android
-                          browser.
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <CheckCircle2 className="size-4 text-emerald-500 shrink-0 mt-0.5" />
-                        <span>
-                          <strong>Live Dish Photos</strong> — High-res food imagery to boost
-                          appetite and order values.
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <CheckCircle2 className="size-4 text-emerald-500 shrink-0 mt-0.5" />
-                        <span>
-                          <strong>Direct WhatsApp Orders</strong> — Carts arrive at staff phone with
-                          table number & itemized details.
-                        </span>
-                      </li>
-                    </ul>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="owner-info"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="rounded-3xl border border-border bg-card/60 p-6 backdrop-blur-md"
-                  >
-                    <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500 mb-4">
-                      <Sparkles className="size-5" />
-                    </div>
-                    <h3 className="font-bold text-xl mb-2">Owner Dashboard & AI</h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed mb-6">
-                      See how restaurant owners manage categories, use AI menu generation & photo
-                      OCR scanning, track scan analytics, and download print-ready QR codes.
-                    </p>
-
-                    <ul className="space-y-3 text-xs">
-                      <li className="flex items-start gap-2.5">
-                        <CheckCircle2 className="size-4 text-amber-500 shrink-0 mt-0.5" />
-                        <span>
-                          <strong>AI Menu Scanner</strong> — Import photo menus or generate 20+
-                          items in 10 seconds.
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <CheckCircle2 className="size-4 text-amber-500 shrink-0 mt-0.5" />
-                        <span>
-                          <strong>6 Custom Themes</strong> — Change your public QR design instantly
-                          anytime.
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2.5">
-                        <CheckCircle2 className="size-4 text-amber-500 shrink-0 mt-0.5" />
-                        <span>
-                          <strong>Printable Stand Designs</strong> — High-res SVG & PNG QR codes for
-                          tables.
-                        </span>
-                      </li>
-                    </ul>
-                  </motion.div>
-                )}
-
-                <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-center">
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Want to see both videos side-by-side or get a live 1-on-1 walkthrough?
-                  </p>
-                  <a
-                    href="#booking-form"
-                    className="inline-flex items-center justify-center w-full rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
-                  >
-                    Book Free Consultation
-                  </a>
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-pink-500 uppercase tracking-wider">
+                  <Instagram className="size-3.5" /> Follow Our Journey
                 </div>
+                <h3 className="font-display text-lg sm:text-xl font-bold text-foreground">
+                  Watch Daily Reels on Instagram: <span className="text-pink-500">instagram/mylinkqr</span>
+                </h3>
+                <p className="text-xs text-muted-foreground max-w-lg">
+                  See real restaurant case studies, QR stand designs, staff training shorts, and live customer reactions at <strong className="text-foreground">@mylinkqr</strong>.
+                </p>
               </div>
             </div>
+            <a
+              href="https://instagram.com/mylinkqr"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-bold text-xs hover:opacity-90 hover:shadow-lg hover:shadow-pink-500/25 transition-all shrink-0"
+            >
+              <Instagram className="size-4" /> Open instagram/mylinkqr
+            </a>
           </div>
+        </section>
+
+        {/* Instagram Profile & Video Reels Feed */}
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+          <InstagramProfileFeed />
         </section>
 
         {/* Meeting Booking & Consultation Form Section */}
@@ -329,6 +200,22 @@ function DemoWatchRoute() {
                     <div>
                       <p className="font-semibold text-foreground">Direct WhatsApp Line</p>
                       <p>+91 93923 18135</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="grid size-8 place-items-center rounded-lg bg-pink-500/10 text-pink-500 shrink-0">
+                      <Instagram className="size-4" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-foreground">Instagram ID</p>
+                      <a
+                        href="https://instagram.com/mylinkqr"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-pink-500 hover:underline font-medium"
+                      >
+                        instagram/mylinkqr
+                      </a>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">

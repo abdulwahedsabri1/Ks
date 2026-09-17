@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import {
   PLANS,
   parsePriceNumber,
+  sanitizePlanItemFeatures,
   type Category,
   type MenuItem,
   type Shop,
@@ -11,11 +12,25 @@ import {
 } from "@/lib/shop";
 import { supabase } from "@/integrations/supabase/client";
 
+export function triggerCrossTabSync(shopId?: string, ownerId?: string | null) {
+  if (typeof window !== "undefined") {
+    try {
+      const bc = new BroadcastChannel("mylink_realtime_sync");
+      bc.postMessage({ type: "SHOP_UPDATED", shopId, ownerId });
+      bc.close();
+    } catch {}
+    localStorage.setItem("mylink_last_shop_update", Date.now().toString());
+    window.dispatchEvent(new Event("storage"));
+  }
+}
+
 export function useMyShop(userId?: string) {
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ["my-shop", userId],
     enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
     queryFn: async (): Promise<Shop | null> => {
       // 1. Primary: Find shop by owner_id
       const { data, error } = await supabase
@@ -31,7 +46,6 @@ export function useMyShop(userId?: string) {
       }
 
       // 2. Fallback: try to locate shop by email prefix (for legacy accounts with orphaned shops)
-      // This does NOT create a new shop — it just re-links an existing one.
       try {
         const { data: authData } = await supabase.auth.getUser();
         const userEmail = authData.user?.email;
@@ -47,9 +61,7 @@ export function useMyShop(userId?: string) {
 
           if (matchedShops && matchedShops.length > 0) {
             const foundShop = matchedShops[0] as Shop;
-            // Re-link the orphaned shop to this user (safe update, no creation)
             await supabase.from("shops").update({ owner_id: userId! }).eq("id", foundShop.id);
-
             return { ...foundShop, owner_id: userId! };
           }
         }
@@ -57,48 +69,71 @@ export function useMyShop(userId?: string) {
         console.error("Shop fallback search error:", err);
       }
 
-      // Return null — DO NOT auto-create shops here.
-      // Shop creation happens only during:
-      //   1. Email signup in auth.tsx
-      //   2. Google OAuth in auth/callback.tsx (ensureShopExists)
       return null;
     },
   });
 
+  // Multi-tier real-time synchronization for shops table
   useEffect(() => {
-    if (!userId || !query.data?.id) return;
-    const shopId = query.data.id;
+    if (!userId) return;
 
-    const channelId = Math.random().toString(36).substring(7);
-    const channel = supabase
-      .channel(`shop-changes-${shopId}-${channelId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "shops",
-          filter: `id=eq.${shopId}`,
-        },
-        (payload: any) => {
-          queryClient.invalidateQueries({ queryKey: ["my-shop", userId] });
-          if (payload.eventType === "UPDATE") {
-            const oldRecord = payload.old as Shop;
-            const newRecord = payload.new as Shop;
-            if (oldRecord.payment_status !== newRecord.payment_status) {
-              toast(`Your payment status has been updated to ${newRecord.payment_status}`);
-            } else if (oldRecord.plan !== newRecord.plan) {
-              toast.success(`Your plan has been upgraded to ${newRecord.plan}! 🎉`);
+    const handleSync = () => {
+      queryClient.invalidateQueries({ queryKey: ["my-shop", userId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-all-shops"] });
+    };
+
+    // 1. BroadcastChannel (0ms instant cross-tab sync)
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel("mylink_realtime_sync");
+      bc.onmessage = () => handleSync();
+    } catch {}
+
+    // 2. Storage event listener (fallback cross-tab sync)
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "mylink_last_shop_update" || !e.key) {
+        handleSync();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+
+    // 3. Supabase Realtime channel listener (cross-device database push)
+    const topic = `realtime-my-shop-${userId}-${Math.random().toString(36).substring(2, 7)}`;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    try {
+      channel = supabase
+        .channel(topic)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "shops",
+          },
+          (payload) => {
+            handleSync();
+            if (payload.new && typeof payload.new === "object" && "id" in payload.new) {
+              const newShop = payload.new as Shop;
+              if (newShop.owner_id === userId) {
+                queryClient.setQueryData(["my-shop", userId], newShop);
+              }
             }
-          }
-        },
-      )
-      .subscribe();
+          },
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("Realtime shops subscription error:", err);
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      if (bc) bc.close();
+      window.removeEventListener("storage", onStorage);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
-  }, [userId, query.data?.id, queryClient]);
+  }, [userId, queryClient]);
 
   return query;
 }
@@ -107,6 +142,7 @@ export function useIsAdmin(userId?: string) {
   return useQuery({
     queryKey: ["is-admin", userId],
     enabled: !!userId,
+    staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data } = await supabase
         .from("user_roles")
@@ -124,6 +160,8 @@ export function useCategories(shopId?: string) {
   const query = useQuery({
     queryKey: ["categories", shopId],
     enabled: !!shopId,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     queryFn: async (): Promise<Category[]> => {
       const { data, error } = await supabase
         .from("categories")
@@ -135,21 +173,37 @@ export function useCategories(shopId?: string) {
     },
   });
 
+  // Real-time synchronization for categories table
   useEffect(() => {
     if (!shopId) return;
-    const channelId = Math.random().toString(36).substring(7);
-    const channel = supabase
-      .channel(`categories-${shopId}-${channelId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "categories", filter: `shop_id=eq.${shopId}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["categories", shopId] });
-        },
-      )
-      .subscribe();
+
+    const topic = `realtime-categories-${shopId}-${Math.random().toString(36).substring(2, 7)}`;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    try {
+      channel = supabase
+        .channel(topic)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "categories",
+            filter: `shop_id=eq.${shopId}`,
+          },
+          () => {
+            queryClient.invalidateQueries({ queryKey: ["categories", shopId] });
+          },
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("Realtime categories subscription error:", err);
+    }
+
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [shopId, queryClient]);
 
@@ -162,6 +216,8 @@ export function useMenuItems(shopId?: string) {
   const query = useQuery({
     queryKey: ["menu-items", shopId],
     enabled: !!shopId,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     queryFn: async (): Promise<MenuItem[]> => {
       const { data, error } = await supabase
         .from("menu_items")
@@ -177,21 +233,37 @@ export function useMenuItems(shopId?: string) {
     },
   });
 
+  // Real-time synchronization for menu_items table
   useEffect(() => {
     if (!shopId) return;
-    const channelId = Math.random().toString(36).substring(7);
-    const channel = supabase
-      .channel(`menu-items-${shopId}-${channelId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "menu_items", filter: `shop_id=eq.${shopId}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["menu-items", shopId] });
-        },
-      )
-      .subscribe();
+
+    const topic = `realtime-menu-items-${shopId}-${Math.random().toString(36).substring(2, 7)}`;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    try {
+      channel = supabase
+        .channel(topic)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "menu_items",
+            filter: `shop_id=eq.${shopId}`,
+          },
+          () => {
+            queryClient.invalidateQueries({ queryKey: ["menu-items", shopId] });
+          },
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("Realtime menu items subscription error:", err);
+    }
+
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [shopId, queryClient]);
 
@@ -371,9 +443,30 @@ export function usePaymentHistory(shopId?: string) {
 }
 
 export function useCustomPlans() {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ["custom-plans"],
     queryFn: async (): Promise<PlanItem[]> => {
+      // 1. Try reading from platform-settings-internal system shop row in Supabase
+      try {
+        const { data } = await supabase
+          .from("shops")
+          .select("features")
+          .eq("slug", "platform-settings-internal")
+          .maybeSingle();
+
+        if (data?.features && (data.features as any).custom_plans) {
+          const customPlans = (data.features as any).custom_plans;
+          if (Array.isArray(customPlans) && customPlans.length > 0) {
+            return sanitizePlanItemFeatures(customPlans as PlanItem[]);
+          }
+        }
+      } catch (err) {
+        console.error("Custom plans Supabase fetch error:", err);
+      }
+
+      // 2. Fallback: try subscription_history log table
       try {
         const { data } = await supabase
           .from("subscription_history")
@@ -385,34 +478,123 @@ export function useCustomPlans() {
         if (data && data.length > 0 && data[0]?.notes) {
           const parsed = JSON.parse(data[0].notes);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed as PlanItem[];
+            return sanitizePlanItemFeatures(parsed as PlanItem[]);
           }
         }
       } catch (err) {
-        console.error("Custom plans fetch error:", err);
+        console.error("Custom plans subscription history fetch error:", err);
       }
 
+      // 3. Fallback: localStorage
       try {
         if (typeof window !== "undefined") {
           const local = localStorage.getItem("mylink_custom_plans");
           if (local) {
             const parsed = JSON.parse(local);
-            if (Array.isArray(parsed) && parsed.length > 0) return parsed as PlanItem[];
+            if (Array.isArray(parsed) && parsed.length > 0) return sanitizePlanItemFeatures(parsed as PlanItem[]);
           }
         }
       } catch {}
 
-      return PLANS;
+      return sanitizePlanItemFeatures(PLANS);
     },
   });
+
+  // Multi-tier real-time sync for platform plans across windows & tabs
+  useEffect(() => {
+    const handleSync = () => {
+      queryClient.invalidateQueries({ queryKey: ["custom-plans"] });
+    };
+
+    // 1. BroadcastChannel (0ms instant cross-tab sync)
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel("mylink_realtime_sync");
+      bc.onmessage = () => handleSync();
+    } catch {}
+
+    // 2. Storage event listener
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "mylink_last_shop_update" || e.key === "mylink_custom_plans" || !e.key) {
+        handleSync();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+
+    // 3. Supabase Realtime channel listener for platform-settings-internal
+    const topic = `realtime-custom-plans-${Math.random().toString(36).substring(2, 7)}`;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    try {
+      channel = supabase
+        .channel(topic)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "shops",
+            filter: "slug=eq.platform-settings-internal",
+          },
+          () => {
+            handleSync();
+          },
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn("Realtime custom plans subscription error:", err);
+    }
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener("storage", onStorage);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [queryClient]);
+
+  return query;
 }
 
 export async function savePlatformPlans(updatedPlans: PlanItem[], userId?: string) {
+  const sanitizedPlans = sanitizePlanItemFeatures(updatedPlans);
   if (typeof window !== "undefined") {
-    localStorage.setItem("mylink_custom_plans", JSON.stringify(updatedPlans));
+    localStorage.setItem("mylink_custom_plans", JSON.stringify(sanitizedPlans));
   }
 
   try {
+    // 1. Upsert into platform-settings-internal system shop
+    const { data: targetShop } = await supabase
+      .from("shops")
+      .select("id, features")
+      .eq("slug", "platform-settings-internal")
+      .maybeSingle();
+
+    const existingFeatures = (targetShop?.features as Record<string, any>) || {};
+    const updatedFeatures = {
+      ...existingFeatures,
+      custom_plans: sanitizedPlans,
+    };
+
+    if (targetShop?.id) {
+      await supabase
+        .from("shops")
+        .update({ features: updatedFeatures })
+        .eq("id", targetShop.id);
+    } else {
+      await supabase.from("shops").insert({
+        slug: "platform-settings-internal",
+        name: "Platform Settings Internal",
+        niche: "System",
+        plan: "premium",
+        status: "system",
+        owner_id: userId ?? "00000000-0000-0000-0000-000000000000",
+        features: updatedFeatures,
+      });
+    }
+
+    // 2. Also log to subscription_history for auditing
     const { data: shops } = await supabase.from("shops").select("id").limit(1);
     const shopId = shops?.[0]?.id;
 
@@ -423,10 +605,12 @@ export async function savePlatformPlans(updatedPlans: PlanItem[], userId?: strin
         previous_value: "custom_plans_update",
         new_value: "updated",
         performed_by: userId ?? null,
-        notes: JSON.stringify(updatedPlans),
+        notes: JSON.stringify(sanitizedPlans),
       });
     }
   } catch (err) {
     console.error("Failed to sync platform plans to Supabase:", err);
+  } finally {
+    triggerCrossTabSync();
   }
 }

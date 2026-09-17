@@ -11,6 +11,7 @@ import { createRazorpayOrder, verifyRazorpayPayment } from "@/lib/payment.functi
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { MultiBusinessComparisonChart } from "@/components/MultiBusinessComparisonChart";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -58,7 +59,7 @@ const COMPARE_ROWS: CompRow[] = [
   { feature: "WhatsApp ordering & cart", trial: false, basic: false, pro: true, premium: true },
   { feature: "On-Table dining", trial: false, basic: false, pro: true, premium: true },
   { feature: "Take-away orders", trial: false, basic: false, pro: true, premium: true },
-  { feature: "Full analytics dashboard", trial: false, basic: false, pro: true, premium: true },
+  { feature: "Full analytics dashboard", trial: false, basic: false, pro: false, premium: true },
   { feature: "AI menu generator", trial: false, basic: false, pro: true, premium: true },
   { feature: "PNG / SVG / PDF QR downloads", trial: false, basic: false, pro: true, premium: true },
   { feature: "Delivery options", trial: false, basic: false, pro: false, premium: true },
@@ -70,7 +71,7 @@ const COMPARE_ROWS: CompRow[] = [
     pro: false,
     premium: true,
   },
-  { feature: "Custom themes", trial: false, basic: false, pro: false, premium: true },
+  { feature: "QR Code Themes", trial: "3 Standard", basic: "6 Standard", pro: "12 Themes", premium: "All 18 Themes" },
   { feature: "Google Reviews integration", trial: false, basic: false, pro: false, premium: true },
   { feature: "Custom domain", trial: false, basic: false, pro: false, premium: true },
   { feature: "Priority support", trial: false, basic: false, pro: false, premium: true },
@@ -168,14 +169,22 @@ function ZCell({ value, highlight }: { value: CellValue; highlight?: boolean }) 
 
 // ── Main Page ────────────────────────────────────────────────────────────────
 
+import { useAuth } from "@/hooks/useAuth";
+
 function PricingPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: plans = PLANS } = useCustomPlans();
   const [selectedPlan, setSelectedPlan] = useState<PlanItem | null>(null);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
 
   const handlePlanClick = (p: PlanItem) => {
-    if (p.id === "trial") {
+    if (!user) {
       navigate({ to: "/auth" });
+      return;
+    }
+    if (p.id === "trial") {
+      navigate({ to: "/dashboard" });
     } else {
       setSelectedPlan(p);
     }
@@ -186,7 +195,23 @@ function PricingPage() {
     navigate({ to: "/dashboard" });
   };
 
-  const priceOf = (p: PlanItem) => p.priceNumber ?? parsePriceNumber(p.price);
+  const priceOf = (p: PlanItem) => {
+    if (p.id === "trial") return 0;
+    if (billingCycle === "yearly") {
+      return p.yearlyPriceNumber || (p.priceNumber ? p.priceNumber * 10 : 0);
+    }
+    return p.priceNumber ?? parsePriceNumber(p.price);
+  };
+
+  const priceDisplayOf = (p: PlanItem) => {
+    if (p.id === "trial") return "Free";
+    if (billingCycle === "yearly") {
+      const val = p.yearlyPriceNumber || (p.priceNumber ? p.priceNumber * 10 : 0);
+      return `₹${val.toLocaleString("en-IN")}`;
+    }
+    const val = p.priceNumber ?? parsePriceNumber(p.price);
+    return `₹${val}`;
+  };
 
   return (
     <div className="min-h-screen bg-[#F5F0E7] text-[#100C09] font-sans selection:bg-[#F5A623]/30">
@@ -194,83 +219,134 @@ function PricingPage() {
 
       <main className="pt-28 pb-24 md:pt-36">
         {/* Header Hero */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-4xl mb-16 md:mb-20">
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-4xl mb-12 md:mb-16">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#F5A623]/30 bg-[#F5A623]/15 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-[#D99A2B] mb-6">
             <Sparkles className="size-3.5" /> Simple Plans for Every Business
           </div>
 
-          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6 text-[#100C09]">
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-4 text-[#100C09]">
             Simple plans for <span className="italic text-[#F5A623]">every business</span>
           </h1>
 
-          <p className="text-base sm:text-lg text-[#3A2818]/70 max-w-2xl mx-auto leading-relaxed font-medium">
-            No hidden fees. Pay securely via Razorpay. Upgrade or cancel anytime.
+          <p className="text-base sm:text-lg text-[#3A2818]/70 max-w-2xl mx-auto leading-relaxed font-medium mb-8">
+            No hidden fees. Upgrade or cancel anytime. Get 2 months extra free on annual subscriptions!
           </p>
+
+          {/* Billing Cycle Toggle Switch */}
+          <div className="inline-flex items-center p-1.5 rounded-2xl bg-white border border-black/10 shadow-md">
+            <button
+              type="button"
+              onClick={() => setBillingCycle("monthly")}
+              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${
+                billingCycle === "monthly"
+                  ? "bg-[#100C09] text-white shadow-sm"
+                  : "text-[#3A2818]/70 hover:text-[#100C09]"
+              }`}
+            >
+              Monthly Billing
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingCycle("yearly")}
+              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                billingCycle === "yearly"
+                  ? "bg-[#F5A623] text-white shadow-sm"
+                  : "text-[#3A2818]/70 hover:text-[#100C09]"
+              }`}
+            >
+              <span>Annual Billing</span>
+              <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-extrabold uppercase tracking-wider">
+                2 Mos Extra Free!
+              </span>
+            </button>
+          </div>
         </section>
 
         {/* 4 Plans Grid */}
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-24">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto items-stretch">
-            {plans.map((p: PlanItem) => (
-              <div
-                key={p.id}
-                className={`relative rounded-3xl bg-white p-6 sm:p-7 border ${
-                  p.highlight
-                    ? "border-[#F5A623] shadow-2xl ring-2 ring-[#F5A623]/30"
-                    : "border-black/10 shadow-xl hover:border-[#F5A623]/40"
-                } flex flex-col justify-between transition-all duration-300`}
-              >
-                {p.highlight && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#F5A623] text-white text-[10px] font-extrabold uppercase tracking-widest py-1 px-4 rounded-full shadow-lg">
-                    Most Popular
-                  </div>
-                )}
+            {plans.map((p: PlanItem) => {
+              const isPopular = Boolean(p.highlight || p.badge === "MOST POPULAR");
+              const extraMonths = typeof p.extraMonths === "number" ? p.extraMonths : 2;
+              const totalMonths = 12 + extraMonths;
 
-                <div>
-                  <h2 className="font-display text-2xl font-bold mb-1 text-[#100C09]">{p.name}</h2>
-                  <p className="text-xs text-[#3A2818]/70 mb-6 min-h-[32px] leading-relaxed font-medium">
-                    {p.tagline}
-                  </p>
-
-                  <div className="flex items-baseline gap-1 mb-6 border-b border-black/10 pb-6">
-                    <span className="font-display text-4xl font-extrabold text-[#100C09]">
-                      {p.price}
-                    </span>
-                    <span className="text-[#3A2818]/70 text-xs font-medium">/period</span>
-                  </div>
-
-                  <ul className="space-y-3 mb-8 text-xs text-[#3A2818]/80 font-medium">
-                    {p.features.map((f: string) => (
-                      <li key={f} className="flex items-center gap-2.5">
-                        <div className="size-4 rounded-full bg-[#F5A623]/20 text-[#D99A2B] flex items-center justify-center shrink-0">
-                          <Check className="size-2.5" />
-                        </div>
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="space-y-2">
-                  <Button
-                    onClick={() => handlePlanClick(p)}
-                    size="lg"
-                    className={`w-full rounded-full font-bold h-11 text-xs ${
-                      p.highlight
-                        ? "bg-[#F5A623] text-white hover:bg-[#F5A623]/90 shadow-lg"
-                        : "bg-[#F5A623] text-white hover:bg-[#F5A623]/90 shadow-md"
-                    }`}
-                  >
-                    {p.id === "trial" ? "Start Free" : `Choose ${p.name}`}
-                  </Button>
-                  {p.id !== "trial" && (
-                    <p className="text-center text-[10px] text-[#3A2818]/40 flex items-center justify-center gap-1">
-                      <Lock className="size-2.5" /> Secured by Razorpay
-                    </p>
+              return (
+                <div
+                  key={p.id}
+                  className={`relative rounded-3xl bg-white p-6 sm:p-7 border ${
+                    isPopular
+                      ? "border-[#F5A623] shadow-2xl ring-2 ring-[#F5A623]/30"
+                      : "border-black/10 shadow-xl hover:border-[#F5A623]/40"
+                  } flex flex-col justify-between transition-all duration-300`}
+                >
+                  {isPopular && (
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#F5A623] text-white text-[10px] font-extrabold uppercase tracking-widest py-1 px-4 rounded-full shadow-lg">
+                      MOST POPULAR
+                    </div>
                   )}
+
+                  <div>
+                    <h2 className="font-display text-2xl font-bold mb-1 text-[#100C09]">{p.name}</h2>
+                    <p className="text-xs text-[#3A2818]/70 mb-4 min-h-[32px] leading-relaxed font-medium">
+                      {p.tagline}
+                    </p>
+
+                    <div className="flex items-baseline gap-1 mb-2">
+                      <span className="font-display text-4xl font-extrabold text-[#100C09]">
+                        {priceDisplayOf(p)}
+                      </span>
+                      <span className="text-[#3A2818]/70 text-xs font-medium">
+                        /{billingCycle === "yearly" && p.id !== "trial" ? "year" : "month"}
+                      </span>
+                    </div>
+
+                    {billingCycle === "yearly" && p.id !== "trial" ? (
+                      <div className="mb-6 pb-4 border-b border-black/10">
+                        <span className="text-[11px] font-bold text-[#D99A2B] bg-[#F5A623]/15 px-2.5 py-1 rounded-md border border-[#F5A623]/30 inline-block">
+                          🎁 {totalMonths} Months Access ({extraMonths > 0 ? `12 Mos + ${extraMonths} ${extraMonths === 1 ? "Mo" : "Mos"} Extra Free` : "12 Months Access"})
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="mb-6 pb-4 border-b border-black/10">
+                        <span className="text-[11px] text-[#3A2818]/50 font-medium">
+                          Billed monthly, cancel anytime
+                        </span>
+                      </div>
+                    )}
+
+                    <ul className="space-y-3 mb-8 text-xs text-[#3A2818]/80 font-medium">
+                      {p.features.map((f: string) => (
+                        <li key={f} className="flex items-center gap-2.5">
+                          <div className="size-4 rounded-full bg-[#F5A623]/20 text-[#D99A2B] flex items-center justify-center shrink-0">
+                            <Check className="size-2.5" />
+                          </div>
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Button
+                      onClick={() => handlePlanClick(p)}
+                      size="lg"
+                      className={`w-full rounded-full font-bold h-11 text-xs ${
+                        isPopular
+                          ? "bg-[#F5A623] text-white hover:bg-[#F5A623]/90 shadow-lg"
+                          : "bg-[#F5A623] text-white hover:bg-[#F5A623]/90 shadow-md"
+                      }`}
+                    >
+                      {p.id === "trial" ? "Start Free" : `Choose ${p.name}`}
+                    </Button>
+                    {p.id !== "trial" && (
+                      <p className="text-center text-[10px] text-[#3A2818]/40 flex items-center justify-center gap-1">
+                        <Lock className="size-2.5" /> Secured by Razorpay
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
@@ -291,7 +367,7 @@ function PricingPage() {
               {["Trial", "Basic", "Pro", "Premium"].map((name) => (
                 <div
                   key={name}
-                  className={`p-4 text-center text-sm font-bold ${name === "Premium" ? "text-[#D99A2B]" : "text-[#100C09]"}`}
+                  className={`p-4 text-center text-sm font-bold ${name === "Pro" ? "text-[#D99A2B]" : "text-[#100C09]"}`}
                 >
                   {name}
                 </div>
@@ -311,10 +387,10 @@ function PricingPage() {
                   <Cell value={row.basic} />
                 </div>
                 <div className="p-3.5 flex items-center justify-center">
-                  <Cell value={row.pro} />
+                  <Cell value={row.pro} highlight />
                 </div>
                 <div className="p-3.5 flex items-center justify-center">
-                  <Cell value={row.premium} highlight />
+                  <Cell value={row.premium} />
                 </div>
               </div>
             ))}
@@ -326,7 +402,7 @@ function PricingPage() {
                   <button
                     onClick={() => handlePlanClick(p)}
                     className={`w-full text-xs font-bold py-2 rounded-full transition-all ${
-                      p.highlight
+                      p.id === "pro" || p.highlight
                         ? "bg-[#F5A623] text-white shadow-lg hover:bg-[#e09615]"
                         : "bg-white border border-[#F5A623]/40 text-[#D99A2B] hover:bg-[#F5A623]/10"
                     }`}
@@ -339,67 +415,9 @@ function PricingPage() {
           </div>
         </section>
 
-        {/* ── MY Link QR vs Zomato / Swiggy ── */}
+        {/* ── Multi-Business Comparison Chart ── */}
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 mb-16 max-w-5xl">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-red-500 mb-5">
-              Why MY Link QR?
-            </div>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-[#100C09] mb-3">
-              We vs <span className="text-red-500">Zomato</span> &amp;{" "}
-              <span className="text-orange-500">Swiggy</span>
-            </h2>
-            <p className="text-[#3A2818]/60 text-sm font-medium max-w-xl mx-auto">
-              Stop losing 18–30% commission on every order. Own your customers, your menu, and your
-              revenue — for less than ₹30 a day.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-black/10 bg-white shadow-xl overflow-hidden">
-            <div className="grid grid-cols-4 bg-[#100C09]">
-              <div className="p-4 text-sm font-bold text-white/60">Feature</div>
-              <div className="p-4 text-center">
-                <span className="text-sm font-bold text-red-400">🍽 Zomato</span>
-              </div>
-              <div className="p-4 text-center">
-                <span className="text-sm font-bold text-orange-400">🛵 Swiggy</span>
-              </div>
-              <div className="p-4 text-center bg-[#F5A623]/20">
-                <span className="text-sm font-bold text-[#F5A623]">⚡ MY Link QR</span>
-              </div>
-            </div>
-
-            {ZOMATO_ROWS.map((row, i) => (
-              <div
-                key={row.feature}
-                className={`grid grid-cols-4 border-b border-black/5 ${i % 2 === 0 ? "bg-white" : "bg-[#F5F0E7]/40"}`}
-              >
-                <div className="p-3.5 text-xs font-medium text-[#3A2818]/80">{row.feature}</div>
-                <div className="p-3.5 flex items-center justify-center">
-                  <ZCell value={row.zomato} />
-                </div>
-                <div className="p-3.5 flex items-center justify-center">
-                  <ZCell value={row.swiggy} />
-                </div>
-                <div className="p-3.5 flex items-center justify-center bg-[#F5A623]/5">
-                  <ZCell value={row.mylink} highlight />
-                </div>
-              </div>
-            ))}
-
-            <div className="p-6 bg-[#100C09] text-center">
-              <p className="text-white/50 text-xs mb-4">
-                Join hundreds of restaurants, cafes &amp; shops who switched to MY Link QR and
-                stopped paying commission.
-              </p>
-              <button
-                onClick={() => navigate({ to: "/auth" })}
-                className="bg-[#F5A623] text-black font-bold text-sm px-8 py-2.5 rounded-full hover:bg-[#e09615] transition-all shadow-lg hover:scale-105 active:scale-95"
-              >
-                Start Free — Zero commission forever ✓
-              </button>
-            </div>
-          </div>
+          <MultiBusinessComparisonChart />
         </section>
       </main>
 
@@ -411,6 +429,7 @@ function PricingPage() {
           <RazorpayModal
             plan={selectedPlan}
             price={priceOf(selectedPlan)}
+            billingCycle={billingCycle}
             onClose={() => setSelectedPlan(null)}
             onSuccess={handlePaymentSuccess}
           />

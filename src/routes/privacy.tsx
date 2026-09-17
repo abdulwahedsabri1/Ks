@@ -57,6 +57,9 @@ function PrivacyPage() {
                 <li>To host, render, and update your live QR code menu pages.</li>
                 <li>To route WhatsApp orders directly to your provided business phone number.</li>
                 <li>To calculate scan analytics and view counters for your shop dashboard.</li>
+                <li>
+                  To enable authorized platform administrators to access and assist with merchant account management, troubleshooting, and onboarding.
+                </li>
                 <li>To send critical account updates, service notices, and billing receipts.</li>
               </ul>
             </section>
@@ -74,7 +77,16 @@ function PrivacyPage() {
 
             <section>
               <h2 className="font-display text-xl font-semibold text-foreground mb-3">
-                4. Cookies & Local Storage
+                4. Administrator Access & Data Governance
+              </h2>
+              <p>
+                All business data, menu configurations, pricing details, and scan analytics collected on our platform are accessible by authorized system administrators of MY Link QR. This administrative access is strictly restricted to platform operations, technical support, server maintenance, menu setup assistance, and system security enforcement.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+                5. Cookies & Local Storage
               </h2>
               <p>
                 We use essential browser cookies and local storage strictly to keep you
@@ -85,7 +97,7 @@ function PrivacyPage() {
 
             <section>
               <h2 className="font-display text-xl font-semibold text-foreground mb-3">
-                5. Contact Privacy Officer
+                6. Contact Privacy Officer
               </h2>
               <p>
                 If you have any questions or wish to request data deletion, please contact us at{" "}

@@ -106,7 +106,16 @@ function OnboardingPage() {
         upsert: true,
       });
 
-      if (error) throw error;
+      if (error) {
+        const dataUrl = await new Promise<string>((res) => {
+          const r = new FileReader();
+          r.onload = () => res(r.result as string);
+          r.readAsDataURL(file);
+        });
+        setLogoUrl(dataUrl);
+        toast.success("Logo added!");
+        return;
+      }
 
       const {
         data: { publicUrl },
@@ -115,7 +124,13 @@ function OnboardingPage() {
       setLogoUrl(publicUrl);
       toast.success("Logo uploaded successfully!");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to upload logo");
+      const dataUrl = await new Promise<string>((res) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result as string);
+        r.readAsDataURL(file);
+      });
+      setLogoUrl(dataUrl);
+      toast.success("Logo added!");
     } finally {
       setLogoUploading(false);
     }
