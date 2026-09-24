@@ -75,6 +75,14 @@ export function shopGoogleReviewLink(shop?: Pick<Shop, "plan" | "features"> | nu
   return val && val.trim() ? val.trim() : undefined;
 }
 
+export function shopCartEnabled(shop?: Pick<Shop, "plan" | "features"> | null) {
+  if (!shopFeatures(shop).ordering) return false;
+  const val1 = shop?.features?.["cart_enabled"];
+  const val2 = shop?.features?.["ordering_enabled"];
+  if (val1 === false || val2 === false) return false;
+  return true;
+}
+
 export function shopDeliveryEnabled(shop?: Pick<Shop, "plan" | "features"> | null) {
   if (!shopFeatures(shop).delivery) return false;
   return shop?.features?.["delivery"] !== false;
@@ -133,7 +141,8 @@ export function shopItemLabel(shop?: Pick<Shop, "niche" | "features"> | null): s
 
   const catalog = shopCatalogLabel(shop).toLowerCase();
   if (catalog === "services" || catalog.includes("service")) return "Service";
-  if (catalog === "catalog" || catalog.includes("catalog") || catalog.includes("product")) return "Product";
+  if (catalog === "catalog" || catalog.includes("catalog") || catalog.includes("product"))
+    return "Product";
   return "Item";
 }
 
@@ -362,6 +371,36 @@ export function parsePriceNumber(priceStr?: string | number | null): number {
   return digits ? parseInt(digits, 10) : 0;
 }
 
+export type PlanSavings = {
+  monthlyPrice: number;
+  monthly12x: number;
+  yearlyPrice: number;
+  savingsAmount: number;
+  discountPercent: number;
+  effectiveMonthly: number;
+};
+
+export function calculatePlanSavings(plan: PlanItem): PlanSavings {
+  const monthlyPrice = plan.priceNumber ?? parsePriceNumber(plan.price);
+  const monthly12x = monthlyPrice * 12;
+  const yearlyPrice =
+    typeof plan.yearlyPriceNumber === "number" && plan.yearlyPriceNumber > 0
+      ? plan.yearlyPriceNumber
+      : parsePriceNumber(plan.yearlyPrice) || (monthlyPrice > 0 ? monthlyPrice * 10 : 0);
+  const savingsAmount = Math.max(0, monthly12x - yearlyPrice);
+  const discountPercent = monthly12x > 0 ? Math.round((savingsAmount / monthly12x) * 100) : 0;
+  const effectiveMonthly = yearlyPrice > 0 ? Math.round(yearlyPrice / 12) : 0;
+
+  return {
+    monthlyPrice,
+    monthly12x,
+    yearlyPrice,
+    savingsAmount,
+    discountPercent,
+    effectiveMonthly,
+  };
+}
+
 export const PLANS: PlanItem[] = [
   {
     id: "trial",
@@ -382,10 +421,10 @@ export const PLANS: PlanItem[] = [
   {
     id: "basic",
     name: "Basic",
-    price: "\u20b9249/mo",
+    price: "₹249/mo",
     priceNumber: 249,
-    yearlyPrice: "₹2,490/yr",
-    yearlyPriceNumber: 2490,
+    yearlyPrice: "₹2,739/yr",
+    yearlyPriceNumber: 2739,
     extraMonths: 2,
     tagline: "Get your first QR menu live",
     features: [
@@ -402,10 +441,10 @@ export const PLANS: PlanItem[] = [
   {
     id: "pro",
     name: "Pro",
-    price: "\u20b9499/mo",
+    price: "₹499/mo",
     priceNumber: 499,
-    yearlyPrice: "₹4,990/yr",
-    yearlyPriceNumber: 4990,
+    yearlyPrice: "₹4,790/yr",
+    yearlyPriceNumber: 4790,
     extraMonths: 2,
     tagline: "For growing shops",
     highlight: true,
@@ -428,8 +467,8 @@ export const PLANS: PlanItem[] = [
     name: "Premium",
     price: "₹799/mo",
     priceNumber: 799,
-    yearlyPrice: "₹7,990/yr",
-    yearlyPriceNumber: 7990,
+    yearlyPrice: "₹8,789/yr",
+    yearlyPriceNumber: 8789,
     extraMonths: 2,
     tagline: "The complete business toolkit",
     highlight: false,
@@ -626,7 +665,9 @@ export function planOf(plan?: string | null): PlanFeatures {
 export function sanitizePlanItemFeatures(plans: PlanItem[]): PlanItem[] {
   return plans.map((p) => ({
     ...p,
-    features: (p.features || []).map((f) => (typeof f === "string" ? f.trim() : "")).filter(Boolean),
+    features: (p.features || [])
+      .map((f) => (typeof f === "string" ? f.trim() : ""))
+      .filter(Boolean),
   }));
 }
 
@@ -639,7 +680,8 @@ export function shopFeatures(shop?: Pick<Shop, "plan" | "features"> | null): Pla
   for (const key of FEATURE_KEYS) {
     if (base[key] === true) {
       // Plan natively grants feature: unlock unless explicitly disabled by admin override
-      merged[key] = overrides[`admin_disabled_${key}`] !== true && overrides[`admin_disabled`] !== true;
+      merged[key] =
+        overrides[`admin_disabled_${key}`] !== true && overrides[`admin_disabled`] !== true;
     } else {
       // Plan does not natively grant feature: lock unless explicitly enabled by admin override
       merged[key] = overrides[`admin_override_${key}`] === true;
@@ -649,7 +691,8 @@ export function shopFeatures(shop?: Pick<Shop, "plan" | "features"> | null): Pla
   if (typeof overrides["items"] === "number") merged.items = overrides["items"];
   if (typeof overrides["max_items"] === "number") merged.items = overrides["max_items"];
   if (typeof overrides["categories"] === "number") merged.categories = overrides["categories"];
-  if (typeof overrides["max_categories"] === "number") merged.categories = overrides["max_categories"];
+  if (typeof overrides["max_categories"] === "number")
+    merged.categories = overrides["max_categories"];
 
   return merged;
 }
@@ -683,7 +726,10 @@ export function daysRemaining(shop?: Pick<Shop, "plan_expires_at"> | null): numb
 }
 
 export function planTotalDays(
-  shop?: Pick<Shop, "plan_started_at" | "plan_expires_at" | "created_at" | "plan" | "billing_cycle"> | null,
+  shop?: Pick<
+    Shop,
+    "plan_started_at" | "plan_expires_at" | "created_at" | "plan" | "billing_cycle"
+  > | null,
 ): number {
   if (!shop?.plan_expires_at) return shop?.plan === "trial" ? 7 : 30;
   const startMs = shop.plan_started_at
@@ -700,7 +746,10 @@ export function planTotalDays(
 }
 
 export function planProgressPercent(
-  shop?: Pick<Shop, "plan_started_at" | "plan_expires_at" | "created_at" | "plan" | "billing_cycle"> | null,
+  shop?: Pick<
+    Shop,
+    "plan_started_at" | "plan_expires_at" | "created_at" | "plan" | "billing_cycle"
+  > | null,
 ): number {
   if (!shop?.plan_expires_at) return 100;
 
@@ -810,9 +859,9 @@ export function planAmount(plan: string, cycle: string, customPlans?: PlanItem[]
         return foundItem.yearlyPriceNumber;
       }
       const monthly = foundItem.priceNumber ?? parsePriceNumber(foundItem.price);
-      return monthly > 0 ? monthly * 10 : 0;
+      return monthly > 0 ? monthly * 12 : 0;
     }
-    return PLAN_PRICE_YEARLY[normPlan] ?? (PLAN_PRICE[normPlan] ? PLAN_PRICE[normPlan] * 10 : 0);
+    return PLAN_PRICE_YEARLY[normPlan] ?? (PLAN_PRICE[normPlan] ? PLAN_PRICE[normPlan] * 12 : 0);
   }
 
   if (foundItem) {

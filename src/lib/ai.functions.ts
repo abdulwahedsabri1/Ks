@@ -9,10 +9,15 @@ type ScannedMenu = {
   items: { name: string; description: string; price: number; category: string }[];
 };
 
-const GEMINI_API_KEY =
-  process.env["GEMINI_API_KEY"] ||
-  process.env["VITE_GEMINI_API_KEY"] ||
-  "AIzaSyDnTCGb_rLTCYcTE1NYzJSzKnauf-hDops";
+function getGeminiApiKey(): string {
+  const key = process.env["GEMINI_API_KEY"];
+  if (!key) {
+    throw new Error(
+      "GEMINI_API_KEY is not configured on the server environment. Please set GEMINI_API_KEY in your deployment project settings.",
+    );
+  }
+  return key;
+}
 
 function cleanJsonParse<T>(rawText: string): T {
   let cleaned = rawText.trim();
@@ -361,7 +366,7 @@ export const generateMenu = createServerFn({ method: "POST" })
     // 1. Primary: Try Google Gemini API
     try {
       const geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${getGeminiApiKey()}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -511,7 +516,7 @@ export const scanMenuPhoto = createServerFn({ method: "POST" })
         : data.image.replace(/^data:image\/[a-zA-Z+]+;base64,/, "");
 
       const geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${getGeminiApiKey()}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

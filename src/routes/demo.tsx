@@ -146,10 +146,12 @@ function DemoWatchRoute() {
                   <Instagram className="size-3.5" /> Follow Our Journey
                 </div>
                 <h3 className="font-display text-lg sm:text-xl font-bold text-foreground">
-                  Watch Daily Reels on Instagram: <span className="text-pink-500">instagram/mylinkqr</span>
+                  Watch Daily Reels on Instagram:{" "}
+                  <span className="text-pink-500">instagram/mylinkqr</span>
                 </h3>
                 <p className="text-xs text-muted-foreground max-w-lg">
-                  See real restaurant case studies, QR stand designs, staff training shorts, and live customer reactions at <strong className="text-foreground">@mylinkqr</strong>.
+                  See real restaurant case studies, QR stand designs, staff training shorts, and
+                  live customer reactions at <strong className="text-foreground">@mylinkqr</strong>.
                 </p>
               </div>
             </div>

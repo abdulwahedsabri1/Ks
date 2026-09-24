@@ -12,11 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Lock, Copy, Check } from "lucide-react";
+import { Lock, Copy, Check, Loader2 } from "lucide-react";
 import {
   NICHES,
   shopBusinessId,
   shopGoogleReviewLink,
+  shopCartEnabled,
   shopDeliveryEnabled,
   shopTakeawayEnabled,
   shopOnTableEnabled,
@@ -54,6 +55,8 @@ function computeLiveShop(shop: Shop, form: any): Shop {
     twitter_url: safeStr(form["twitter_url"]),
     website_url: safeStr(form["website_url"]),
     google_review_link: safeStr(form["google_review_link"]),
+    cart_enabled: form["cart_enabled"],
+    ordering_enabled: form["cart_enabled"],
     delivery: form["delivery"],
     takeaway: form["takeaway"],
     take_away: form["takeaway"],
@@ -85,8 +88,6 @@ function computeLiveShop(shop: Shop, form: any): Shop {
     features: updatedFeatures,
   };
 }
-
-
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({
@@ -125,6 +126,7 @@ function SettingsPage() {
     twitter_url: "",
     website_url: "",
     google_review_link: "",
+    cart_enabled: true,
     delivery: true,
     takeaway: true,
     on_table: true,
@@ -143,6 +145,7 @@ function SettingsPage() {
     cover_url: "",
   });
   const [saving, setSaving] = useState(false);
+  const [uploadingMedia, setUploadingMedia] = useState<string | null>(null);
   const [testUpiAmount, setTestUpiAmount] = useState<number>(240);
   const [copiedId, setCopiedId] = useState(false);
 
@@ -224,6 +227,7 @@ function SettingsPage() {
       twitter_url: safeStr(shopSocialLinks(shop).twitter),
       website_url: safeStr(shopSocialLinks(shop).website),
       google_review_link: safeStr(shopGoogleReviewLink(shop)),
+      cart_enabled: shopCartEnabled(shop),
       delivery: shopDeliveryEnabled(shop),
       takeaway: shopTakeawayEnabled(shop),
       on_table: shopOnTableEnabled(shop),
@@ -264,6 +268,8 @@ function SettingsPage() {
         twitter_url: safeStr(form.twitter_url),
         website_url: safeStr(form.website_url),
         google_review_link: safeStr(form.google_review_link),
+        cart_enabled: form.cart_enabled,
+        ordering_enabled: form.cart_enabled,
         delivery: form.delivery,
         takeaway: form.takeaway,
         take_away: form.takeaway,
@@ -294,16 +300,14 @@ function SettingsPage() {
         features: updatedFeatures,
       };
 
-      // 1. INSTANT (0ms) Optimistic Update in UI & Cache
+      // 1. INSTANT Optimistic Update in UI & Cache
       const optimisticShop: Shop = { ...shop, ...updates };
       qc.setQueryData(["my-shop", user?.id], optimisticShop);
       qc.setQueryData(["my-shop", shop.id], optimisticShop);
       triggerCrossTabSync(shop.id, user?.id);
 
-      // 2. Immediate user feedback (0ms)
-      toast.success("✨ Settings saved!");
-
-      // 3. Fast direct Supabase DB write in background
+      // 2. Direct Supabase DB write with timing tracker
+      const startTime = Date.now();
       const { data: updatedShops, error } = await supabase
         .from("shops")
         .update({
@@ -315,6 +319,7 @@ function SettingsPage() {
 
       if (error) {
         console.error("Direct update error:", error);
+        toast.error("Error saving: " + error.message);
       } else if (updatedShops && updatedShops[0]) {
         const persistedShop = updatedShops[0] as Shop;
         qc.setQueryData(["my-shop", user?.id], persistedShop);
@@ -322,6 +327,14 @@ function SettingsPage() {
       }
 
       await qc.invalidateQueries({ queryKey: ["my-shop"] });
+
+      // Minimum 500ms delay to ensure the user clearly sees the animated loader symbol processing
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 500) {
+        await new Promise((r) => setTimeout(r, 500 - elapsed));
+      }
+
+      toast.success("✨ Settings saved successfully!");
     } catch (err) {
       console.error("Failed to save shop settings:", err);
       toast.error("Failed to save settings: " + (err instanceof Error ? err.message : String(err)));
@@ -332,6 +345,7 @@ function SettingsPage() {
 
   async function upload(kind: "logo_url" | "cover_url" | "upi_qr_url", file?: File) {
     if (!shop || !file) return;
+    setUploadingMedia(kind);
     try {
       const url = await uploadShopMedia(file, shop.id);
       if (kind === "upi_qr_url") {
@@ -345,19 +359,19 @@ function SettingsPage() {
           .update({ features: updatedFeatures })
           .eq("id", shop.id);
         if (error) throw error;
-        toast.success("UPI QR Code image updated");
+        toast.success("UPI QR Code image updated!");
       } else {
         const patch = kind === "logo_url" ? { logo_url: url } : { cover_url: url };
         setForm((f) => ({ ...f, [kind]: url }));
         const { error } = await supabase.from("shops").update(patch).eq("id", shop.id);
         if (error) throw error;
-        toast.success(
-          kind === "logo_url" ? "Shop logo uploaded!" : "Cover banner uploaded!",
-        );
+        toast.success(kind === "logo_url" ? "Shop logo uploaded!" : "Cover banner uploaded!");
       }
       await qc.invalidateQueries();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingMedia(null);
     }
   }
 
@@ -611,7 +625,9 @@ function SettingsPage() {
                         id="s-upi"
                         placeholder="e.g. sabriabdulwahed-2@okhdfcbank"
                         value={form.upi_id}
-                        onChange={(e) => updateForm((prev) => ({ ...prev, upi_id: e.target.value }))}
+                        onChange={(e) =>
+                          updateForm((prev) => ({ ...prev, upi_id: e.target.value }))
+                        }
                       />
                       <p className="text-xs text-muted-foreground mt-1">
                         It will be automatically included in the WhatsApp order message.
@@ -973,8 +989,38 @@ function SettingsPage() {
           <div className="space-y-4">
             <h3 className="font-medium text-lg border-b pb-2">Ordering Features</h3>
             <p className="text-sm text-muted-foreground">
-              Select which order types are available to customers.
+              Master control for Cart button and customer ordering choices.
             </p>
+
+            <div className="flex items-center justify-between rounded-xl border bg-gradient-to-r from-amber-500/10 via-card to-card p-4 border-amber-500/30 shadow-xs">
+              <div className="space-y-0.5">
+                <Label
+                  htmlFor="cart-toggle"
+                  className="text-base flex items-center gap-2 font-bold text-foreground"
+                >
+                  Shopping Cart & Ordering Button
+                  {!feat.ordering ? (
+                    <span className="text-[10px] bg-[#F5A623]/15 text-[#D99A2B] px-2 py-0.5 rounded-full font-normal">
+                      Pro Plan
+                    </span>
+                  ) : (
+                    <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded-full font-semibold">
+                      Real-Time Sync
+                    </span>
+                  )}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Enable or disable the Cart button, Add to Cart functionality, and WhatsApp
+                  ordering on your public menu link.
+                </p>
+              </div>
+              <Switch
+                id="cart-toggle"
+                checked={form.cart_enabled && feat.ordering}
+                disabled={!feat.ordering}
+                onCheckedChange={(v) => updateForm((prev) => ({ ...prev, cart_enabled: v }))}
+              />
+            </div>
 
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
@@ -1045,7 +1091,10 @@ function SettingsPage() {
             <div className="space-y-3 rounded-lg border p-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="enquiry-toggle" className="text-base flex items-center gap-2 font-semibold">
+                  <Label
+                    htmlFor="enquiry-toggle"
+                    className="text-base flex items-center gap-2 font-semibold"
+                  >
                     General Enquiry
                     {!feat.enquiry && (
                       <span className="text-[10px] bg-[#F5A623]/15 text-[#D99A2B] px-2 py-0.5 rounded-full font-normal">
@@ -1066,14 +1115,19 @@ function SettingsPage() {
               </div>
               {form.enquiry && feat.enquiry && (
                 <div className="pt-2 border-t space-y-1.5">
-                  <Label htmlFor="enquiry-label" className="text-xs text-muted-foreground font-medium">
+                  <Label
+                    htmlFor="enquiry-label"
+                    className="text-xs text-muted-foreground font-medium"
+                  >
                     Display Title / Label in Shop Link
                   </Label>
                   <Input
                     id="enquiry-label"
                     placeholder="e.g. General Enquiry / Quote"
                     value={form.label_enquiry}
-                    onChange={(e) => updateForm((prev) => ({ ...prev, label_enquiry: e.target.value }))}
+                    onChange={(e) =>
+                      updateForm((prev) => ({ ...prev, label_enquiry: e.target.value }))
+                    }
                     className="h-9 text-sm"
                   />
                 </div>
@@ -1089,7 +1143,11 @@ function SettingsPage() {
               </Label>
               <div className="flex items-center gap-4 p-3 rounded-xl border bg-muted/30">
                 <div className="size-16 rounded-xl border overflow-hidden bg-background shrink-0 flex items-center justify-center shadow-sm relative">
-                  {form.logo_url ? (
+                  {uploadingMedia === "logo_url" ? (
+                    <div className="flex items-center justify-center size-full bg-muted/60">
+                      <Loader2 className="size-5 animate-spin text-[#F5A623]" />
+                    </div>
+                  ) : form.logo_url ? (
                     <img
                       src={form.logo_url}
                       alt="Logo preview"
@@ -1106,6 +1164,7 @@ function SettingsPage() {
                     id="s-logo"
                     type="file"
                     accept="image/*"
+                    disabled={uploadingMedia === "logo_url"}
                     className="text-xs h-9 cursor-pointer"
                     onChange={(e) => {
                       const f = e.target.files?.[0];
@@ -1132,7 +1191,11 @@ function SettingsPage() {
               </Label>
               <div className="space-y-3 p-3 rounded-xl border bg-muted/30">
                 <div className="h-16 w-full rounded-lg border overflow-hidden bg-background flex items-center justify-center shadow-sm relative">
-                  {form.cover_url ? (
+                  {uploadingMedia === "cover_url" ? (
+                    <div className="flex items-center justify-center size-full bg-muted/60">
+                      <Loader2 className="size-5 animate-spin text-[#F5A623]" />
+                    </div>
+                  ) : form.cover_url ? (
                     <img
                       src={form.cover_url}
                       alt="Cover banner preview"
@@ -1149,6 +1212,7 @@ function SettingsPage() {
                     id="s-cover"
                     type="file"
                     accept="image/*"
+                    disabled={uploadingMedia === "cover_url"}
                     className="text-xs h-9 cursor-pointer flex-1"
                     onChange={(e) => {
                       const f = e.target.files?.[0];
@@ -1171,10 +1235,20 @@ function SettingsPage() {
 
           <Button
             onClick={save}
-            disabled={saving}
-            className="bg-[#F5A623] hover:bg-[#e09615] text-black font-bold text-sm px-6 h-10 shadow-md transition-all"
+            disabled={saving || Boolean(uploadingMedia)}
+            className="bg-[#F5A623] hover:bg-[#e09615] text-black font-bold text-sm px-6 h-10 shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-80 disabled:cursor-not-allowed"
           >
-            {saving ? "Saving changes…" : "Save changes"}
+            {saving ? (
+              <>
+                <Loader2 className="size-4 animate-spin text-black shrink-0" />
+                <span>Saving changes…</span>
+              </>
+            ) : (
+              <>
+                <Check className="size-4 shrink-0" />
+                <span>Save changes</span>
+              </>
+            )}
           </Button>
           <p className="text-xs text-muted-foreground">Public link: /shop/{shop.slug}</p>
         </div>

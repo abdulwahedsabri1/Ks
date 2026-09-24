@@ -180,7 +180,8 @@ export function BusinessVideoSeries({
             Watch Business <span className="text-gradient italic">Video Series</span>
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-            Select any business series video below to see MY Link QR in action across restaurants, cafes, retail, and owner management dashboards.
+            Select any business series video below to see MY Link QR in action across restaurants,
+            cafes, retail, and owner management dashboards.
           </p>
         </div>
       )}
@@ -340,9 +341,7 @@ export function BusinessVideoSeries({
                 >
                   <Icon className="size-4" />
                 </div>
-                {isActive && (
-                  <span className="flex size-2 rounded-full bg-primary animate-ping" />
-                )}
+                {isActive && <span className="flex size-2 rounded-full bg-primary animate-ping" />}
               </div>
               <div>
                 <p
@@ -352,9 +351,7 @@ export function BusinessVideoSeries({
                 >
                   {item.title}
                 </p>
-                <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-                  {item.subtitle}
-                </p>
+                <p className="text-[10px] text-muted-foreground truncate mt-0.5">{item.subtitle}</p>
               </div>
             </button>
           );

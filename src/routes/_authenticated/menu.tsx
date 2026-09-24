@@ -36,7 +36,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { money, planOf, shopCatalogLabel, shopItemLabel, shopFeatures, type MenuItem } from "@/lib/shop";
+import {
+  money,
+  planOf,
+  shopCatalogLabel,
+  shopItemLabel,
+  shopFeatures,
+  type MenuItem,
+} from "@/lib/shop";
 import { getFoodImageUrl } from "@/lib/foodImage";
 
 export const Route = createFileRoute("/_authenticated/menu")({
@@ -310,11 +317,16 @@ function MenuPage() {
     try {
       const image = await readImage(file);
       const result = await runScan({ data: { image } });
-      if (result.items.length === 0) throw new Error(`No readable ${catalogLabel.toLowerCase()} items were found.`);
+      if (result.items.length === 0)
+        throw new Error(`No readable ${catalogLabel.toLowerCase()} items were found.`);
       setScanned(result.items);
       toast.success(`Found ${result.items.length} ${itemLabel.toLowerCase()}s`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : `Could not scan that ${catalogLabel.toLowerCase()} photo`);
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : `Could not scan that ${catalogLabel.toLowerCase()} photo`,
+      );
     } finally {
       setScanBusy(false);
     }
@@ -412,13 +424,19 @@ function MenuPage() {
         throw error;
       }
 
-      toast.success(`🎉 All ${itemsToImport.length} ${itemLabel.toLowerCase()}s imported successfully!`);
+      toast.success(
+        `🎉 All ${itemsToImport.length} ${itemLabel.toLowerCase()}s imported successfully!`,
+      );
       setScanned([]);
       setScanName("");
       refresh();
     } catch (err) {
       console.error("Import error:", err);
-      toast.error(err instanceof Error ? err.message : `Could not add the scanned ${catalogLabel.toLowerCase()}`);
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : `Could not add the scanned ${catalogLabel.toLowerCase()}`,
+      );
     } finally {
       setImportBusy(false);
     }
@@ -459,7 +477,9 @@ function MenuPage() {
         <div className="space-y-4 sm:space-y-6">
           <section className="rounded-2xl border bg-card p-4 sm:p-5 shadow-sm">
             <div className="flex items-center justify-between gap-2">
-              <h2 className="font-bold text-sm sm:text-base">AI {catalogLabel.toLowerCase()} generator</h2>
+              <h2 className="font-bold text-sm sm:text-base">
+                AI {catalogLabel.toLowerCase()} generator
+              </h2>
               {!features.ai && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                   <Lock className="size-3" /> Pro
@@ -483,7 +503,8 @@ function MenuPage() {
               onClick={aiGenerate}
               disabled={busy || !features.ai}
             >
-              <Sparkles className="size-4" /> {busy ? "Generating…" : `Generate ${catalogLabel.toLowerCase()}`}
+              <Sparkles className="size-4" />{" "}
+              {busy ? "Generating…" : `Generate ${catalogLabel.toLowerCase()}`}
             </Button>
           </section>
 
@@ -499,7 +520,8 @@ function MenuPage() {
               )}
             </div>
             <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              Upload a clear photo to extract {itemLabel.toLowerCase()} names, prices and categories.
+              Upload a clear photo to extract {itemLabel.toLowerCase()} names, prices and
+              categories.
             </p>
             <Label
               htmlFor="menu-photo"
@@ -507,7 +529,9 @@ function MenuPage() {
             >
               <Upload className="mb-1.5 size-5 text-primary" />
               <span className="text-xs font-semibold">
-                {scanBusy ? `Reading ${catalogLabel.toLowerCase()}…` : scanName || `Choose ${catalogLabel.toLowerCase()} photo`}
+                {scanBusy
+                  ? `Reading ${catalogLabel.toLowerCase()}…`
+                  : scanName || `Choose ${catalogLabel.toLowerCase()} photo`}
               </span>
               <span className="mt-1 text-[11px] text-muted-foreground">
                 JPG, PNG or WebP · max 5 MB
@@ -754,7 +778,11 @@ function MenuPage() {
                       <button
                         type="button"
                         onClick={() => toggleAvailability(i as unknown as MenuItem)}
-                        title={i.is_available === false ? "Click to mark In Stock" : "Click to mark Sold Out"}
+                        title={
+                          i.is_available === false
+                            ? "Click to mark In Stock"
+                            : "Click to mark Sold Out"
+                        }
                         className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
                           i.is_available === false
                             ? "bg-red-500/15 border-red-500/30 text-red-500 hover:bg-red-500/25"
@@ -888,7 +916,9 @@ function MenuPage() {
                     Item Availability
                   </Label>
                   <p className="text-[11px] text-muted-foreground">
-                    {editForm.is_available ? "In Stock (Available to order)" : "Sold Out (Out of stock)"}
+                    {editForm.is_available
+                      ? "In Stock (Available to order)"
+                      : "Sold Out (Out of stock)"}
                   </p>
                 </div>
                 <Switch

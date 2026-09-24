@@ -51,7 +51,7 @@ export function HeroSection() {
                 size="lg"
                 className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 h-14 px-8 text-base"
               >
-                <Link to="/auth">
+                <Link to="/auth" search={{ tab: "signup", plan: "trial" }}>
                   Start free trial <ArrowRight className="ml-2 size-5" />
                 </Link>
               </Button>

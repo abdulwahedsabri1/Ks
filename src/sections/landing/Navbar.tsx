@@ -77,6 +77,7 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-4">
             <Link
               to="/auth"
+              search={{ tab: "login" }}
               className="text-sm font-medium text-foreground hover:text-primary transition-colors px-3 py-1.5"
             >
               Sign in
@@ -85,7 +86,9 @@ export function Navbar() {
               asChild
               className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 shadow-glow"
             >
-              <Link to="/auth">Start free</Link>
+              <Link to="/auth" search={{ tab: "signup", plan: "trial" }}>
+                Start free
+              </Link>
             </Button>
           </div>
 

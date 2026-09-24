@@ -36,15 +36,21 @@ if (typeof window !== "undefined" && !document.getElementById("razorpay-sdk")) {
   document.head.appendChild(script);
 }
 
-import { shopBusinessId } from "@/lib/shop";
+import { shopBusinessId, calculatePlanSavings } from "@/lib/shop";
 import { usePaymentSettings, recordCouponUsage, type Coupon } from "@/hooks/usePaymentSettings";
 import { Tag, Sparkles as SparklesIcon, CheckCircle2 as CheckCircleIcon } from "lucide-react";
 
-export function RazorpayModal({ plan, price, billingCycle = "monthly", onClose, onSuccess }: RazorpayModalProps) {
+export function RazorpayModal({
+  plan,
+  price,
+  billingCycle = "monthly",
+  onClose,
+  onSuccess,
+}: RazorpayModalProps) {
   const isYearly = billingCycle === "yearly";
   const extraMonths = typeof plan.extraMonths === "number" ? plan.extraMonths : 2;
   const totalMonths = 12 + extraMonths;
-  const basePrice = isYearly ? (plan.yearlyPriceNumber || plan.priceNumber * 10 || price) : price;
+  const basePrice = isYearly ? plan.yearlyPriceNumber || plan.priceNumber * 12 || price : price;
 
   const [loading, setLoading] = useState(false);
   const [directLoading, setDirectLoading] = useState(false);
@@ -109,13 +115,17 @@ export function RazorpayModal({ plan, price, billingCycle = "monthly", onClose, 
     }
 
     const calcDiscount =
-      found.discount_type === "percent" ? (price * found.discount_value) / 100 : found.discount_value;
+      found.discount_type === "percent"
+        ? (price * found.discount_value) / 100
+        : found.discount_value;
 
     setAppliedCoupon(found);
     setCouponSuccessMsg(
       `Coupon "${found.code}" applied! You saved ₹${Math.min(price, Math.round(calcDiscount))}.`,
     );
-    toast.success(`🎉 Coupon "${found.code}" applied! Saved ₹${Math.min(price, Math.round(calcDiscount))}`);
+    toast.success(
+      `🎉 Coupon "${found.code}" applied! Saved ₹${Math.min(price, Math.round(calcDiscount))}`,
+    );
   }
 
   function handleRemoveCoupon() {
@@ -336,7 +346,7 @@ export function RazorpayModal({ plan, price, billingCycle = "monthly", onClose, 
         await recordCouponUsage(appliedCoupon.code);
       }
 
-      const keyId = import.meta.env["VITE_RAZORPAY_KEY_ID"] || "rzp_live_Ta4juTNtUmcLxK";
+      const keyId = import.meta.env["VITE_RAZORPAY_KEY_ID"];
 
       // 1. Fast path: If Razorpay SDK is loaded, launch popup instantly
       if (window.Razorpay) {
@@ -449,32 +459,55 @@ export function RazorpayModal({ plan, price, billingCycle = "monthly", onClose, 
             Upgrading to
           </p>
           <h2 className="text-2xl font-bold text-white">{plan.name} Plan</h2>
-          <div className="flex items-baseline gap-2 mt-2">
-            {appliedCoupon ? (
+          {(() => {
+            const sav = calculatePlanSavings(plan);
+
+            return (
               <>
-                <span className="text-4xl font-extrabold text-[#F5A623]">₹{finalPrice}</span>
-                <span className="text-white/50 text-sm line-through">₹{basePrice}</span>
-                <span className="text-white/50 text-sm">/{isYearly ? "year" : "month"}</span>
-                <span className="text-emerald-400 text-xs font-bold bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                  {appliedCoupon.discount_type === "percent"
-                    ? `${appliedCoupon.discount_value}% OFF`
-                    : `₹${appliedCoupon.discount_value} OFF`}
-                </span>
+                {isYearly && sav.monthly12x > sav.yearlyPrice && (
+                  <div className="text-xs text-white/50 line-through font-semibold mt-1">
+                    12x Regular Total: ₹{sav.monthly12x.toLocaleString("en-IN")}
+                  </div>
+                )}
+                <div className="flex items-baseline gap-2 mt-1">
+                  {appliedCoupon ? (
+                    <>
+                      <span className="text-4xl font-extrabold text-[#F5A623]">₹{finalPrice}</span>
+                      <span className="text-white/50 text-sm line-through">₹{basePrice}</span>
+                      <span className="text-white/50 text-sm">/{isYearly ? "year" : "month"}</span>
+                      <span className="text-emerald-400 text-xs font-bold bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                        {appliedCoupon.discount_type === "percent"
+                          ? `${appliedCoupon.discount_value}% OFF`
+                          : `₹${appliedCoupon.discount_value} OFF`}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-4xl font-extrabold text-[#F5A623]">₹{price}</span>
+                      <span className="text-white/50 text-sm">/{isYearly ? "year" : "month"}</span>
+                      {isYearly && sav.savingsAmount > 0 && (
+                        <span className="text-emerald-400 text-xs font-bold bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30 ml-1">
+                          Save ₹{sav.savingsAmount.toLocaleString("en-IN")} ({sav.discountPercent}%
+                          OFF)
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
+                {isYearly && (
+                  <p className="mt-2 text-xs font-bold text-[#F5A623] flex items-center gap-1">
+                    <span>
+                      🎁 Annual Billing: Includes {totalMonths} Months Access (
+                      {extraMonths > 0
+                        ? `12 Mos + ${extraMonths} ${extraMonths === 1 ? "Mo" : "Mos"} Free`
+                        : "12 Months Access"}
+                      )
+                    </span>
+                  </p>
+                )}
               </>
-            ) : (
-              <>
-                <span className="text-4xl font-extrabold text-[#F5A623]">₹{price}</span>
-                <span className="text-white/50 text-sm">/{isYearly ? "year" : "month"}</span>
-              </>
-            )}
-          </div>
-          {isYearly && (
-            <p className="mt-2 text-xs font-bold text-[#F5A623] flex items-center gap-1">
-              <span>
-                🎁 Annual Billing: Includes {totalMonths} Months Access ({extraMonths > 0 ? `12 Mos + ${extraMonths} ${extraMonths === 1 ? "Mo" : "Mos"} Free` : "12 Months Access"})
-              </span>
-            </p>
-          )}
+            );
+          })()}
         </div>
 
         {/* Features summary */}
@@ -624,8 +657,8 @@ export function RazorpayModal({ plan, price, billingCycle = "monthly", onClose, 
               />
               <div className="text-center">
                 <p className="text-[10px] text-[#3A2818]/50 mt-2">
-                  After making the payment of ₹{finalPrice}, click the button below to send proof via
-                  WhatsApp.
+                  After making the payment of ₹{finalPrice}, click the button below to send proof
+                  via WhatsApp.
                 </p>
               </div>
               <Button

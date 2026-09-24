@@ -56,6 +56,8 @@ import {
   type PlanItem,
   shopBusinessId,
   shopFeatures,
+  shopCartEnabled,
+  calculatePlanSavings,
 } from "@/lib/shop";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -84,7 +86,7 @@ function DashboardPage() {
     string | undefined;
   const { data: events } = useAnalytics(shop?.id, 30, resetAt);
   const [selectedPlan, setSelectedPlan] = useState<PlanItem | null>(null);
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
 
   const [, setNowTick] = useState(Date.now());
   useEffect(() => {
@@ -97,7 +99,7 @@ function DashboardPage() {
 
   const priceOf = (p: PlanItem) => {
     if (billingCycle === "yearly") {
-      return p.yearlyPriceNumber || (p.priceNumber ? p.priceNumber * 10 : 0);
+      return p.yearlyPriceNumber || (p.priceNumber ? p.priceNumber * 12 : 0);
     }
     return p.priceNumber ?? parsePriceNumber(p.price);
   };
@@ -143,7 +145,11 @@ function DashboardPage() {
             />
             <Stat
               label="Current plan"
-              sublabel={daysRemaining(shop) !== Infinity && daysRemaining(shop) > 0 ? `${daysRemaining(shop)}d left` : "Active"}
+              sublabel={
+                daysRemaining(shop) !== Infinity && daysRemaining(shop) > 0
+                  ? `${daysRemaining(shop)}d left`
+                  : "Active"
+              }
               value={shop.plan}
               icon={Sparkles}
             />
@@ -315,7 +321,8 @@ function DashboardPage() {
                     />
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Your <span className="capitalize font-bold text-foreground">{shop.plan}</span> plan started on{" "}
+                    Your <span className="capitalize font-bold text-foreground">{shop.plan}</span>{" "}
+                    plan started on{" "}
                     <span className="font-semibold text-foreground">
                       {formatDate(shop.plan_started_at || shop.created_at)}
                     </span>{" "}
@@ -340,8 +347,12 @@ function DashboardPage() {
                       locked: !feat.ai,
                     },
                     {
-                      label: feat.ordering ? "WhatsApp ordering" : "Ordering locked",
-                      locked: !feat.ordering,
+                      label: !feat.ordering
+                        ? "Ordering locked (Pro Plan)"
+                        : !shopCartEnabled(shop)
+                          ? "Cart Button Off"
+                          : "Cart & Ordering Active",
+                      locked: !feat.ordering || !shopCartEnabled(shop),
                     },
                     {
                       label: feat.analytics ? "Full analytics" : "Basic views",
@@ -388,10 +399,12 @@ function DashboardPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
                   <div>
                     <h3 className="font-display text-base sm:text-lg font-bold flex items-center gap-2 text-foreground">
-                      <Sparkles className="size-4 text-amber-500" /> Subscription Plans & Instant Upgrade
+                      <Sparkles className="size-4 text-amber-500" /> Subscription Plans & Instant
+                      Upgrade
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Click any plan to open Razorpay checkout. Get 2 months extra free on annual subscriptions!
+                      Click any plan to open Razorpay checkout. Get 2 months extra free on annual
+                      subscriptions!
                     </p>
                   </div>
 
@@ -455,23 +468,49 @@ function DashboardPage() {
                         ) : null}
 
                         <div>
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <h4 className="font-display text-base font-bold text-foreground">
-                              {p.name}
-                            </h4>
-                            <span className="font-display text-xl font-extrabold text-amber-500">
-                              ₹{price}
-                              <span className="text-xs font-normal text-muted-foreground">
-                                /{billingCycle === "yearly" ? "yr" : "mo"}
-                              </span>
-                            </span>
-                          </div>
+                          {(() => {
+                            const sav = calculatePlanSavings(p);
+                            const isYearly = billingCycle === "yearly";
 
-                          {billingCycle === "yearly" && (
-                            <p className="text-[10px] font-bold text-amber-500 mb-2">
-                              🎁 Includes {totalMonths} Months Access ({extraMonths > 0 ? `12 Mos + ${extraMonths} ${extraMonths === 1 ? "Mo" : "Mos"} Free` : "12 Months Access"})
-                            </p>
-                          )}
+                            return (
+                              <>
+                                {isYearly && sav.monthly12x > sav.yearlyPrice && (
+                                  <div className="text-[11px] text-muted-foreground line-through font-semibold mb-0.5 text-right">
+                                    12x Regular: ₹{sav.monthly12x.toLocaleString("en-IN")}
+                                  </div>
+                                )}
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                  <h4 className="font-display text-base font-bold text-foreground">
+                                    {p.name}
+                                  </h4>
+                                  <span className="font-display text-xl font-extrabold text-amber-500">
+                                    ₹{price}
+                                    <span className="text-xs font-normal text-muted-foreground">
+                                      /{isYearly ? "yr" : "mo"}
+                                    </span>
+                                  </span>
+                                </div>
+
+                                {isYearly && (
+                                  <div className="mb-2 space-y-1">
+                                    {sav.savingsAmount > 0 && (
+                                      <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30 inline-block mr-1">
+                                        💥 SAVE ₹{sav.savingsAmount.toLocaleString("en-IN")} (
+                                        {sav.discountPercent}% OFF)
+                                      </span>
+                                    )}
+                                    <p className="text-[10px] font-bold text-amber-500">
+                                      🎁 Includes {totalMonths} Months Access (
+                                      {extraMonths > 0
+                                        ? `12 Mos + ${extraMonths} ${extraMonths === 1 ? "Mo" : "Mos"} Free`
+                                        : "12 Months Access"}
+                                      )
+                                    </p>
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
 
                           <p className="text-xs text-muted-foreground mb-4 min-h-[32px] leading-relaxed">
                             {p.tagline}
@@ -505,7 +544,8 @@ function DashboardPage() {
                             {isCurrent ? `Renew ${p.name} (₹${price})` : `Upgrade to ${p.name}`}
                           </Button>
                           <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
-                            <Lock className="size-2.5 text-muted-foreground" /> Instant Razorpay Gateway
+                            <Lock className="size-2.5 text-muted-foreground" /> Instant Razorpay
+                            Gateway
                           </p>
                         </div>
                       </div>
@@ -517,12 +557,21 @@ function DashboardPage() {
               {/* Quick Action Navigation Bar */}
               <div className="mt-6 pt-5 border-t border-border flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
                 <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2.5 w-full sm:w-auto">
-                  <Button asChild variant="outline" size="sm" className="h-10 text-xs font-bold rounded-xl">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="h-10 text-xs font-bold rounded-xl"
+                  >
                     <a href={`/shop/${shop.slug}`} target="_blank" rel="noreferrer">
                       <ExternalLink className="size-3.5 mr-1.5" /> View Public Shop
                     </a>
                   </Button>
-                  <Button asChild size="sm" className="h-10 text-xs font-bold rounded-xl bg-amber-500 text-black hover:bg-amber-600">
+                  <Button
+                    asChild
+                    size="sm"
+                    className="h-10 text-xs font-bold rounded-xl bg-amber-500 text-black hover:bg-amber-600"
+                  >
                     <Link to="/menu">Edit {shopCatalogLabel(shop)}</Link>
                   </Button>
                   <Button
@@ -541,7 +590,8 @@ function DashboardPage() {
                       className="h-10 text-xs font-bold rounded-xl col-span-2 sm:col-span-1 border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
                     >
                       <a href={shopGoogleReviewLink(shop)} target="_blank" rel="noreferrer">
-                        <Star className="size-3.5 mr-1.5 fill-amber-400 text-amber-400" /> Google Review
+                        <Star className="size-3.5 mr-1.5 fill-amber-400 text-amber-400" /> Google
+                        Review
                       </a>
                     </Button>
                   )}

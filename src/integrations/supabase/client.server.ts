@@ -39,12 +39,30 @@ function createSupabaseAdminClient() {
     import.meta.env["VITE_SUPABASE_URL"] ||
     "https://qmxrfzvvgwhzhqzhmwrf.supabase.co";
 
-  const SUPABASE_SERVICE_ROLE_KEY =
-    process.env["SUPABASE_SERVICE_ROLE_KEY"] ||
-    process.env["SUPABASE_PUBLISHABLE_KEY"] ||
-    process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
-    import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
-    "sb_publishable_zsLutER8J1k7E2qpwyE8vw_uVC24oU-";
+  const SUPABASE_SERVICE_ROLE_KEY = process.env["SUPABASE_SERVICE_ROLE_KEY"];
+
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    const fallbackKey =
+      process.env["SUPABASE_PUBLISHABLE_KEY"] ||
+      process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+      import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+      "sb_publishable_zsLutER8J1k7E2qpwyE8vw_uVC24oU-";
+
+    console.warn(
+      "SUPABASE_SERVICE_ROLE_KEY is not defined in server environment. Admin RLS bypass is disabled.",
+    );
+
+    return createClient<Database>(SUPABASE_URL, fallbackKey, {
+      global: {
+        fetch: createSupabaseFetch(fallbackKey),
+      },
+      auth: {
+        storage: undefined,
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
+  }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     global: {

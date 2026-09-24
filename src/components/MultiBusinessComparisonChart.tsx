@@ -1,6 +1,19 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, X, Sparkles, Utensils, Coffee, Scissors, ShoppingBag, Hotel, Stethoscope, Dumbbell, Store, ArrowRight } from "lucide-react";
+import {
+  Check,
+  X,
+  Sparkles,
+  Utensils,
+  Coffee,
+  Scissors,
+  ShoppingBag,
+  Hotel,
+  Stethoscope,
+  Dumbbell,
+  Store,
+  ArrowRight,
+} from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
 export interface ComparisonCategory {
@@ -44,7 +57,12 @@ export const COMPARISON_CATEGORIES: ComparisonCategory[] = [
       { feature: "UPI / direct payments", comp1: false, comp2: false, mylink: true },
       { feature: "No middleman delivery fee", comp1: false, comp2: false, mylink: true },
       { feature: "Setup in minutes", comp1: false, comp2: false, mylink: true },
-      { feature: "Offline QR menu (no internet required)", comp1: false, comp2: false, mylink: true },
+      {
+        feature: "Offline QR menu (no internet required)",
+        comp1: false,
+        comp2: false,
+        mylink: true,
+      },
       { feature: "Custom coupon codes", comp1: false, comp2: false, mylink: true },
       {
         feature: "Real-time menu updates",
@@ -71,8 +89,18 @@ export const COMPARISON_CATEGORIES: ComparisonCategory[] = [
         mylink: "₹249–799/mo",
       },
       { feature: "Order commission fee", comp1: "18–30%", comp2: "N/A", mylink: "0% (Zero!)" },
-      { feature: "High-resolution dish photos", comp1: "Limited", comp2: "Static text", mylink: true },
-      { feature: "Instant price updates", comp1: "Slow approval", comp2: "Reprint required", mylink: true },
+      {
+        feature: "High-resolution dish photos",
+        comp1: "Limited",
+        comp2: "Static text",
+        mylink: true,
+      },
+      {
+        feature: "Instant price updates",
+        comp1: "Slow approval",
+        comp2: "Reprint required",
+        mylink: true,
+      },
       { feature: "Multi-language auto-translate", comp1: false, comp2: false, mylink: true },
       { feature: "Direct GPay / PhonePe UPI", comp1: false, comp2: "Cash only", mylink: true },
       { feature: "Counter & takeaway WhatsApp cart", comp1: false, comp2: false, mylink: true },
@@ -96,7 +124,12 @@ export const COMPARISON_CATEGORIES: ComparisonCategory[] = [
         mylink: "0% (Zero!)",
       },
       { feature: "Direct client phone & ownership", comp1: false, comp2: false, mylink: true },
-      { feature: "Custom service catalog & photos", comp1: "Generic template", comp2: "Text only", mylink: true },
+      {
+        feature: "Custom service catalog & photos",
+        comp1: "Generic template",
+        comp2: "Text only",
+        mylink: true,
+      },
       { feature: "Instant service price updates", comp1: "Delayed", comp2: "Slow", mylink: true },
       { feature: "Direct WhatsApp booking", comp1: false, comp2: false, mylink: true },
       { feature: "Printable mirror & counter QR stand", comp1: false, comp2: false, mylink: true },
@@ -119,11 +152,31 @@ export const COMPARISON_CATEGORIES: ComparisonCategory[] = [
         comp2: "2–3% Payment fees",
         mylink: "0% (Zero!)",
       },
-      { feature: "Product catalog setup time", comp1: "Days/weeks", comp2: "Complex build", mylink: "Under 5 mins" },
-      { feature: "Direct customer connection", comp1: "Hidden by platform", comp2: "Email only", mylink: "Direct WhatsApp" },
+      {
+        feature: "Product catalog setup time",
+        comp1: "Days/weeks",
+        comp2: "Complex build",
+        mylink: "Under 5 mins",
+      },
+      {
+        feature: "Direct customer connection",
+        comp1: "Hidden by platform",
+        comp2: "Email only",
+        mylink: "Direct WhatsApp",
+      },
       { feature: "In-store counter QR scanner", comp1: false, comp2: false, mylink: true },
-      { feature: "Instant GPay / PhonePe payouts", comp1: "15-day settlement", comp2: "Weekly payouts", mylink: "Instant 0%" },
-      { feature: "Custom discount coupons", comp1: "Restricted", comp2: "Add-on fee", mylink: true },
+      {
+        feature: "Instant GPay / PhonePe payouts",
+        comp1: "15-day settlement",
+        comp2: "Weekly payouts",
+        mylink: "Instant 0%",
+      },
+      {
+        feature: "Custom discount coupons",
+        comp1: "Restricted",
+        comp2: "Add-on fee",
+        mylink: true,
+      },
     ],
   },
   {
@@ -143,9 +196,24 @@ export const COMPARISON_CATEGORIES: ComparisonCategory[] = [
         mylink: "0% (Zero!)",
       },
       { feature: "In-room QR dining & amenity menu", comp1: false, comp2: false, mylink: true },
-      { feature: "Instant room service via WhatsApp", comp1: false, comp2: "Landline call", mylink: "Direct Room #" },
-      { feature: "Multi-language guest menu", comp1: false, comp2: "English only", mylink: "8+ Languages" },
-      { feature: "Instant price & item updates", comp1: "Slow", comp2: "Reprint binders", mylink: "Instant" },
+      {
+        feature: "Instant room service via WhatsApp",
+        comp1: false,
+        comp2: "Landline call",
+        mylink: "Direct Room #",
+      },
+      {
+        feature: "Multi-language guest menu",
+        comp1: false,
+        comp2: "English only",
+        mylink: "8+ Languages",
+      },
+      {
+        feature: "Instant price & item updates",
+        comp1: "Slow",
+        comp2: "Reprint binders",
+        mylink: "Instant",
+      },
       { feature: "Reception desk QR display", comp1: false, comp2: false, mylink: true },
     ],
   },
@@ -166,8 +234,18 @@ export const COMPARISON_CATEGORIES: ComparisonCategory[] = [
         mylink: "0% (Zero!)",
       },
       { feature: "Direct patient WhatsApp contact", comp1: false, comp2: false, mylink: true },
-      { feature: "Branded digital fee catalog", comp1: "Generic profile", comp2: "Static paper", mylink: true },
-      { feature: "Direct UPI payment QR code", comp1: false, comp2: "Manual cash/card", mylink: "Direct GPay/PhonePe" },
+      {
+        feature: "Branded digital fee catalog",
+        comp1: "Generic profile",
+        comp2: "Static paper",
+        mylink: true,
+      },
+      {
+        feature: "Direct UPI payment QR code",
+        comp1: false,
+        comp2: "Manual cash/card",
+        mylink: "Direct GPay/PhonePe",
+      },
       { feature: "Reception desk vector QR stand", comp1: false, comp2: false, mylink: true },
     ],
   },
@@ -188,7 +266,12 @@ export const COMPARISON_CATEGORIES: ComparisonCategory[] = [
         mylink: "0% (Zero!)",
       },
       { feature: "Direct WhatsApp membership inquiry", comp1: false, comp2: false, mylink: true },
-      { feature: "Digital package catalog", comp1: "Generic listing", comp2: "Paper flyer", mylink: true },
+      {
+        feature: "Digital package catalog",
+        comp1: "Generic listing",
+        comp2: "Paper flyer",
+        mylink: true,
+      },
       { feature: "Instant 0% UPI payment QR", comp1: false, comp2: "Cash/POS", mylink: true },
       { feature: "Front desk QR stand", comp1: false, comp2: false, mylink: true },
     ],
@@ -210,8 +293,18 @@ export const COMPARISON_CATEGORIES: ComparisonCategory[] = [
         mylink: "0% (Zero!)",
       },
       { feature: "Own your local customers", comp1: false, comp2: "Limited", mylink: true },
-      { feature: "Digital product list & prices", comp1: "App controlled", comp2: "Memory only", mylink: true },
-      { feature: "Direct GPay/PhonePe UPI", comp1: "Delayed payouts", comp2: "Cash on delivery", mylink: "Instant 0%" },
+      {
+        feature: "Digital product list & prices",
+        comp1: "App controlled",
+        comp2: "Memory only",
+        mylink: true,
+      },
+      {
+        feature: "Direct GPay/PhonePe UPI",
+        comp1: "Delayed payouts",
+        comp2: "Cash on delivery",
+        mylink: "Instant 0%",
+      },
       { feature: "Counter QR code sticker", comp1: false, comp2: false, mylink: true },
     ],
   },
@@ -274,7 +367,8 @@ export function MultiBusinessComparisonChart() {
       {/* Category Chips Bar */}
       <div className="mb-10 text-center sm:text-left">
         <p className="text-xs font-extrabold uppercase tracking-widest text-[#D99A2B] mb-4 flex items-center gap-1.5 justify-center sm:justify-start">
-          <Sparkles className="size-3.5 text-[#F5A623] animate-pulse" /> SELECT YOUR INDUSTRY CATEGORY
+          <Sparkles className="size-3.5 text-[#F5A623] animate-pulse" /> SELECT YOUR INDUSTRY
+          CATEGORY
         </p>
         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
           {COMPARISON_CATEGORIES.map((cat) => {
@@ -353,7 +447,9 @@ export function MultiBusinessComparisonChart() {
               </div>
               <div className="p-4 sm:p-5 text-center bg-gradient-to-b from-[#FFC45A]/30 via-[#FFC45A]/15 to-[#FFC45A]/10 text-[#FFC45A] flex items-center justify-center gap-1.5 border-l border-r border-[#FFC45A]/30 shadow-inner">
                 <Sparkles className="size-4 text-[#FFC45A] animate-spin-slow" />
-                <span className="font-extrabold tracking-wide text-xs sm:text-sm">⚡ MY Link QR</span>
+                <span className="font-extrabold tracking-wide text-xs sm:text-sm">
+                  ⚡ MY Link QR
+                </span>
               </div>
             </div>
 
@@ -388,13 +484,17 @@ export function MultiBusinessComparisonChart() {
             {/* Table Footer Banner */}
             <div className="p-6 sm:p-8 bg-gradient-to-b from-[#18120D] to-[#100C09] text-center border-t border-white/10 relative z-10">
               <p className="text-white/80 text-xs sm:text-sm mb-5 font-medium max-w-xl mx-auto leading-relaxed">
-                Join hundreds of <span className="text-[#FFC45A] font-bold">{activeCategory.name.toLowerCase()}</span> businesses who switched to MY Link QR and stopped paying commissions.
+                Join hundreds of{" "}
+                <span className="text-[#FFC45A] font-bold">
+                  {activeCategory.name.toLowerCase()}
+                </span>{" "}
+                businesses who switched to MY Link QR and stopped paying commissions.
               </p>
               <motion.button
                 type="button"
                 whileHover={{ scale: 1.05, boxShadow: "0 0 35px rgba(245,166,35,0.45)" }}
                 whileTap={{ scale: 0.96 }}
-                onClick={() => navigate({ to: "/auth" })}
+                onClick={() => navigate({ to: "/auth", search: { tab: "signup", plan: "trial" } })}
                 className="relative group overflow-hidden bg-gradient-to-r from-[#FFC45A] via-[#F5A623] to-[#FFC45A] text-[#100C09] font-extrabold text-xs sm:text-sm px-9 py-4 rounded-full transition-all shadow-2xl cursor-pointer inline-flex items-center gap-2.5 border border-[#FFC45A]/50"
               >
                 <span className="relative z-10 flex items-center gap-2">

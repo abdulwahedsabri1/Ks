@@ -229,7 +229,7 @@ export function BusinessPreviewSection() {
     setCart((prev) =>
       prev
         .map((i) => (i.name === itemName ? { ...i, qty: i.qty + delta } : i))
-        .filter((i) => i.qty > 0)
+        .filter((i) => i.qty > 0),
     );
   };
 
@@ -243,7 +243,7 @@ export function BusinessPreviewSection() {
 
           try {
             const res = await fetch(
-              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
             );
             if (res.ok) {
               const data = await res.json();
@@ -268,7 +268,7 @@ export function BusinessPreviewSection() {
           if (!foundAddress) {
             try {
               const res = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
               );
               if (res.ok) {
                 const data = await res.json();
@@ -312,7 +312,7 @@ export function BusinessPreviewSection() {
             toast.error("Could not fetch GPS. Loaded demo address.");
           }
         },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
       );
     } else {
       setDeliveryAddress("Flat 402, Green Park Avenue");
@@ -414,20 +414,20 @@ export function BusinessPreviewSection() {
                           {activeTab === "restaurant"
                             ? "Restaurant QR Experience Video"
                             : activeTab === "salon"
-                            ? "Salon & Services Dashboard Video"
-                            : activeTab === "retail"
-                            ? "Retail & Mobile Catalog Video"
-                            : "Multi-Business Video Tour"}
+                              ? "Salon & Services Dashboard Video"
+                              : activeTab === "retail"
+                                ? "Retail & Mobile Catalog Video"
+                                : "Multi-Business Video Tour"}
                         </span>
                       </div>
                       <span className="text-[9px] font-bold uppercase tracking-wider bg-[#FFC45A]/20 text-[#FFC45A] px-2 py-0.5 rounded-full">
                         {activeTab === "restaurant"
                           ? "kj.mp4"
                           : activeTab === "salon"
-                          ? "dsf.mp4"
-                          : activeTab === "retail"
-                          ? "Mylinkqr.mp4"
-                          : "Series"}
+                            ? "dsf.mp4"
+                            : activeTab === "retail"
+                              ? "Mylinkqr.mp4"
+                              : "Series"}
                       </span>
                     </div>
 
@@ -447,10 +447,10 @@ export function BusinessPreviewSection() {
                             activeTab === "restaurant"
                               ? "/mock/kj.mp4"
                               : activeTab === "salon"
-                              ? "/mock/dsf.mp4"
-                              : activeTab === "retail"
-                              ? "/mock/Mylinkqr.mp4"
-                              : "/mock/Visual_Show_different_busines.mp4"
+                                ? "/mock/dsf.mp4"
+                                : activeTab === "retail"
+                                  ? "/mock/Mylinkqr.mp4"
+                                  : "/mock/Visual_Show_different_busines.mp4"
                           }
                           type="video/mp4"
                         />
@@ -463,10 +463,10 @@ export function BusinessPreviewSection() {
                         {activeTab === "restaurant"
                           ? "Showing kj.mp4: Restaurant guest ordering flow"
                           : activeTab === "salon"
-                          ? "Showing dsf.mp4: Dashboard & Owner view"
-                          : activeTab === "retail"
-                          ? "Showing Mylinkqr.mp4: Mobile catalog experience"
-                          : "Showing Visual_Show_different_busines.mp4: Multi-business showcase"}
+                            ? "Showing dsf.mp4: Dashboard & Owner view"
+                            : activeTab === "retail"
+                              ? "Showing Mylinkqr.mp4: Mobile catalog experience"
+                              : "Showing Visual_Show_different_busines.mp4: Multi-business showcase"}
                       </p>
                     </div>
                   </motion.div>
@@ -599,7 +599,9 @@ export function BusinessPreviewSection() {
                                           >
                                             <Minus className="size-2.5" />
                                           </button>
-                                          <span className={`px-1 text-[10px] font-bold ${p.textColor}`}>
+                                          <span
+                                            className={`px-1 text-[10px] font-bold ${p.textColor}`}
+                                          >
                                             {qty}
                                           </span>
                                           <button
@@ -707,7 +709,9 @@ export function BusinessPreviewSection() {
                                     className={`flex items-center justify-between p-2.5 rounded-lg border ${p.borderColor} ${p.cardColor}`}
                                   >
                                     <div className="min-w-0 flex-1 pr-2">
-                                      <p className={`text-xs font-semibold truncate ${p.textColor}`}>
+                                      <p
+                                        className={`text-xs font-semibold truncate ${p.textColor}`}
+                                      >
                                         {item.name}
                                       </p>
                                       <p className={`text-[11px] font-bold ${p.accentText}`}>
@@ -723,7 +727,9 @@ export function BusinessPreviewSection() {
                                       >
                                         <Minus className="size-3" />
                                       </button>
-                                      <span className={`w-4 text-center font-bold text-xs ${p.textColor}`}>
+                                      <span
+                                        className={`w-4 text-center font-bold text-xs ${p.textColor}`}
+                                      >
                                         {item.qty}
                                       </span>
                                       <button
@@ -755,12 +761,12 @@ export function BusinessPreviewSection() {
                                     ORDER / ENQUIRY TYPE
                                   </p>
                                   <div className="flex flex-wrap gap-1.5 text-[11px]">
-                                     {[
-                                       { id: "delivery", label: "Delivery" },
-                                       { id: "takeaway", label: "Take Away" },
-                                       { id: "on_table", label: "On-Table Dining" },
-                                       { id: "enquiry", label: "General Enquiry / Quote" },
-                                     ].map((type) => (
+                                    {[
+                                      { id: "delivery", label: "Delivery" },
+                                      { id: "takeaway", label: "Take Away" },
+                                      { id: "on_table", label: "On-Table Dining" },
+                                      { id: "enquiry", label: "General Enquiry / Quote" },
+                                    ].map((type) => (
                                       <button
                                         key={type.id}
                                         type="button"
@@ -894,7 +900,9 @@ export function BusinessPreviewSection() {
                                 </div>
 
                                 {/* Discount Code Block */}
-                                <div className={`p-2.5 rounded-xl border ${p.borderColor} bg-white/5 space-y-1.5`}>
+                                <div
+                                  className={`p-2.5 rounded-xl border ${p.borderColor} bg-white/5 space-y-1.5`}
+                                >
                                   <label className={`text-[10px] font-bold ${p.accentText}`}>
                                     Discount Code
                                   </label>
@@ -952,7 +960,8 @@ export function BusinessPreviewSection() {
                                         exit={{ opacity: 0, height: 0 }}
                                         className="text-[9px] text-emerald-400 font-bold flex items-center gap-1"
                                       >
-                                        <CheckCircle className="size-3" /> Coupon applied: -₹{appliedDiscount}
+                                        <CheckCircle className="size-3" /> Coupon applied: -₹
+                                        {appliedDiscount}
                                       </motion.p>
                                     )}
                                   </AnimatePresence>

@@ -70,7 +70,9 @@ export function DashboardShell({
           />
           <div>
             <span className="font-display text-base font-bold leading-tight block">MY Link QR</span>
-            <span className="text-[11px] text-muted-foreground font-medium">Digital Catalog Engine</span>
+            <span className="text-[11px] text-muted-foreground font-medium">
+              Digital Catalog Engine
+            </span>
           </div>
         </Link>
 
@@ -107,7 +109,8 @@ export function DashboardShell({
             NAV.map((item) => {
               const isActive = pathname === item.to;
               const Icon = item.icon;
-              const isAnalyticsLocked = item.to === "/analytics" && shop && !shopFeatures(shop).analytics;
+              const isAnalyticsLocked =
+                item.to === "/analytics" && shop && !shopFeatures(shop).analytics;
               return (
                 <Link
                   key={item.to}
@@ -121,7 +124,9 @@ export function DashboardShell({
                 >
                   <div className="flex items-center gap-3">
                     <Icon className="size-4 shrink-0" />
-                    <span>{item.label === "Menu & Items" ? `${catalogLabel} & Items` : item.label}</span>
+                    <span>
+                      {item.label === "Menu & Items" ? `${catalogLabel} & Items` : item.label}
+                    </span>
                   </div>
                   {isAnalyticsLocked && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-500 border border-amber-500/20 shrink-0">
@@ -381,7 +386,12 @@ export function DashboardShell({
                       : "text-muted-foreground hover:text-foreground opacity-80",
                   )}
                 >
-                  <div className={cn("p-1 rounded-lg transition-colors", isActive && "bg-amber-500/10 text-amber-500")}>
+                  <div
+                    className={cn(
+                      "p-1 rounded-lg transition-colors",
+                      isActive && "bg-amber-500/10 text-amber-500",
+                    )}
+                  >
                     <Icon className="size-4" />
                   </div>
                   <span className="truncate max-w-[60px]">{displayLabel}</span>
@@ -396,4 +406,3 @@ export function DashboardShell({
 }
 
 export default DashboardShell;
-

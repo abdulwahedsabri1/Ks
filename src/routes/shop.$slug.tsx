@@ -38,6 +38,7 @@ import {
   shopTiming,
   shopSocialLinks,
   shopGoogleReviewLink,
+  shopCartEnabled,
   shopDeliveryEnabled,
   shopTakeawayEnabled,
   shopOnTableEnabled,
@@ -75,7 +76,8 @@ export const Route = createFileRoute("/shop/$slug")({
     const catalogLabel = shopCatalogLabel(shop as unknown as Shop);
     const title = `${shop.name} — ${catalogLabel}`;
     const description =
-      shop.tagline ?? `Browse the live ${catalogLabel.toLowerCase()} of ${shop.name} and order on WhatsApp.`;
+      shop.tagline ??
+      `Browse the live ${catalogLabel.toLowerCase()} of ${shop.name} and order on WhatsApp.`;
     return {
       meta: [
         { title },
@@ -193,10 +195,9 @@ function PublicMenu() {
     };
   }, [shop?.id]);
 
-
-
   const subState = subscriptionState(shop);
-  const isSuspendedOrExpired = shop.status === "suspended" || subState === "expired" || subState === "suspended";
+  const isSuspendedOrExpired =
+    shop.status === "suspended" || subState === "expired" || subState === "suspended";
 
   if (isSuspendedOrExpired) {
     return (
@@ -205,9 +206,13 @@ function PublicMenu() {
           <AlertTriangle className="size-12 text-rose-500 mx-auto" />
           <h1 className="font-display text-2xl font-bold">Shop Menu Unavailable</h1>
           <p className="text-xs text-slate-400 leading-relaxed">
-            This shop menu is currently inactive or temporarily suspended. Please contact the business owner or platform administrator.
+            This shop menu is currently inactive or temporarily suspended. Please contact the
+            business owner or platform administrator.
           </p>
-          <Button asChild className="bg-[#00E676] text-[#080C14] font-bold hover:bg-[#00E676]/90 rounded-xl">
+          <Button
+            asChild
+            className="bg-[#00E676] text-[#080C14] font-bold hover:bg-[#00E676]/90 rounded-xl"
+          >
             <Link to="/">Go Home</Link>
           </Button>
         </div>
@@ -418,19 +423,17 @@ function PublicMenu() {
       .then(() => undefined);
   }, [shop.id]);
 
-function mergeShop(prev: Shop, updated: Partial<Shop>): Shop {
-  const mergedFeatures =
-    updated.features !== undefined
-      ? (updated.features as Record<string, any> | null)
-      : (prev.features ?? null);
-  return {
-    ...prev,
-    ...updated,
-    features: mergedFeatures,
-  };
-}
-
-
+  function mergeShop(prev: Shop, updated: Partial<Shop>): Shop {
+    const mergedFeatures =
+      updated.features !== undefined
+        ? (updated.features as Record<string, any> | null)
+        : (prev.features ?? null);
+    return {
+      ...prev,
+      ...updated,
+      features: mergedFeatures,
+    };
+  }
 
   useEffect(() => {
     if (!showTranslate) return;
@@ -489,7 +492,8 @@ function mergeShop(prev: Shop, updated: Partial<Shop>): Shop {
   const visible = items.filter(
     (i) => i.is_available && (active === "all" || i.category_id === active),
   );
-  const canOrder = features.ordering && !!shop.whatsapp;
+  const isCartEnabled = shopCartEnabled(shop);
+  const canOrder = features.ordering && isCartEnabled && !!shop.whatsapp;
 
   function change(id: string, delta: number) {
     setCart((c) => ({ ...c, [id]: Math.max(0, (c[id] ?? 0) + delta) }));
@@ -1181,7 +1185,8 @@ function mergeShop(prev: Shop, updated: Partial<Shop>): Shop {
                       }}
                     >
                       <MessageCircle className="mr-2 size-5" />
-                      {orderType === "enquiry" ? "Send Enquiry" : "Send Order"} ({money(total, shop.currency)})
+                      {orderType === "enquiry" ? "Send Enquiry" : "Send Order"} (
+                      {money(total, shop.currency)})
                     </a>
                   </Button>
                 </div>

@@ -102,7 +102,8 @@ export function usePaymentSettings() {
       return {
         ...DEFAULT_SETTINGS,
         ...settings,
-        coupons: settings.coupons && Array.isArray(settings.coupons) ? settings.coupons : DEFAULT_COUPONS,
+        coupons:
+          settings.coupons && Array.isArray(settings.coupons) ? settings.coupons : DEFAULT_COUPONS,
       };
     },
   });
@@ -116,7 +117,12 @@ export function usePaymentSettings() {
         .channel(topic)
         .on(
           "postgres_changes",
-          { event: "*", schema: "public", table: "shops", filter: "slug=eq.platform-settings-internal" },
+          {
+            event: "*",
+            schema: "public",
+            table: "shops",
+            filter: "slug=eq.platform-settings-internal",
+          },
           () => {
             queryClient.invalidateQueries({ queryKey: ["payment_settings"] });
           },
@@ -132,7 +138,10 @@ export function usePaymentSettings() {
   return query;
 }
 
-export async function savePaymentSettings(updatedSettings: Partial<PaymentSettings>, userId?: string) {
+export async function savePaymentSettings(
+  updatedSettings: Partial<PaymentSettings>,
+  userId?: string,
+) {
   if (typeof window !== "undefined") {
     const existing = localStorage.getItem("mylink_payment_settings");
     const parsed = existing ? JSON.parse(existing) : {};
@@ -159,10 +168,7 @@ export async function savePaymentSettings(updatedSettings: Partial<PaymentSettin
     };
 
     if (targetShop?.id) {
-      await supabase
-        .from("shops")
-        .update({ features: updatedFeatures })
-        .eq("id", targetShop.id);
+      await supabase.from("shops").update({ features: updatedFeatures }).eq("id", targetShop.id);
     } else {
       await supabase.from("shops").insert({
         slug: "platform-settings-internal",
@@ -208,4 +214,3 @@ export async function recordCouponUsage(couponCode: string) {
     console.error("Failed to record coupon usage:", err);
   }
 }
-

@@ -819,7 +819,11 @@ export function QrPage() {
 
         ctx.fillStyle = "rgba(255,255,255,0.6)";
         ctx.font = "28px sans-serif";
-        ctx.fillText("No registration required • Powered by MY Link QR", width / 2, gy + glassH - 75);
+        ctx.fillText(
+          "No registration required • Powered by MY Link QR",
+          width / 2,
+          gy + glassH - 75,
+        );
       }
       // 8. RETRO DINER & BISTRO
       else if (frameStyle === "retro_diner") {
@@ -1890,26 +1894,152 @@ export function QrPage() {
     cat: CategoryFilter;
     minPlan: "basic" | "pro" | "premium";
   }[] = [
-    { id: "stand", label: "Table Stand", icon: <Store className="size-5" />, tag: "Popular", cat: "food_dining", minPlan: "basic" },
-    { id: "food_truck", label: "Express Bites", icon: <Truck className="size-5" />, tag: "Express", cat: "food_dining", minPlan: "basic" },
-    { id: "minimal_mono", label: "Matte Mono", icon: <Square className="size-5" />, tag: "Minimal", cat: "minimal_pure", minPlan: "basic" },
-    { id: "nordic_warm", label: "Nordic Linen", icon: <Coffee className="size-5" />, tag: "Warm", cat: "food_dining", minPlan: "basic" },
-    { id: "poster", label: "Poster Card", icon: <Sparkles className="size-5" />, tag: "Classic", cat: "retail_shopping", minPlan: "basic" },
-    { id: "clean", label: "Minimal 1:1", icon: <QrIcon className="size-5" />, tag: "Pure QR", cat: "minimal_pure", minPlan: "basic" },
+    {
+      id: "stand",
+      label: "Table Stand",
+      icon: <Store className="size-5" />,
+      tag: "Popular",
+      cat: "food_dining",
+      minPlan: "basic",
+    },
+    {
+      id: "food_truck",
+      label: "Express Bites",
+      icon: <Truck className="size-5" />,
+      tag: "Express",
+      cat: "food_dining",
+      minPlan: "basic",
+    },
+    {
+      id: "minimal_mono",
+      label: "Matte Mono",
+      icon: <Square className="size-5" />,
+      tag: "Minimal",
+      cat: "minimal_pure",
+      minPlan: "basic",
+    },
+    {
+      id: "nordic_warm",
+      label: "Nordic Linen",
+      icon: <Coffee className="size-5" />,
+      tag: "Warm",
+      cat: "food_dining",
+      minPlan: "basic",
+    },
+    {
+      id: "poster",
+      label: "Poster Card",
+      icon: <Sparkles className="size-5" />,
+      tag: "Classic",
+      cat: "retail_shopping",
+      minPlan: "basic",
+    },
+    {
+      id: "clean",
+      label: "Minimal 1:1",
+      icon: <QrIcon className="size-5" />,
+      tag: "Pure QR",
+      cat: "minimal_pure",
+      minPlan: "basic",
+    },
 
-    { id: "rose_gold_salon", label: "Rose Gold Salon", icon: <Scissors className="size-5" />, tag: "Salon", cat: "salon_beauty", minPlan: "pro" },
-    { id: "gym_fitness", label: "Power Gym", icon: <Dumbbell className="size-5" />, tag: "Fitness", cat: "health_fitness", minPlan: "pro" },
-    { id: "cyber_neon", label: "Cyber Neon", icon: <Zap className="size-5" />, tag: "Trendy", cat: "tech_modern", minPlan: "pro" },
-    { id: "retro_diner", label: "Retro Bistro", icon: <Utensils className="size-5" />, tag: "Vibe", cat: "food_dining", minPlan: "pro" },
-    { id: "emerald_botanical", label: "Emerald Spa", icon: <Leaf className="size-5" />, tag: "Botanical", cat: "salon_beauty", minPlan: "pro" },
-    { id: "sunset_vibes", label: "Sunset Lounge", icon: <Sun className="size-5" />, tag: "Lounge", cat: "hotels_hospitality", minPlan: "pro" },
+    {
+      id: "rose_gold_salon",
+      label: "Rose Gold Salon",
+      icon: <Scissors className="size-5" />,
+      tag: "Salon",
+      cat: "salon_beauty",
+      minPlan: "pro",
+    },
+    {
+      id: "gym_fitness",
+      label: "Power Gym",
+      icon: <Dumbbell className="size-5" />,
+      tag: "Fitness",
+      cat: "health_fitness",
+      minPlan: "pro",
+    },
+    {
+      id: "cyber_neon",
+      label: "Cyber Neon",
+      icon: <Zap className="size-5" />,
+      tag: "Trendy",
+      cat: "tech_modern",
+      minPlan: "pro",
+    },
+    {
+      id: "retro_diner",
+      label: "Retro Bistro",
+      icon: <Utensils className="size-5" />,
+      tag: "Vibe",
+      cat: "food_dining",
+      minPlan: "pro",
+    },
+    {
+      id: "emerald_botanical",
+      label: "Emerald Spa",
+      icon: <Leaf className="size-5" />,
+      tag: "Botanical",
+      cat: "salon_beauty",
+      minPlan: "pro",
+    },
+    {
+      id: "sunset_vibes",
+      label: "Sunset Lounge",
+      icon: <Sun className="size-5" />,
+      tag: "Lounge",
+      cat: "hotels_hospitality",
+      minPlan: "pro",
+    },
 
-    { id: "luxury_gold", label: "Luxury Gold", icon: <Crown className="size-5" />, tag: "Premium", cat: "salon_beauty", minPlan: "premium" },
-    { id: "hotel_concierge", label: "Grand Hotel", icon: <Bed className="size-5" />, tag: "Hotel", cat: "hotels_hospitality", minPlan: "premium" },
-    { id: "jewelry_luxury", label: "Diamond Jewelry", icon: <Diamond className="size-5" />, tag: "Luxury", cat: "retail_shopping", minPlan: "premium" },
-    { id: "clinic_medical", label: "Clinic Medical", icon: <Stethoscope className="size-5" />, tag: "Clinic", cat: "health_fitness", minPlan: "premium" },
-    { id: "royal_glass", label: "Royal Glass", icon: <Gem className="size-5" />, tag: "Modern", cat: "hotels_hospitality", minPlan: "premium" },
-    { id: "hologram_futuristic", label: "Prism Tech", icon: <Radio className="size-5" />, tag: "Futuristic", cat: "tech_modern", minPlan: "premium" },
+    {
+      id: "luxury_gold",
+      label: "Luxury Gold",
+      icon: <Crown className="size-5" />,
+      tag: "Premium",
+      cat: "salon_beauty",
+      minPlan: "premium",
+    },
+    {
+      id: "hotel_concierge",
+      label: "Grand Hotel",
+      icon: <Bed className="size-5" />,
+      tag: "Hotel",
+      cat: "hotels_hospitality",
+      minPlan: "premium",
+    },
+    {
+      id: "jewelry_luxury",
+      label: "Diamond Jewelry",
+      icon: <Diamond className="size-5" />,
+      tag: "Luxury",
+      cat: "retail_shopping",
+      minPlan: "premium",
+    },
+    {
+      id: "clinic_medical",
+      label: "Clinic Medical",
+      icon: <Stethoscope className="size-5" />,
+      tag: "Clinic",
+      cat: "health_fitness",
+      minPlan: "premium",
+    },
+    {
+      id: "royal_glass",
+      label: "Royal Glass",
+      icon: <Gem className="size-5" />,
+      tag: "Modern",
+      cat: "hotels_hospitality",
+      minPlan: "premium",
+    },
+    {
+      id: "hologram_futuristic",
+      label: "Prism Tech",
+      icon: <Radio className="size-5" />,
+      tag: "Futuristic",
+      cat: "tech_modern",
+      minPlan: "premium",
+    },
   ];
 
   const categoryTabs: { id: CategoryFilter; label: string }[] = [
@@ -1923,9 +2053,8 @@ export function QrPage() {
     { id: "minimal_pure", label: "Minimalist" },
   ];
 
-  const filteredFrames = categoryFilter === "all"
-    ? frameOptions
-    : frameOptions.filter((f) => f.cat === categoryFilter);
+  const filteredFrames =
+    categoryFilter === "all" ? frameOptions : frameOptions.filter((f) => f.cat === categoryFilter);
 
   const handleSelectTheme = (opt: (typeof frameOptions)[0]) => {
     const requiredLevel = minPlanLevels[opt.minPlan] ?? 1;
@@ -1940,7 +2069,7 @@ export function QrPage() {
             },
           },
           duration: 6000,
-        }
+        },
       );
       return;
     }
@@ -2000,7 +2129,9 @@ export function QrPage() {
           isAdmin={!!isAdmin}
         >
           {!shop ? (
-            <p className="text-sm text-muted-foreground">Create your shop on the dashboard first.</p>
+            <p className="text-sm text-muted-foreground">
+              Create your shop on the dashboard first.
+            </p>
           ) : (
             <div className="grid gap-6 lg:grid-cols-[1fr_440px] items-start">
               {/* Main Display Preview Card */}
@@ -2091,7 +2222,11 @@ export function QrPage() {
                         className="h-11 px-5 text-xs sm:text-sm font-bold rounded-xl border-border flex-1 min-w-[130px]"
                         onClick={handleCopyLink}
                       >
-                        {copied ? <Check className="mr-2 size-4 text-green-500" /> : <Copy className="mr-2 size-4" />}
+                        {copied ? (
+                          <Check className="mr-2 size-4 text-green-500" />
+                        ) : (
+                          <Copy className="mr-2 size-4" />
+                        )}
                         {copied ? "Copied!" : "Copy Link"}
                       </Button>
                       <Button
@@ -2107,7 +2242,8 @@ export function QrPage() {
                 ) : (
                   <div className="py-12 flex flex-col items-center justify-center opacity-90">
                     <p className="text-sm text-muted-foreground mb-4">
-                      {qrType === "map" && "You haven't added a Google Maps link in Shop Settings yet."}
+                      {qrType === "map" &&
+                        "You haven't added a Google Maps link in Shop Settings yet."}
                       {qrType === "review" &&
                         "You haven't added a Google Review link in Shop Settings yet."}
                     </p>
@@ -2168,7 +2304,15 @@ export function QrPage() {
                           }`}
                         >
                           <div className="flex items-center justify-between w-full mb-2">
-                            <div className={frameStyle === opt.id ? "text-amber-500" : isLocked ? "text-muted-foreground/60" : "text-muted-foreground"}>
+                            <div
+                              className={
+                                frameStyle === opt.id
+                                  ? "text-amber-500"
+                                  : isLocked
+                                    ? "text-muted-foreground/60"
+                                    : "text-muted-foreground"
+                              }
+                            >
                               {opt.icon}
                             </div>
                             {isLocked ? (
@@ -2181,7 +2325,11 @@ export function QrPage() {
                               </span>
                             )}
                           </div>
-                          <span className={`text-xs font-semibold leading-tight ${isLocked ? "text-muted-foreground" : ""}`}>{opt.label}</span>
+                          <span
+                            className={`text-xs font-semibold leading-tight ${isLocked ? "text-muted-foreground" : ""}`}
+                          >
+                            {opt.label}
+                          </span>
                         </button>
                       );
                     })}
@@ -2223,7 +2371,9 @@ export function QrPage() {
                             aria-label={`Use colour ${c.name}`}
                             onClick={() => setDark(c.color)}
                             className={`size-7 rounded-full border-2 transition-transform hover:scale-110 ${
-                              dark === c.color ? "border-amber-500 scale-110 ring-2 ring-amber-500/30" : "border-transparent"
+                              dark === c.color
+                                ? "border-amber-500 scale-110 ring-2 ring-amber-500/30"
+                                : "border-transparent"
                             }`}
                             style={{ background: c.color }}
                           />
@@ -2254,7 +2404,8 @@ export function QrPage() {
                     onClick={() => void render()}
                     disabled={busy}
                   >
-                    <RefreshCw className={`mr-2 size-3.5 ${busy ? "animate-spin" : ""}`} /> Regenerate QR Code
+                    <RefreshCw className={`mr-2 size-3.5 ${busy ? "animate-spin" : ""}`} />{" "}
+                    Regenerate QR Code
                   </Button>
                 </div>
               </div>

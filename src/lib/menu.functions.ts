@@ -116,4 +116,3 @@ export const getPublicShop = createServerFn({ method: "GET" })
 
     return result;
   });
-

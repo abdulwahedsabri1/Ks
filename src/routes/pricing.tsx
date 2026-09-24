@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, Sparkles, X, Minus, ShieldCheck, Loader2, Lock } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { PLANS, parsePriceNumber, type PlanItem } from "@/lib/shop";
+import { PLANS, parsePriceNumber, calculatePlanSavings, type PlanItem } from "@/lib/shop";
 import { useCustomPlans } from "@/hooks/useShopData";
 import { RazorpayModal } from "@/components/RazorpayModal";
 import { Navbar } from "@/sections/landing/Navbar";
@@ -71,7 +71,13 @@ const COMPARE_ROWS: CompRow[] = [
     pro: false,
     premium: true,
   },
-  { feature: "QR Code Themes", trial: "3 Standard", basic: "6 Standard", pro: "12 Themes", premium: "All 18 Themes" },
+  {
+    feature: "QR Code Themes",
+    trial: "3 Standard",
+    basic: "6 Standard",
+    pro: "12 Themes",
+    premium: "All 18 Themes",
+  },
   { feature: "Google Reviews integration", trial: false, basic: false, pro: false, premium: true },
   { feature: "Custom domain", trial: false, basic: false, pro: false, premium: true },
   { feature: "Priority support", trial: false, basic: false, pro: false, premium: true },
@@ -176,11 +182,14 @@ function PricingPage() {
   const { user } = useAuth();
   const { data: plans = PLANS } = useCustomPlans();
   const [selectedPlan, setSelectedPlan] = useState<PlanItem | null>(null);
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("yearly");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
 
   const handlePlanClick = (p: PlanItem) => {
     if (!user) {
-      navigate({ to: "/auth" });
+      navigate({
+        to: "/auth",
+        search: { tab: "signup", plan: p.id, cycle: billingCycle },
+      });
       return;
     }
     if (p.id === "trial") {
@@ -198,7 +207,7 @@ function PricingPage() {
   const priceOf = (p: PlanItem) => {
     if (p.id === "trial") return 0;
     if (billingCycle === "yearly") {
-      return p.yearlyPriceNumber || (p.priceNumber ? p.priceNumber * 10 : 0);
+      return p.yearlyPriceNumber || (p.priceNumber ? p.priceNumber * 12 : 0);
     }
     return p.priceNumber ?? parsePriceNumber(p.price);
   };
@@ -206,7 +215,7 @@ function PricingPage() {
   const priceDisplayOf = (p: PlanItem) => {
     if (p.id === "trial") return "Free";
     if (billingCycle === "yearly") {
-      const val = p.yearlyPriceNumber || (p.priceNumber ? p.priceNumber * 10 : 0);
+      const val = p.yearlyPriceNumber || (p.priceNumber ? p.priceNumber * 12 : 0);
       return `₹${val.toLocaleString("en-IN")}`;
     }
     const val = p.priceNumber ?? parsePriceNumber(p.price);
@@ -229,7 +238,8 @@ function PricingPage() {
           </h1>
 
           <p className="text-base sm:text-lg text-[#3A2818]/70 max-w-2xl mx-auto leading-relaxed font-medium mb-8">
-            No hidden fees. Upgrade or cancel anytime. Get 2 months extra free on annual subscriptions!
+            No hidden fees. Upgrade or cancel anytime. Get 2 months extra free on annual
+            subscriptions!
           </p>
 
           {/* Billing Cycle Toggle Switch */}
@@ -286,33 +296,68 @@ function PricingPage() {
                   )}
 
                   <div>
-                    <h2 className="font-display text-2xl font-bold mb-1 text-[#100C09]">{p.name}</h2>
+                    <h2 className="font-display text-2xl font-bold mb-1 text-[#100C09]">
+                      {p.name}
+                    </h2>
                     <p className="text-xs text-[#3A2818]/70 mb-4 min-h-[32px] leading-relaxed font-medium">
                       {p.tagline}
                     </p>
 
-                    <div className="flex items-baseline gap-1 mb-2">
-                      <span className="font-display text-4xl font-extrabold text-[#100C09]">
-                        {priceDisplayOf(p)}
-                      </span>
-                      <span className="text-[#3A2818]/70 text-xs font-medium">
-                        /{billingCycle === "yearly" && p.id !== "trial" ? "year" : "month"}
-                      </span>
-                    </div>
+                    {(() => {
+                      const sav = calculatePlanSavings(p);
+                      const isYearly = billingCycle === "yearly" && p.id !== "trial";
 
-                    {billingCycle === "yearly" && p.id !== "trial" ? (
-                      <div className="mb-6 pb-4 border-b border-black/10">
-                        <span className="text-[11px] font-bold text-[#D99A2B] bg-[#F5A623]/15 px-2.5 py-1 rounded-md border border-[#F5A623]/30 inline-block">
-                          🎁 {totalMonths} Months Access ({extraMonths > 0 ? `12 Mos + ${extraMonths} ${extraMonths === 1 ? "Mo" : "Mos"} Extra Free` : "12 Months Access"})
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="mb-6 pb-4 border-b border-black/10">
-                        <span className="text-[11px] text-[#3A2818]/50 font-medium">
-                          Billed monthly, cancel anytime
-                        </span>
-                      </div>
-                    )}
+                      return (
+                        <>
+                          <div className="flex flex-col mb-2">
+                            {isYearly && sav.monthly12x > sav.yearlyPrice && (
+                              <div className="flex items-center gap-2 text-xs text-[#3A2818]/50 line-through font-semibold">
+                                <span>12x Regular: ₹{sav.monthly12x.toLocaleString("en-IN")}</span>
+                              </div>
+                            )}
+                            <div className="flex items-baseline gap-1">
+                              <span className="font-display text-4xl font-extrabold text-[#100C09]">
+                                {priceDisplayOf(p)}
+                              </span>
+                              <span className="text-[#3A2818]/70 text-xs font-medium">
+                                /{isYearly ? "year" : "month"}
+                              </span>
+                              {isYearly && sav.effectiveMonthly > 0 && (
+                                <span className="text-[11px] text-emerald-700 font-bold ml-1.5">
+                                  (₹{sav.effectiveMonthly}/mo)
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {isYearly ? (
+                            <div className="mb-6 pb-4 border-b border-black/10 space-y-1.5">
+                              {sav.savingsAmount > 0 && (
+                                <div className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-emerald-800 bg-emerald-500/15 px-2.5 py-0.5 rounded-md border border-emerald-500/30">
+                                  💥 SAVE ₹{sav.savingsAmount.toLocaleString("en-IN")} (
+                                  {sav.discountPercent}% OFF)
+                                </div>
+                              )}
+                              <div>
+                                <span className="text-[11px] font-bold text-[#D99A2B] bg-[#F5A623]/15 px-2.5 py-1 rounded-md border border-[#F5A623]/30 inline-block">
+                                  🎁 {totalMonths} Months Access (
+                                  {extraMonths > 0
+                                    ? `12 Mos + ${extraMonths} ${extraMonths === 1 ? "Mo" : "Mos"} Extra Free`
+                                    : "12 Months Access"}
+                                  )
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mb-6 pb-4 border-b border-black/10">
+                              <span className="text-[11px] text-[#3A2818]/50 font-medium">
+                                Billed monthly, cancel anytime
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
 
                     <ul className="space-y-3 mb-8 text-xs text-[#3A2818]/80 font-medium">
                       {p.features.map((f: string) => (

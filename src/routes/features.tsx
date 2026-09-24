@@ -491,214 +491,213 @@ function FeaturesRoute() {
         </section>
 
         <div className="pb-24">
-
-        {/* Highlight Banner: Most Profitable Feature */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-14 md:mt-20">
-          <div className="rounded-3xl border border-emerald-600/30 bg-gradient-to-r from-emerald-50 via-white to-teal-50 p-6 sm:p-10 shadow-xl relative overflow-hidden text-[#100C09] group hover:border-emerald-500 transition-all duration-300">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
-              <div className="space-y-4 max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-600/15 border border-emerald-600/30 text-emerald-800 text-xs font-bold uppercase tracking-wider">
-                  <Flame className="size-3.5 text-emerald-600" /> Most Profitable Feature #1
+          {/* Highlight Banner: Most Profitable Feature */}
+          <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-14 md:mt-20">
+            <div className="rounded-3xl border border-emerald-600/30 bg-gradient-to-r from-emerald-50 via-white to-teal-50 p-6 sm:p-10 shadow-xl relative overflow-hidden text-[#100C09] group hover:border-emerald-500 transition-all duration-300">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
+                <div className="space-y-4 max-w-2xl">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-600/15 border border-emerald-600/30 text-emerald-800 text-xs font-bold uppercase tracking-wider">
+                    <Flame className="size-3.5 text-emerald-600" /> Most Profitable Feature #1
+                  </div>
+                  <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#100C09]">
+                    WhatsApp Direct Ordering + Instant 0% Fee UPI Payments
+                  </h2>
+                  <p className="text-sm text-[#3A2818]/80 leading-relaxed font-medium">
+                    Eliminate 15%–30% food aggregator commission fees. Accept orders directly to
+                    your staff WhatsApp with payments deposited straight to your UPI ID (
+                    <code className="text-emerald-800 font-bold bg-emerald-100/70 px-1.5 py-0.5 rounded">
+                      GPay, PhonePe, Paytm
+                    </code>
+                    ) with <strong className="text-emerald-800 font-bold">0% fees</strong>.
+                  </p>
+                  <div className="flex flex-wrap gap-4 text-xs text-[#3A2818]/90 font-semibold pt-1">
+                    <span className="flex items-center gap-1.5">
+                      <Check className="size-4 text-emerald-600 stroke-[3]" /> Save ₹15,000+ monthly
+                      in fees
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Check className="size-4 text-emerald-600 stroke-[3]" /> 100% Instant bank
+                      settlements
+                    </span>
+                  </div>
                 </div>
-                <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#100C09]">
-                  WhatsApp Direct Ordering + Instant 0% Fee UPI Payments
-                </h2>
-                <p className="text-sm text-[#3A2818]/80 leading-relaxed font-medium">
-                  Eliminate 15%–30% food aggregator commission fees. Accept orders directly to your
-                  staff WhatsApp with payments deposited straight to your UPI ID (
-                  <code className="text-emerald-800 font-bold bg-emerald-100/70 px-1.5 py-0.5 rounded">
-                    GPay, PhonePe, Paytm
-                  </code>
-                  ) with <strong className="text-emerald-800 font-bold">0% fees</strong>.
-                </p>
-                <div className="flex flex-wrap gap-4 text-xs text-[#3A2818]/90 font-semibold pt-1">
-                  <span className="flex items-center gap-1.5">
-                    <Check className="size-4 text-emerald-600 stroke-[3]" /> Save ₹15,000+ monthly
-                    in fees
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Check className="size-4 text-emerald-600 stroke-[3]" /> 100% Instant bank
-                    settlements
-                  </span>
-                </div>
-              </div>
 
-              <div className="flex-shrink-0 w-full md:w-auto">
-                <Button
-                  asChild
-                  size="lg"
-                  className="w-full md:w-auto rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-12 px-8 shadow-lg hover:scale-105 transition-all"
-                >
-                  <Link to="/auth">Unlock UPI Payments</Link>
-                </Button>
+                <div className="flex-shrink-0 w-full md:w-auto">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="w-full md:w-auto rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-12 px-8 shadow-lg hover:scale-105 transition-all"
+                  >
+                    <Link to="/auth">Unlock UPI Payments</Link>
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Category Tabs */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-16 text-center">
-          <div className="inline-flex flex-wrap items-center justify-center gap-2 p-2 rounded-2xl border border-black/10 bg-white shadow-md">
-            <button
-              onClick={() => setActiveCategory("all")}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                activeCategory === "all"
-                  ? "bg-[#100C09] text-white shadow-md"
-                  : "text-[#3A2818]/70 hover:text-[#100C09] hover:bg-black/5"
-              }`}
-            >
-              All 16+ Features ({ALL_16_FEATURES.length})
-            </button>
-            <button
-              onClick={() => setActiveCategory("payments")}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                activeCategory === "payments"
-                  ? "bg-emerald-600 text-white shadow-md"
-                  : "text-[#3A2818]/70 hover:text-[#100C09] hover:bg-black/5"
-              }`}
-            >
-              🔥 Payments & Revenue
-            </button>
-            <button
-              onClick={() => setActiveCategory("ordering")}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                activeCategory === "ordering"
-                  ? "bg-[#100C09] text-white shadow-md"
-                  : "text-[#3A2818]/70 hover:text-[#100C09] hover:bg-black/5"
-              }`}
-            >
-              Ordering & Menu AI
-            </button>
-            <button
-              onClick={() => setActiveCategory("design")}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                activeCategory === "design"
-                  ? "bg-[#100C09] text-white shadow-md"
-                  : "text-[#3A2818]/70 hover:text-[#100C09] hover:bg-black/5"
-              }`}
-            >
-              Design & Themes
-            </button>
-            <button
-              onClick={() => setActiveCategory("analytics")}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                activeCategory === "analytics"
-                  ? "bg-[#100C09] text-white shadow-md"
-                  : "text-[#3A2818]/70 hover:text-[#100C09] hover:bg-black/5"
-              }`}
-            >
-              Analytics & Stats
-            </button>
-          </div>
-        </section>
+          {/* Category Tabs */}
+          <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-16 text-center">
+            <div className="inline-flex flex-wrap items-center justify-center gap-2 p-2 rounded-2xl border border-black/10 bg-white shadow-md">
+              <button
+                onClick={() => setActiveCategory("all")}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  activeCategory === "all"
+                    ? "bg-[#100C09] text-white shadow-md"
+                    : "text-[#3A2818]/70 hover:text-[#100C09] hover:bg-black/5"
+                }`}
+              >
+                All 16+ Features ({ALL_16_FEATURES.length})
+              </button>
+              <button
+                onClick={() => setActiveCategory("payments")}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  activeCategory === "payments"
+                    ? "bg-emerald-600 text-white shadow-md"
+                    : "text-[#3A2818]/70 hover:text-[#100C09] hover:bg-black/5"
+                }`}
+              >
+                🔥 Payments & Revenue
+              </button>
+              <button
+                onClick={() => setActiveCategory("ordering")}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  activeCategory === "ordering"
+                    ? "bg-[#100C09] text-white shadow-md"
+                    : "text-[#3A2818]/70 hover:text-[#100C09] hover:bg-black/5"
+                }`}
+              >
+                Ordering & Menu AI
+              </button>
+              <button
+                onClick={() => setActiveCategory("design")}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  activeCategory === "design"
+                    ? "bg-[#100C09] text-white shadow-md"
+                    : "text-[#3A2818]/70 hover:text-[#100C09] hover:bg-black/5"
+                }`}
+              >
+                Design & Themes
+              </button>
+              <button
+                onClick={() => setActiveCategory("analytics")}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                  activeCategory === "analytics"
+                    ? "bg-[#100C09] text-white shadow-md"
+                    : "text-[#3A2818]/70 hover:text-[#100C09] hover:bg-black/5"
+                }`}
+              >
+                Analytics & Stats
+              </button>
+            </div>
+          </section>
 
-        {/* Feature Cards Grid - All Cards with Colorful Hover Gradient Fill */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-10">
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {filteredFeatures.map((feat) => {
-              const Icon = feat.icon;
-              return (
-                <div
-                  key={feat.id}
-                  className={`group relative flex flex-col justify-between rounded-3xl bg-white border p-7 sm:p-8 shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl overflow-hidden ${
-                    feat.isMostProfitable
-                      ? "border-emerald-500/60 hover:border-emerald-600 ring-2 ring-emerald-500/20"
-                      : "border-black/10 hover:border-[#F5A623]"
-                  }`}
-                >
-                  {/* Vibrant Pastel Gradient Fill Overlay on Hover */}
+          {/* Feature Cards Grid - All Cards with Colorful Hover Gradient Fill */}
+          <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {filteredFeatures.map((feat) => {
+                const Icon = feat.icon;
+                return (
                   <div
-                    className={`absolute inset-0 bg-gradient-to-br ${feat.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-3xl`}
-                  />
+                    key={feat.id}
+                    className={`group relative flex flex-col justify-between rounded-3xl bg-white border p-7 sm:p-8 shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl overflow-hidden ${
+                      feat.isMostProfitable
+                        ? "border-emerald-500/60 hover:border-emerald-600 ring-2 ring-emerald-500/20"
+                        : "border-black/10 hover:border-[#F5A623]"
+                    }`}
+                  >
+                    {/* Vibrant Pastel Gradient Fill Overlay on Hover */}
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-br ${feat.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-3xl`}
+                    />
 
-                  <div className="relative z-10">
-                    {/* Top Row: Gold Number & Orange Square Icon Box */}
-                    <div className="flex items-center justify-between gap-2 mb-6">
-                      <span className="font-mono text-3xl sm:text-4xl font-extrabold text-[#F5A623] transition-colors duration-300">
-                        {feat.number}
-                      </span>
-                      <div className="size-12 sm:size-14 rounded-2xl bg-[#F5A623] text-white border border-black/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
-                        <Icon className="size-6 sm:size-7" />
+                    <div className="relative z-10">
+                      {/* Top Row: Gold Number & Orange Square Icon Box */}
+                      <div className="flex items-center justify-between gap-2 mb-6">
+                        <span className="font-mono text-3xl sm:text-4xl font-extrabold text-[#F5A623] transition-colors duration-300">
+                          {feat.number}
+                        </span>
+                        <div className="size-12 sm:size-14 rounded-2xl bg-[#F5A623] text-white border border-black/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md">
+                          <Icon className="size-6 sm:size-7" />
+                        </div>
                       </div>
+
+                      {/* Tag Badge & Plan Pill */}
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span
+                          className={`inline-block px-3 py-1 rounded-md text-xs font-extrabold uppercase tracking-wider border ${feat.badgeColor}`}
+                        >
+                          {feat.tag}
+                        </span>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#100C09]/5 border border-black/10 text-[#100C09]/75">
+                          {feat.plan} Plan
+                        </span>
+                      </div>
+
+                      {/* Feature Title in Gold/Amber */}
+                      <h3 className="font-display font-bold text-2xl mb-3 text-[#F5A623] group-hover:text-[#D99A2B] transition-colors">
+                        {feat.title}
+                      </h3>
+                      <p className="text-sm text-[#3A2818]/90 leading-relaxed mb-6 font-medium">
+                        {feat.description}
+                      </p>
                     </div>
 
-                    {/* Tag Badge & Plan Pill */}
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-md text-xs font-extrabold uppercase tracking-wider border ${feat.badgeColor}`}
+                    {/* Bottom Row: Points List & Action Link */}
+                    <div className="relative z-10 pt-5 border-t border-black/10">
+                      <ul className="space-y-2 text-xs text-[#3A2818]/90 font-semibold mb-5">
+                        {feat.points.map((pt) => (
+                          <li key={pt} className="flex items-center gap-2">
+                            <CheckCircle2 className="size-3.5 text-[#F5A623] shrink-0" />
+                            <span>{pt}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <Link
+                        to="/auth"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F5A623] hover:text-[#D99A2B] transition-colors group-hover:translate-x-1"
                       >
-                        {feat.tag}
-                      </span>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#100C09]/5 border border-black/10 text-[#100C09]/75">
-                        {feat.plan} Plan
-                      </span>
+                        <span>Try Feature Now</span>
+                        <ArrowRight className="size-3.5 group-hover:translate-x-1 transition-transform" />
+                      </Link>
                     </div>
-
-                    {/* Feature Title in Gold/Amber */}
-                    <h3 className="font-display font-bold text-2xl mb-3 text-[#F5A623] group-hover:text-[#D99A2B] transition-colors">
-                      {feat.title}
-                    </h3>
-                    <p className="text-sm text-[#3A2818]/90 leading-relaxed mb-6 font-medium">
-                      {feat.description}
-                    </p>
                   </div>
+                );
+              })}
+            </div>
+          </section>
 
-                  {/* Bottom Row: Points List & Action Link */}
-                  <div className="relative z-10 pt-5 border-t border-black/10">
-                    <ul className="space-y-2 text-xs text-[#3A2818]/90 font-semibold mb-5">
-                      {feat.points.map((pt) => (
-                        <li key={pt} className="flex items-center gap-2">
-                          <CheckCircle2 className="size-3.5 text-[#F5A623] shrink-0" />
-                          <span>{pt}</span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    <Link
-                      to="/auth"
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F5A623] hover:text-[#D99A2B] transition-colors group-hover:translate-x-1"
-                    >
-                      <span>Try Feature Now</span>
-                      <ArrowRight className="size-3.5 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                  </div>
+          {/* Bottom CTA Banner */}
+          <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-20 md:mt-28">
+            <div className="rounded-3xl border border-[#F5A623]/30 bg-gradient-to-br from-[#100C09] via-[#18120D] to-[#100C09] p-8 sm:p-12 text-center max-w-4xl mx-auto shadow-2xl relative overflow-hidden text-white">
+              <div className="relative z-10">
+                <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4 text-white">
+                  Ready to Upgrade Your Restaurant Experience?
+                </h2>
+                <p className="text-xs sm:text-sm text-white/70 max-w-xl mx-auto mb-8 font-medium">
+                  Join hundreds of restaurants, cafes, and bakeries using MY Link QR to boost sales
+                  and customer satisfaction.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-4">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="rounded-full bg-[#FFC45A] hover:bg-[#FFC45A]/90 text-[#100C09] font-bold h-12 px-8 text-sm shadow-xl hover:scale-105 transition-all"
+                  >
+                    <Link to="/auth">Create Your QR Menu Now</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="rounded-full border-white/20 bg-white/10 hover:bg-white/20 text-white font-bold h-12 px-8 text-sm hover:scale-105 transition-all"
+                  >
+                    <Link to="/demo">Watch Video Demo</Link>
+                  </Button>
                 </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Bottom CTA Banner */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-20 md:mt-28">
-          <div className="rounded-3xl border border-[#F5A623]/30 bg-gradient-to-br from-[#100C09] via-[#18120D] to-[#100C09] p-8 sm:p-12 text-center max-w-4xl mx-auto shadow-2xl relative overflow-hidden text-white">
-            <div className="relative z-10">
-              <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4 text-white">
-                Ready to Upgrade Your Restaurant Experience?
-              </h2>
-              <p className="text-xs sm:text-sm text-white/70 max-w-xl mx-auto mb-8 font-medium">
-                Join hundreds of restaurants, cafes, and bakeries using MY Link QR to boost sales
-                and customer satisfaction.
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-4">
-                <Button
-                  asChild
-                  size="lg"
-                  className="rounded-full bg-[#FFC45A] hover:bg-[#FFC45A]/90 text-[#100C09] font-bold h-12 px-8 text-sm shadow-xl hover:scale-105 transition-all"
-                >
-                  <Link to="/auth">Create Your QR Menu Now</Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="rounded-full border-white/20 bg-white/10 hover:bg-white/20 text-white font-bold h-12 px-8 text-sm hover:scale-105 transition-all"
-                >
-                  <Link to="/demo">Watch Video Demo</Link>
-                </Button>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
         </div>
       </main>
 

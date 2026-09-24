@@ -491,7 +491,8 @@ export function useCustomPlans() {
           const local = localStorage.getItem("mylink_custom_plans");
           if (local) {
             const parsed = JSON.parse(local);
-            if (Array.isArray(parsed) && parsed.length > 0) return sanitizePlanItemFeatures(parsed as PlanItem[]);
+            if (Array.isArray(parsed) && parsed.length > 0)
+              return sanitizePlanItemFeatures(parsed as PlanItem[]);
           }
         }
       } catch {}
@@ -578,10 +579,7 @@ export async function savePlatformPlans(updatedPlans: PlanItem[], userId?: strin
     };
 
     if (targetShop?.id) {
-      await supabase
-        .from("shops")
-        .update({ features: updatedFeatures })
-        .eq("id", targetShop.id);
+      await supabase.from("shops").update({ features: updatedFeatures }).eq("id", targetShop.id);
     } else {
       await supabase.from("shops").insert({
         slug: "platform-settings-internal",

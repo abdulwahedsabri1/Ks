@@ -38,6 +38,7 @@ import {
   RotateCcw,
   CheckSquare,
   Tag,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,12 +46,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   PLANS,
   formatDate,
@@ -66,13 +62,21 @@ import {
   FEATURE_KEYS,
 } from "@/lib/shop";
 import { useCustomPlans, savePlatformPlans, triggerCrossTabSync } from "@/hooks/useShopData";
-import { usePaymentSettings, savePaymentSettings, type Coupon, DEFAULT_COUPONS } from "@/hooks/usePaymentSettings";
+import {
+  usePaymentSettings,
+  savePaymentSettings,
+  type Coupon,
+  DEFAULT_COUPONS,
+} from "@/hooks/usePaymentSettings";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
       { title: "MY Link QR Admin Console — Real-Time Control Center" },
-      { name: "description", content: "Platform management, shop administration, and pricing control." },
+      {
+        name: "description",
+        content: "Platform management, shop administration, and pricing control.",
+      },
     ],
   }),
   component: AdminConsolePage,
@@ -342,8 +346,13 @@ function AdminConsolePage() {
 
     setSavingStaff(true);
     try {
-      const assignedShopObj = shops.find((s) => s.id === newStaffAssignedShop || s.slug === newStaffAssignedShop);
-      const shopNameStr = newStaffAssignedShop === "all" ? "All Platform Shops" : (assignedShopObj?.name || newStaffAssignedShop);
+      const assignedShopObj = shops.find(
+        (s) => s.id === newStaffAssignedShop || s.slug === newStaffAssignedShop,
+      );
+      const shopNameStr =
+        newStaffAssignedShop === "all"
+          ? "All Platform Shops"
+          : assignedShopObj?.name || newStaffAssignedShop;
 
       const newMember: StaffRow = {
         id: editingStaffMember ? editingStaffMember.id : `st-${Date.now()}`,
@@ -398,7 +407,9 @@ function AdminConsolePage() {
       triggerCrossTabSync();
       qc.invalidateQueries({ queryKey: ["admin-staff-list"] });
 
-      toast.success(`🎉 Staff member "${newMember.name}" ${editingStaffMember ? "updated" : "added & assigned"}!`);
+      toast.success(
+        `🎉 Staff member "${newMember.name}" ${editingStaffMember ? "updated" : "added & assigned"}!`,
+      );
       setIsAddStaffOpen(false);
       setEditingStaffMember(null);
     } catch (err) {
@@ -465,18 +476,14 @@ function AdminConsolePage() {
     try {
       channel = supabase
         .channel(topic)
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "shops" },
-          (payload) => {
-            qc.invalidateQueries({ queryKey: ["admin-all-shops"] });
-            qc.invalidateQueries({ queryKey: ["my-shop"] });
-            if (payload.new && typeof payload.new === "object" && "id" in payload.new) {
-              const updated = payload.new as Shop;
-              setManagingShop((curr) => (curr?.id === updated.id ? updated : curr));
-            }
-          },
-        )
+        .on("postgres_changes", { event: "*", schema: "public", table: "shops" }, (payload) => {
+          qc.invalidateQueries({ queryKey: ["admin-all-shops"] });
+          qc.invalidateQueries({ queryKey: ["my-shop"] });
+          if (payload.new && typeof payload.new === "object" && "id" in payload.new) {
+            const updated = payload.new as Shop;
+            setManagingShop((curr) => (curr?.id === updated.id ? updated : curr));
+          }
+        })
         .on("postgres_changes", { event: "*", schema: "public", table: "payment_history" }, () => {
           qc.invalidateQueries({ queryKey: ["admin-payment-logs"] });
         })
@@ -494,8 +501,6 @@ function AdminConsolePage() {
       }
     };
   }, [isAdmin, qc]);
-
-
 
   // Shops table search & filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -549,9 +554,10 @@ function AdminConsolePage() {
     setEditPaymentStatus(shop.payment_status || "paid");
     setEditBillingCycle(shop.billing_cycle || "monthly");
 
-    const currentPrice = shop.amount_paid && shop.amount_paid > 0
-      ? shop.amount_paid
-      : planAmount(rawPlan, shop.billing_cycle || "monthly", customPlansData);
+    const currentPrice =
+      shop.amount_paid && shop.amount_paid > 0
+        ? shop.amount_paid
+        : planAmount(rawPlan, shop.billing_cycle || "monthly", customPlansData);
     setEditAmountPaid(currentPrice);
 
     setEditGoogleReviewLink((shop.features as any)?.google_review_link || "");
@@ -609,12 +615,14 @@ function AdminConsolePage() {
   };
 
   // Dynamic preview shop object for live modal metrics
-  const previewExpiryStr = editEndDate && !isNaN(new Date(editEndDate).getTime())
-    ? new Date(editEndDate).toISOString()
-    : null;
-  const previewStartStr = editStartDate && !isNaN(new Date(editStartDate).getTime())
-    ? new Date(editStartDate).toISOString()
-    : null;
+  const previewExpiryStr =
+    editEndDate && !isNaN(new Date(editEndDate).getTime())
+      ? new Date(editEndDate).toISOString()
+      : null;
+  const previewStartStr =
+    editStartDate && !isNaN(new Date(editStartDate).getTime())
+      ? new Date(editStartDate).toISOString()
+      : null;
 
   const shopPreviewForMetrics: Shop | null = managingShop
     ? {
@@ -625,7 +633,8 @@ function AdminConsolePage() {
         plan_expires_at: previewExpiryStr,
         grace_period_days: gracePeriodDays,
         status:
-          editPaymentStatus === "paid" && (!previewExpiryStr || new Date(previewExpiryStr).getTime() >= Date.now())
+          editPaymentStatus === "paid" &&
+          (!previewExpiryStr || new Date(previewExpiryStr).getTime() >= Date.now())
             ? "active"
             : managingShop.status,
       }
@@ -660,9 +669,10 @@ function AdminConsolePage() {
   // Quick Custom Month Date Setter
   const handleSetMonths = (months: number) => {
     const numMonths = Math.max(1, Math.min(60, months || 1));
-    const start = editStartDate && !isNaN(new Date(editStartDate).getTime())
-      ? new Date(editStartDate)
-      : new Date();
+    const start =
+      editStartDate && !isNaN(new Date(editStartDate).getTime())
+        ? new Date(editStartDate)
+        : new Date();
     const end = new Date(start);
     end.setMonth(end.getMonth() + numMonths);
     const endStr = end.toISOString().slice(0, 10);
@@ -687,8 +697,12 @@ function AdminConsolePage() {
       const startDateObj = editStartDate ? new Date(editStartDate) : new Date();
       const endDateObj = editEndDate ? new Date(editEndDate) : new Date(Date.now() + 30 * 86400000);
 
-      const planStartedAtISO = !isNaN(startDateObj.getTime()) ? startDateObj.toISOString() : new Date().toISOString();
-      const planExpiresAtISO = !isNaN(endDateObj.getTime()) ? endDateObj.toISOString() : new Date(Date.now() + 30 * 86400000).toISOString();
+      const planStartedAtISO = !isNaN(startDateObj.getTime())
+        ? startDateObj.toISOString()
+        : new Date().toISOString();
+      const planExpiresAtISO = !isNaN(endDateObj.getTime())
+        ? endDateObj.toISOString()
+        : new Date(Date.now() + 30 * 86400000).toISOString();
 
       const normalizedPlan = editPlan.toLowerCase().trim();
       const basePlanFeatures = planOf(normalizedPlan) as Record<string, any>;
@@ -720,11 +734,12 @@ function AdminConsolePage() {
 
       const isPaid = editPaymentStatus === "paid";
       const isNotExpired = new Date(planExpiresAtISO).getTime() >= Date.now();
-      const computedStatus = isPaid && isNotExpired
-        ? "active"
-        : editPaymentStatus === "unpaid" && !isNotExpired
-          ? "suspended"
-          : managingShop.status || "active";
+      const computedStatus =
+        isPaid && isNotExpired
+          ? "active"
+          : editPaymentStatus === "unpaid" && !isNotExpired
+            ? "suspended"
+            : managingShop.status || "active";
 
       const updatePayload: any = {
         plan: editPlan,
@@ -763,7 +778,9 @@ function AdminConsolePage() {
         previous_value: managingShop.plan,
         new_value: editPlan,
         performed_by: user?.id ?? null,
-        notes: adminNotes || `Updated billing & dates: ${editStartDate} to ${editEndDate} (${editPlan} - ${editPaymentStatus})`,
+        notes:
+          adminNotes ||
+          `Updated billing & dates: ${editStartDate} to ${editEndDate} (${editPlan} - ${editPaymentStatus})`,
       });
 
       // Log payment history if paid
@@ -846,7 +863,9 @@ function AdminConsolePage() {
       setEditEndDate(newExpiry.slice(0, 10));
 
       syncAll(managingShop.id, managingShop.owner_id);
-      toast.success(`Marked "${managingShop.name}" as Paid! Features unlocked & expiry extended to ${formatDate(newExpiry)}.`);
+      toast.success(
+        `Marked "${managingShop.name}" as Paid! Features unlocked & expiry extended to ${formatDate(newExpiry)}.`,
+      );
     } catch (err) {
       toast.error("Failed to mark as paid");
     } finally {
@@ -859,7 +878,10 @@ function AdminConsolePage() {
     setSavingShop(true);
     try {
       const updatePayload = { payment_status: "pending" };
-      const { error } = await supabase.from("shops").update(updatePayload).eq("id", managingShop.id);
+      const { error } = await supabase
+        .from("shops")
+        .update(updatePayload)
+        .eq("id", managingShop.id);
       if (error) throw error;
 
       const updatedShop = { ...managingShop, ...updatePayload };
@@ -879,7 +901,11 @@ function AdminConsolePage() {
     if (!managingShop) return;
     setSavingShop(true);
     try {
-      const currentExpiry = editEndDate ? new Date(editEndDate) : (managingShop.plan_expires_at ? new Date(managingShop.plan_expires_at) : new Date());
+      const currentExpiry = editEndDate
+        ? new Date(editEndDate)
+        : managingShop.plan_expires_at
+          ? new Date(managingShop.plan_expires_at)
+          : new Date();
       const baseTime = currentExpiry.getTime() > Date.now() ? currentExpiry.getTime() : Date.now();
       const newEnd = new Date(baseTime);
       newEnd.setMonth(newEnd.getMonth() + months);
@@ -891,7 +917,10 @@ function AdminConsolePage() {
         status: "active",
       };
 
-      const { error } = await supabase.from("shops").update(updatePayload).eq("id", managingShop.id);
+      const { error } = await supabase
+        .from("shops")
+        .update(updatePayload)
+        .eq("id", managingShop.id);
       if (error) throw error;
 
       await supabase.from("subscription_history").insert({
@@ -909,7 +938,9 @@ function AdminConsolePage() {
       setEditPaymentStatus("paid");
 
       syncAll(managingShop.id, managingShop.owner_id);
-      toast.success(`Extended subscription for "${managingShop.name}" by ${months} month(s) until ${formatDate(newExpiryStr)}!`);
+      toast.success(
+        `Extended subscription for "${managingShop.name}" by ${months} month(s) until ${formatDate(newExpiryStr)}!`,
+      );
     } catch (err) {
       toast.error("Failed to extend subscription");
     } finally {
@@ -921,7 +952,9 @@ function AdminConsolePage() {
     if (!managingShop) return;
     setSavingShop(true);
     try {
-      const isExpired = !managingShop.plan_expires_at || new Date(managingShop.plan_expires_at).getTime() < Date.now();
+      const isExpired =
+        !managingShop.plan_expires_at ||
+        new Date(managingShop.plan_expires_at).getTime() < Date.now();
       const newExpiry = isExpired
         ? new Date(Date.now() + 30 * 86400000).toISOString()
         : (managingShop.plan_expires_at ?? new Date(Date.now() + 30 * 86400000).toISOString());
@@ -943,7 +976,10 @@ function AdminConsolePage() {
         features: updatedFeatures,
       };
 
-      const { error } = await supabase.from("shops").update(updatePayload).eq("id", managingShop.id);
+      const { error } = await supabase
+        .from("shops")
+        .update(updatePayload)
+        .eq("id", managingShop.id);
       if (error) throw error;
 
       await supabase.from("subscription_history").insert({
@@ -961,7 +997,9 @@ function AdminConsolePage() {
       setEditEndDate(newExpiry.slice(0, 10));
 
       syncAll(managingShop.id, managingShop.owner_id);
-      toast.success(`Activated account for "${managingShop.name}"! Features unlocked, public link & dashboard are live.`);
+      toast.success(
+        `Activated account for "${managingShop.name}"! Features unlocked, public link & dashboard are live.`,
+      );
     } catch (err) {
       toast.error("Failed to activate account");
     } finally {
@@ -974,7 +1012,10 @@ function AdminConsolePage() {
     setSavingShop(true);
     try {
       const updatePayload = { status: "suspended" };
-      const { error } = await supabase.from("shops").update(updatePayload).eq("id", managingShop.id);
+      const { error } = await supabase
+        .from("shops")
+        .update(updatePayload)
+        .eq("id", managingShop.id);
       if (error) throw error;
 
       const updatedShop = { ...managingShop, ...updatePayload };
@@ -994,7 +1035,10 @@ function AdminConsolePage() {
     setSavingShop(true);
     try {
       const updatePayload = { status: "cancelled", payment_status: "unpaid" };
-      const { error } = await supabase.from("shops").update(updatePayload).eq("id", managingShop.id);
+      const { error } = await supabase
+        .from("shops")
+        .update(updatePayload)
+        .eq("id", managingShop.id);
       if (error) throw error;
 
       const updatedShop = { ...managingShop, ...updatePayload };
@@ -1054,7 +1098,11 @@ function AdminConsolePage() {
   };
 
   const handleDeleteShop = async (shop: Shop) => {
-    if (!confirm(`Are you sure you want to permanently delete "${shop.name}"? This action cannot be undone.`))
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete "${shop.name}"? This action cannot be undone.`,
+      )
+    )
       return;
 
     setSavingShop(true);
@@ -1067,10 +1115,22 @@ function AdminConsolePage() {
         supabase.from("payment_history").delete().eq("shop_id", shop.id),
         supabase.from("subscription_history").delete().eq("shop_id", shop.id),
         supabase.from("analytics_events").delete().eq("shop_id", shop.id),
-        supabase.from("reviews" as any).delete().eq("shop_id", shop.id),
-        supabase.from("google_reviews" as any).delete().eq("shop_id", shop.id),
-        supabase.from("orders" as any).delete().eq("shop_id", shop.id),
-        supabase.from("customers" as any).delete().eq("shop_id", shop.id),
+        supabase
+          .from("reviews" as any)
+          .delete()
+          .eq("shop_id", shop.id),
+        supabase
+          .from("google_reviews" as any)
+          .delete()
+          .eq("shop_id", shop.id),
+        supabase
+          .from("orders" as any)
+          .delete()
+          .eq("shop_id", shop.id),
+        supabase
+          .from("customers" as any)
+          .delete()
+          .eq("shop_id", shop.id),
       ]);
 
       // 2. Delete shop record itself
@@ -1116,7 +1176,8 @@ function AdminConsolePage() {
         delete updatedFeatures[`admin_override_${key}`];
       }
 
-      const isExpired = shop.plan_expires_at && new Date(shop.plan_expires_at).getTime() < Date.now();
+      const isExpired =
+        shop.plan_expires_at && new Date(shop.plan_expires_at).getTime() < Date.now();
       const newExpiry = isExpired
         ? new Date(Date.now() + 30 * 86400000).toISOString()
         : (shop.plan_expires_at ?? new Date(Date.now() + 30 * 86400000).toISOString());
@@ -1130,10 +1191,7 @@ function AdminConsolePage() {
         plan_expires_at: newExpiry,
       };
 
-      const { error } = await supabase
-        .from("shops")
-        .update(updatePayload)
-        .eq("id", shop.id);
+      const { error } = await supabase.from("shops").update(updatePayload).eq("id", shop.id);
 
       if (error) throw error;
 
@@ -1154,7 +1212,9 @@ function AdminConsolePage() {
         setManagingShop({ ...managingShop, ...updatePayload });
       }
 
-      toast.success(`Updated "${shop.name}" plan to ${normalizedPlan.toUpperCase()}! Features unlocked.`);
+      toast.success(
+        `Updated "${shop.name}" plan to ${normalizedPlan.toUpperCase()}! Features unlocked.`,
+      );
     } catch (err) {
       console.error("Quick plan change error:", err);
       toast.error(err instanceof Error ? err.message : "Failed to change plan");
@@ -1169,10 +1229,12 @@ function AdminConsolePage() {
     setSavingShop(true);
     try {
       const isPaid = newStatus === "paid";
-      const isExpired = !shop.plan_expires_at || new Date(shop.plan_expires_at).getTime() < Date.now();
-      const newExpiry = isPaid && isExpired
-        ? new Date(Date.now() + 30 * 86400000).toISOString()
-        : (shop.plan_expires_at ?? new Date(Date.now() + 30 * 86400000).toISOString());
+      const isExpired =
+        !shop.plan_expires_at || new Date(shop.plan_expires_at).getTime() < Date.now();
+      const newExpiry =
+        isPaid && isExpired
+          ? new Date(Date.now() + 30 * 86400000).toISOString()
+          : (shop.plan_expires_at ?? new Date(Date.now() + 30 * 86400000).toISOString());
 
       const updatePayload: any = {
         payment_status: newStatus,
@@ -1200,7 +1262,9 @@ function AdminConsolePage() {
         await supabase.from("payment_history").insert({
           shop_id: shop.id,
           invoice_id: `INV-${Date.now()}`,
-          amount: shop.amount_paid || planAmount(shop.plan, shop.billing_cycle || "monthly", customPlansData),
+          amount:
+            shop.amount_paid ||
+            planAmount(shop.plan, shop.billing_cycle || "monthly", customPlansData),
           plan: shop.plan,
           billing_cycle: shop.billing_cycle || "monthly",
           payment_status: "paid",
@@ -1217,7 +1281,9 @@ function AdminConsolePage() {
         setManagingShop({ ...managingShop, ...updatePayload });
       }
 
-      toast.success(`Updated payment status for "${shop.name}" to ${newStatus.toUpperCase()}! Features unlocked.`);
+      toast.success(
+        `Updated payment status for "${shop.name}" to ${newStatus.toUpperCase()}! Features unlocked.`,
+      );
     } catch (err) {
       console.error("Quick payment status change error:", err);
       toast.error("Failed to update payment status");
@@ -1246,7 +1312,8 @@ function AdminConsolePage() {
         }
         updatePayload.features = updatedFeatures;
         updatePayload.payment_status = "paid";
-        const isExpired = !shop.plan_expires_at || new Date(shop.plan_expires_at).getTime() < Date.now();
+        const isExpired =
+          !shop.plan_expires_at || new Date(shop.plan_expires_at).getTime() < Date.now();
         if (isExpired) {
           updatePayload.plan_expires_at = new Date(Date.now() + 30 * 86400000).toISOString();
         }
@@ -1263,7 +1330,7 @@ function AdminConsolePage() {
       toast.success(
         isCurrentlySuspended
           ? `Activated "${shop.name}"! Public link and dashboard restored.`
-          : `Suspended "${shop.name}". Public link disabled.`
+          : `Suspended "${shop.name}". Public link disabled.`,
       );
     } catch (err) {
       toast.error(isCurrentlySuspended ? "Failed to activate shop" : "Failed to suspend shop");
@@ -1297,10 +1364,7 @@ function AdminConsolePage() {
       };
 
       if (targetShop?.id) {
-        await supabase
-          .from("shops")
-          .update({ features: updatedFeatures })
-          .eq("id", targetShop.id);
+        await supabase.from("shops").update({ features: updatedFeatures }).eq("id", targetShop.id);
       } else {
         await supabase.from("shops").insert({
           slug: "platform-settings-internal",
@@ -1316,7 +1380,7 @@ function AdminConsolePage() {
       toast.success(
         newValue
           ? "Razorpay Enabled! Live checkout is active."
-          : "Razorpay Disabled! Manual UPI payment instructions active."
+          : "Razorpay Disabled! Manual UPI payment instructions active.",
       );
       qc.invalidateQueries({ queryKey: ["payment_settings"] });
     } catch (err) {
@@ -1433,9 +1497,7 @@ function AdminConsolePage() {
     }
 
     if (
-      couponsList.some(
-        (c) => c.id !== editingCoupon.id && c.code.toUpperCase() === trimmedCode
-      )
+      couponsList.some((c) => c.id !== editingCoupon.id && c.code.toUpperCase() === trimmedCode)
     ) {
       toast.error(`Coupon code "${trimmedCode}" already exists.`);
       return;
@@ -1470,7 +1532,9 @@ function AdminConsolePage() {
       qc.invalidateQueries({ queryKey: ["admin-all-shops"] });
       qc.invalidateQueries({ queryKey: ["my-shop"] });
       triggerCrossTabSync();
-      toast.success("✅ Platform plans, prices & features saved and synchronized live across Website & Dashboards!");
+      toast.success(
+        "✅ Platform plans, prices & features saved and synchronized live across Website & Dashboards!",
+      );
     } catch (err) {
       toast.error("Failed to save platform plans");
     } finally {
@@ -1487,7 +1551,12 @@ function AdminConsolePage() {
       priceNumber: 1499,
       tagline: "Dedicated features & VIP support",
       badge: "CUSTOM",
-      features: ["Everything in Premium", "Dedicated Domain Setup", "Unlimited Staff", "24/7 Priority Support"],
+      features: [
+        "Everything in Premium",
+        "Dedicated Domain Setup",
+        "Unlimited Staff",
+        "24/7 Priority Support",
+      ],
     };
     setPlansForm([...plansForm, newPlan]);
     toast.info("Added new custom plan tier! Click 'Save All Prices' to publish.");
@@ -1511,7 +1580,7 @@ function AdminConsolePage() {
   // Calculate Metrics
   const totalShopsCount = shops.length;
   const pendingApprovalCount = shops.filter(
-    (s) => s.status === "pending" || s.payment_status === "pending"
+    (s) => s.status === "pending" || s.payment_status === "pending",
   ).length;
   const activeShopsCount = shops.filter((s) => s.status === "active" || !s.status).length;
   const suspendedShopsCount = shops.filter((s) => s.status === "suspended").length;
@@ -1520,7 +1589,9 @@ function AdminConsolePage() {
 
   const monthlyRevenue = shops.reduce((acc, s) => {
     if (s.payment_status === "paid") {
-      const pNum = s.amount_paid ?? (s.plan === "pro" ? 499 : s.plan === "premium" ? 799 : s.plan === "basic" ? 249 : 0);
+      const pNum =
+        s.amount_paid ??
+        (s.plan === "pro" ? 499 : s.plan === "premium" ? 799 : s.plan === "basic" ? 249 : 0);
       return acc + pNum;
     }
     return acc;
@@ -1575,7 +1646,11 @@ function AdminConsolePage() {
       {/* Top Header Navigation Bar */}
       <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-[#080C14]/90 backdrop-blur-md px-3 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-2.5 sm:gap-4">
         {/* Brand Logo & Title */}
-        <Link to="/" className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 group" title="Go to Website Home Page">
+        <Link
+          to="/"
+          className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 group"
+          title="Go to Website Home Page"
+        >
           <img
             src="/favicon.ico"
             alt="MY Link QR Logo"
@@ -1585,7 +1660,9 @@ function AdminConsolePage() {
             <h1 className="font-display text-xs sm:text-base font-extrabold tracking-tight text-white flex items-center gap-1.5 truncate group-hover:text-[#FFC45A] transition-colors">
               MY Link QR Admin <span className="hidden sm:inline">Console</span>
             </h1>
-            <p className="text-[10px] sm:text-[11px] font-medium text-slate-400 truncate">Platform control centre</p>
+            <p className="text-[10px] sm:text-[11px] font-medium text-slate-400 truncate">
+              Platform control centre
+            </p>
           </div>
         </Link>
 
@@ -1638,7 +1715,8 @@ function AdminConsolePage() {
             size="sm"
             className="h-8 sm:h-9 px-2 sm:px-3 text-xs font-semibold rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10"
           >
-            <LogOut className="size-3.5 sm:mr-1.5" /> <span className="hidden sm:inline">Sign out</span>
+            <LogOut className="size-3.5 sm:mr-1.5" />{" "}
+            <span className="hidden sm:inline">Sign out</span>
           </Button>
         </div>
       </header>
@@ -1681,32 +1759,46 @@ function AdminConsolePage() {
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
               <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
                 <p className="text-[11px] sm:text-xs font-medium text-slate-400">Total shops</p>
-                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">{totalShopsCount}</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">
+                  {totalShopsCount}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
-                <p className="text-[11px] sm:text-xs font-medium text-slate-400">Pending Approval</p>
-                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#FFC45A]">{pendingApprovalCount}</p>
+                <p className="text-[11px] sm:text-xs font-medium text-slate-400">
+                  Pending Approval
+                </p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#FFC45A]">
+                  {pendingApprovalCount}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
                 <p className="text-[11px] sm:text-xs font-medium text-slate-400">Active shops</p>
-                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#00E676]">{activeShopsCount}</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#00E676]">
+                  {activeShopsCount}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
                 <p className="text-[11px] sm:text-xs font-medium text-slate-400">Suspended</p>
-                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-rose-500">{suspendedShopsCount}</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-rose-500">
+                  {suspendedShopsCount}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
                 <p className="text-[11px] sm:text-xs font-medium text-slate-400">Payment Pending</p>
-                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#FFC45A]">{paymentPendingCount}</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#FFC45A]">
+                  {paymentPendingCount}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
                 <p className="text-[11px] sm:text-xs font-medium text-slate-400">Paid Plans</p>
-                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#00E676]">{paidPlansCount}</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#00E676]">
+                  {paidPlansCount}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
@@ -1717,28 +1809,40 @@ function AdminConsolePage() {
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
-                <p className="text-[11px] sm:text-xs font-medium text-slate-400">Expiring ≤7 days</p>
-                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#FFC45A]">{expiringSoonCount}</p>
+                <p className="text-[11px] sm:text-xs font-medium text-slate-400">
+                  Expiring ≤7 days
+                </p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-[#FFC45A]">
+                  {expiringSoonCount}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
                 <p className="text-[11px] sm:text-xs font-medium text-slate-400">Menu items</p>
-                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">{totalMenuItems}</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">
+                  {totalMenuItems}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
                 <p className="text-[11px] sm:text-xs font-medium text-slate-400">Tracked events</p>
-                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">{totalTrackedEvents}</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">
+                  {totalTrackedEvents}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
                 <p className="text-[11px] sm:text-xs font-medium text-slate-400">Staff members</p>
-                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">{staffMembersCount}</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">
+                  {staffMembersCount}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-3.5 sm:p-5 shadow-sm">
                 <p className="text-[11px] sm:text-xs font-medium text-slate-400">New this week</p>
-                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">{newThisWeekCount}</p>
+                <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl font-extrabold text-white">
+                  {newThisWeekCount}
+                </p>
               </div>
             </div>
           </div>
@@ -1875,7 +1979,9 @@ function AdminConsolePage() {
                       {/* Select Selectors Row */}
                       <div className="grid grid-cols-2 gap-2 pt-1">
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase">Plan</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase">
+                            Plan
+                          </label>
                           <select
                             value={(shop.plan || "pro").toLowerCase().trim()}
                             onChange={(e) => handleQuickPlanChange(shop, e.target.value)}
@@ -1891,7 +1997,9 @@ function AdminConsolePage() {
                         </div>
 
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase">Payment</label>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase">
+                            Payment
+                          </label>
                           <select
                             value={shop.payment_status || "paid"}
                             onChange={(e) => handleQuickPaymentStatusChange(shop, e.target.value)}
@@ -2038,7 +2146,9 @@ function AdminConsolePage() {
 
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2">
-                                    <span className="font-bold text-sm text-white truncate">{shop.name}</span>
+                                    <span className="font-bold text-sm text-white truncate">
+                                      {shop.name}
+                                    </span>
                                     <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
                                       {businessId}
                                     </span>
@@ -2068,7 +2178,11 @@ function AdminConsolePage() {
                                 className="px-2.5 py-1 rounded-full text-[11px] font-extrabold capitalize bg-slate-800 border border-slate-700 text-slate-100 cursor-pointer hover:border-[#00E676] focus:border-[#00E676] focus:outline-none transition-colors"
                               >
                                 {plansForm.map((p) => (
-                                  <option key={p.id} value={p.id.toLowerCase()} className="bg-[#0D131F] text-white">
+                                  <option
+                                    key={p.id}
+                                    value={p.id.toLowerCase()}
+                                    className="bg-[#0D131F] text-white"
+                                  >
                                     {p.name}
                                   </option>
                                 ))}
@@ -2078,7 +2192,9 @@ function AdminConsolePage() {
                             <td className="py-3.5 px-4">
                               <select
                                 value={shop.payment_status || "paid"}
-                                onChange={(e) => handleQuickPaymentStatusChange(shop, e.target.value)}
+                                onChange={(e) =>
+                                  handleQuickPaymentStatusChange(shop, e.target.value)
+                                }
                                 disabled={savingShop}
                                 title="Click to change payment status"
                                 className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold capitalize cursor-pointer focus:outline-none transition-colors ${
@@ -2145,7 +2261,9 @@ function AdminConsolePage() {
                                 <button
                                   type="button"
                                   onClick={() => handleToggleShopStatus(shop)}
-                                  title={shop.status === "suspended" ? "Activate Shop" : "Suspend Shop"}
+                                  title={
+                                    shop.status === "suspended" ? "Activate Shop" : "Suspend Shop"
+                                  }
                                   className={`size-8 rounded-lg border flex items-center justify-center transition-colors ${
                                     shop.status === "suspended"
                                       ? "border-emerald-500/40 bg-emerald-500/10 text-[#00E676] hover:bg-emerald-500/20"
@@ -2162,7 +2280,9 @@ function AdminConsolePage() {
                                 {confirmResetShopId === shop.id ? (
                                   /* Inline confirm strip */
                                   <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg px-2 py-1">
-                                    <span className="text-[10px] text-amber-300 font-semibold whitespace-nowrap">Reset?</span>
+                                    <span className="text-[10px] text-amber-300 font-semibold whitespace-nowrap">
+                                      Reset?
+                                    </span>
                                     <button
                                       type="button"
                                       onClick={() => handleResetShopAnalytics(shop)}
@@ -2277,13 +2397,21 @@ function AdminConsolePage() {
 
                     <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80 text-xs">
                       <div>
-                        <span className="text-slate-500 text-[10px] uppercase font-bold block">Assigned Shop</span>
-                        <span className="font-semibold text-slate-200">{st.shop_name || "All Platform Shops"}</span>
+                        <span className="text-slate-500 text-[10px] uppercase font-bold block">
+                          Assigned Shop
+                        </span>
+                        <span className="font-semibold text-slate-200">
+                          {st.shop_name || "All Platform Shops"}
+                        </span>
                       </div>
 
                       <div>
-                        <span className="text-slate-500 text-[10px] uppercase font-bold block">Joined Date</span>
-                        <span className="font-medium text-slate-400">{formatDate(st.created_at)}</span>
+                        <span className="text-slate-500 text-[10px] uppercase font-bold block">
+                          Joined Date
+                        </span>
+                        <span className="font-medium text-slate-400">
+                          {formatDate(st.created_at)}
+                        </span>
                       </div>
                     </div>
 
@@ -2328,7 +2456,8 @@ function AdminConsolePage() {
                   {staffList.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="p-8 text-center text-slate-500">
-                        No staff members found. Click "+ Add Staff Member" to assign your first team member.
+                        No staff members found. Click "+ Add Staff Member" to assign your first team
+                        member.
                       </td>
                     </tr>
                   ) : (
@@ -2366,9 +2495,7 @@ function AdminConsolePage() {
                           {st.shop_name || "All Platform Shops"}
                         </td>
 
-                        <td className="py-3.5 px-4 text-slate-400">
-                          {formatDate(st.created_at)}
-                        </td>
+                        <td className="py-3.5 px-4 text-slate-400">{formatDate(st.created_at)}</td>
 
                         <td className="py-3.5 px-5 text-right">
                           <div className="flex items-center justify-end gap-1.5">
@@ -2400,92 +2527,96 @@ function AdminConsolePage() {
           </div>
         )}
 
-      {/* ================= ADD / EDIT STAFF MODAL ================= */}
-      <Dialog open={isAddStaffOpen} onOpenChange={setIsAddStaffOpen}>
-        <DialogContent className="w-[95vw] sm:w-full max-w-md rounded-2xl bg-[#0D131F] border border-slate-800 text-slate-100 p-0 overflow-hidden shadow-2xl">
-          <DialogHeader className="p-5 border-b border-slate-800 bg-[#0A0F1A]">
-            <DialogTitle className="font-display text-lg font-bold text-white flex items-center gap-2">
-              <Users className="size-5 text-[#00E676]" />
-              {editingStaffMember ? "Edit Staff Member" : "Add New Staff Member"}
-            </DialogTitle>
-          </DialogHeader>
+        {/* ================= ADD / EDIT STAFF MODAL ================= */}
+        <Dialog open={isAddStaffOpen} onOpenChange={setIsAddStaffOpen}>
+          <DialogContent className="w-[95vw] sm:w-full max-w-md rounded-2xl bg-[#0D131F] border border-slate-800 text-slate-100 p-0 overflow-hidden shadow-2xl">
+            <DialogHeader className="p-5 border-b border-slate-800 bg-[#0A0F1A]">
+              <DialogTitle className="font-display text-lg font-bold text-white flex items-center gap-2">
+                <Users className="size-5 text-[#00E676]" />
+                {editingStaffMember ? "Edit Staff Member" : "Add New Staff Member"}
+              </DialogTitle>
+            </DialogHeader>
 
-          <div className="p-5 space-y-4 text-xs">
-            <div className="space-y-1.5">
-              <Label className="text-slate-300 font-semibold">Full Name</Label>
-              <Input
-                placeholder="e.g. Rahul Sharma"
-                value={newStaffName}
-                onChange={(e) => setNewStaffName(e.target.value)}
-                className="h-10 bg-[#080C14] border-slate-800 text-white rounded-xl text-xs font-medium"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-slate-300 font-semibold">Email Address</Label>
-              <Input
-                type="email"
-                placeholder="e.g. rahul.staff@qrmenu.com"
-                value={newStaffEmail}
-                onChange={(e) => setNewStaffEmail(e.target.value)}
-                className="h-10 bg-[#080C14] border-slate-800 text-white rounded-xl text-xs font-medium"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-5 space-y-4 text-xs">
               <div className="space-y-1.5">
-                <Label className="text-slate-300 font-semibold">Role</Label>
-                <select
-                  value={newStaffRole}
-                  onChange={(e) => setNewStaffRole(e.target.value)}
-                  className="h-10 w-full px-3 bg-[#080C14] border border-slate-800 text-white rounded-xl font-bold text-xs capitalize"
-                >
-                  <option value="staff">Staff Member</option>
-                  <option value="manager">Store Manager</option>
-                  <option value="support">Support Agent</option>
-                  <option value="admin">Platform Admin</option>
-                </select>
+                <Label className="text-slate-300 font-semibold">Full Name</Label>
+                <Input
+                  placeholder="e.g. Rahul Sharma"
+                  value={newStaffName}
+                  onChange={(e) => setNewStaffName(e.target.value)}
+                  className="h-10 bg-[#080C14] border-slate-800 text-white rounded-xl text-xs font-medium"
+                />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-slate-300 font-semibold">Assigned Shop</Label>
-                <select
-                  value={newStaffAssignedShop}
-                  onChange={(e) => setNewStaffAssignedShop(e.target.value)}
-                  className="h-10 w-full px-3 bg-[#080C14] border border-slate-800 text-white rounded-xl font-bold text-xs truncate"
+                <Label className="text-slate-300 font-semibold">Email Address</Label>
+                <Input
+                  type="email"
+                  placeholder="e.g. rahul.staff@qrmenu.com"
+                  value={newStaffEmail}
+                  onChange={(e) => setNewStaffEmail(e.target.value)}
+                  className="h-10 bg-[#080C14] border-slate-800 text-white rounded-xl text-xs font-medium"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300 font-semibold">Role</Label>
+                  <select
+                    value={newStaffRole}
+                    onChange={(e) => setNewStaffRole(e.target.value)}
+                    className="h-10 w-full px-3 bg-[#080C14] border border-slate-800 text-white rounded-xl font-bold text-xs capitalize"
+                  >
+                    <option value="staff">Staff Member</option>
+                    <option value="manager">Store Manager</option>
+                    <option value="support">Support Agent</option>
+                    <option value="admin">Platform Admin</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-slate-300 font-semibold">Assigned Shop</Label>
+                  <select
+                    value={newStaffAssignedShop}
+                    onChange={(e) => setNewStaffAssignedShop(e.target.value)}
+                    className="h-10 w-full px-3 bg-[#080C14] border border-slate-800 text-white rounded-xl font-bold text-xs truncate"
+                  >
+                    <option value="all">All Platform Shops</option>
+                    {shops.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800/80">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddStaffOpen(false)}
+                  className="h-9 px-4 text-xs font-bold rounded-xl border-slate-800 bg-[#080C14] text-slate-300 hover:bg-slate-800"
                 >
-                  <option value="all">All Platform Shops</option>
-                  {shops.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                  Cancel
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={handleSaveStaffMember}
+                  disabled={savingStaff}
+                  className="h-9 px-5 text-xs font-bold rounded-xl bg-[#00E676] text-[#080C14] hover:bg-[#00E676]/90 shadow-md shadow-[#00E676]/15"
+                >
+                  {savingStaff
+                    ? "Saving..."
+                    : editingStaffMember
+                      ? "Update Staff"
+                      : "Add Staff Member"}
+                </Button>
               </div>
             </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800/80">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsAddStaffOpen(false)}
-                className="h-9 px-4 text-xs font-bold rounded-xl border-slate-800 bg-[#080C14] text-slate-300 hover:bg-slate-800"
-              >
-                Cancel
-              </Button>
-
-              <Button
-                type="button"
-                onClick={handleSaveStaffMember}
-                disabled={savingStaff}
-                className="h-9 px-5 text-xs font-bold rounded-xl bg-[#00E676] text-[#080C14] hover:bg-[#00E676]/90 shadow-md shadow-[#00E676]/15"
-              >
-                {savingStaff ? "Saving..." : editingStaffMember ? "Update Staff" : "Add Staff Member"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
         {/* ================= PAYMENTS TAB ================= */}
         {activeTab === "payments" && (
@@ -2535,7 +2666,14 @@ function AdminConsolePage() {
                     size="sm"
                     className="h-9 px-3.5 text-xs font-extrabold rounded-xl bg-[#00E676] text-[#080C14] hover:bg-[#00E676]/90"
                   >
-                    {savingPlans ? "Syncing..." : "Save All Prices & Real-Time Sync"}
+                    {savingPlans ? (
+                      <span className="flex items-center gap-1.5">
+                        <Loader2 className="size-3.5 animate-spin" />
+                        <span>Syncing...</span>
+                      </span>
+                    ) : (
+                      "Save All Prices & Real-Time Sync"
+                    )}
                   </Button>
                 </div>
               )}
@@ -2548,20 +2686,26 @@ function AdminConsolePage() {
                     <RefreshCw className="size-4" /> Platform Plans & Rupee (₹) Price Management
                   </h3>
                   <p className="mt-1 text-xs text-slate-300 leading-relaxed">
-                    Set custom plan prices in Rupees (₹), edit plan details, or add new subscription tiers. Updates automatically synchronize in real-time across the User Dashboard, Website Pricing Page, and Razorpay Payment Gateway.
+                    Set custom plan prices in Rupees (₹), edit plan details, or add new subscription
+                    tiers. Updates automatically synchronize in real-time across the User Dashboard,
+                    Website Pricing Page, and Razorpay Payment Gateway.
                   </p>
                 </div>
 
                 <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-5 space-y-4 shadow-xl">
                   <h4 className="font-display text-sm font-bold text-white flex items-center gap-2">
-                    <CreditCard className="size-4 text-[#00E676]" /> Gateway & Manual Payment Settings
+                    <CreditCard className="size-4 text-[#00E676]" /> Gateway & Manual Payment
+                    Settings
                   </h4>
 
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-1">
                     <div>
-                      <label className="text-xs font-bold text-white block">Enable Razorpay Integration</label>
+                      <label className="text-xs font-bold text-white block">
+                        Enable Razorpay Integration
+                      </label>
                       <p className="text-[11px] text-slate-400">
-                        Toggle live Razorpay checkout. When OFF, users will see manual UPI payment instructions.
+                        Toggle live Razorpay checkout. When OFF, users will see manual UPI payment
+                        instructions.
                       </p>
                     </div>
 
@@ -2609,7 +2753,8 @@ function AdminConsolePage() {
                         <Tag className="size-4 text-[#FFC45A]" /> Coupon Codes & Discount Promotions
                       </h4>
                       <p className="text-[11px] text-slate-400 mt-0.5">
-                        Create promo codes for plan purchases. Syncs automatically with user checkout, dashboard, and website pricing.
+                        Create promo codes for plan purchases. Syncs automatically with user
+                        checkout, dashboard, and website pricing.
                       </p>
                     </div>
 
@@ -2630,7 +2775,9 @@ function AdminConsolePage() {
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                       <div>
-                        <Label className="text-[10px] font-semibold text-slate-400">Coupon Code</Label>
+                        <Label className="text-[10px] font-semibold text-slate-400">
+                          Coupon Code
+                        </Label>
                         <Input
                           placeholder="e.g. SAVE50"
                           value={newCpnCode}
@@ -2640,7 +2787,9 @@ function AdminConsolePage() {
                       </div>
 
                       <div>
-                        <Label className="text-[10px] font-semibold text-slate-400">Discount Type</Label>
+                        <Label className="text-[10px] font-semibold text-slate-400">
+                          Discount Type
+                        </Label>
                         <select
                           value={newCpnType}
                           onChange={(e) => setNewCpnType(e.target.value as "percent" | "fixed")}
@@ -2664,7 +2813,9 @@ function AdminConsolePage() {
                       </div>
 
                       <div>
-                        <Label className="text-[10px] font-semibold text-slate-400">Max Usage Limit</Label>
+                        <Label className="text-[10px] font-semibold text-slate-400">
+                          Max Usage Limit
+                        </Label>
                         <Input
                           type="number"
                           value={newCpnMaxUses}
@@ -2674,7 +2825,9 @@ function AdminConsolePage() {
                       </div>
 
                       <div>
-                        <Label className="text-[10px] font-semibold text-slate-400">Notes / Description</Label>
+                        <Label className="text-[10px] font-semibold text-slate-400">
+                          Notes / Description
+                        </Label>
                         <Input
                           placeholder="e.g. Festival Launch Offer"
                           value={newCpnNotes}
@@ -2725,7 +2878,9 @@ function AdminConsolePage() {
                               </td>
 
                               <td className="py-3 px-4 font-extrabold text-[#00E676]">
-                                {c.discount_type === "percent" ? `${c.discount_value}% OFF` : `₹${c.discount_value} OFF`}
+                                {c.discount_type === "percent"
+                                  ? `${c.discount_value}% OFF`
+                                  : `₹${c.discount_value} OFF`}
                               </td>
 
                               <td className="py-3 px-4 font-mono text-slate-300">
@@ -2786,7 +2941,9 @@ function AdminConsolePage() {
                       <div
                         key={p.id}
                         className={`relative rounded-2xl border p-5 flex flex-col justify-between bg-[#0D131F] transition-all ${
-                          isPopular ? "border-amber-500/80 shadow-lg shadow-amber-500/10" : "border-slate-800"
+                          isPopular
+                            ? "border-amber-500/80 shadow-lg shadow-amber-500/10"
+                            : "border-slate-800"
                         }`}
                       >
                         {isPopular && (
@@ -2797,7 +2954,9 @@ function AdminConsolePage() {
 
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <h4 className="font-display text-xl font-bold text-white capitalize">{p.name}</h4>
+                            <h4 className="font-display text-xl font-bold text-white capitalize">
+                              {p.name}
+                            </h4>
                             <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
                               {p.id}
                             </span>
@@ -2812,7 +2971,7 @@ function AdminConsolePage() {
                                   return i === idx
                                     ? { ...item, highlight: true, badge: "MOST POPULAR" }
                                     : { ...rest, highlight: false };
-                                })
+                                }),
                               );
                             }}
                             className={`w-full py-1.5 px-3 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
@@ -2830,7 +2989,9 @@ function AdminConsolePage() {
                                 Monthly (₹/mo)
                               </Label>
                               <div className="relative">
-                                <span className="absolute left-2.5 top-2.5 font-bold text-white text-xs">₹</span>
+                                <span className="absolute left-2.5 top-2.5 font-bold text-white text-xs">
+                                  ₹
+                                </span>
                                 <Input
                                   type="number"
                                   value={p.priceNumber ?? 0}
@@ -2843,11 +3004,11 @@ function AdminConsolePage() {
                                               ...item,
                                               priceNumber: val,
                                               price: `₹${val}`,
-                                              yearlyPriceNumber: item.yearlyPriceNumber || val * 10,
-                                              yearlyPrice: `₹${(item.yearlyPriceNumber || val * 10).toLocaleString("en-IN")}`,
+                                              yearlyPriceNumber: item.yearlyPriceNumber || val * 12,
+                                              yearlyPrice: `₹${(item.yearlyPriceNumber || val * 12).toLocaleString("en-IN")}`,
                                             }
-                                          : item
-                                      )
+                                          : item,
+                                      ),
                                     );
                                   }}
                                   className="pl-6 h-9 text-xs font-bold bg-[#080C14] border-slate-800 text-white rounded-xl"
@@ -2860,10 +3021,14 @@ function AdminConsolePage() {
                                 Annual (₹/yr)
                               </Label>
                               <div className="relative">
-                                <span className="absolute left-2.5 top-2.5 font-bold text-amber-400 text-xs">₹</span>
+                                <span className="absolute left-2.5 top-2.5 font-bold text-amber-400 text-xs">
+                                  ₹
+                                </span>
                                 <Input
                                   type="number"
-                                  value={p.yearlyPriceNumber ?? (p.priceNumber ? p.priceNumber * 10 : 0)}
+                                  value={
+                                    p.yearlyPriceNumber ?? (p.priceNumber ? p.priceNumber * 12 : 0)
+                                  }
                                   onChange={(e) => {
                                     const val = Number(e.target.value);
                                     setPlansForm((prev) =>
@@ -2874,8 +3039,8 @@ function AdminConsolePage() {
                                               yearlyPriceNumber: val,
                                               yearlyPrice: `₹${val.toLocaleString("en-IN")}`,
                                             }
-                                          : item
-                                      )
+                                          : item,
+                                      ),
                                     );
                                   }}
                                   className="pl-6 h-9 text-xs font-bold bg-[#080C14] border-slate-800 text-amber-400 rounded-xl"
@@ -2883,6 +3048,122 @@ function AdminConsolePage() {
                               </div>
                             </div>
                           </div>
+
+                          {p.id !== "trial" &&
+                            (() => {
+                              const m12 = (p.priceNumber || 0) * 12;
+                              const currentAnnual =
+                                p.yearlyPriceNumber ?? (p.priceNumber ? p.priceNumber * 12 : 0);
+                              const currentSavings = Math.max(0, m12 - currentAnnual);
+                              const currentPct =
+                                m12 > 0 ? Math.round((currentSavings / m12) * 100) : 0;
+
+                              return (
+                                <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 space-y-2">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-slate-400 text-[11px] font-medium">
+                                      12x Monthly Total:
+                                    </span>
+                                    <span className="line-through text-slate-400 font-bold">
+                                      ₹{m12.toLocaleString("en-IN")}
+                                    </span>
+                                  </div>
+
+                                  <div className="space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <Label className="text-[10px] text-slate-300 font-bold">
+                                        Discount Amount (₹ Off)
+                                      </Label>
+                                      <span className="text-[10px] font-extrabold text-[#00E676]">
+                                        {currentPct}% OFF
+                                      </span>
+                                    </div>
+                                    <div className="relative">
+                                      <span className="absolute left-2.5 top-2 font-bold text-[#00E676] text-xs">
+                                        ₹
+                                      </span>
+                                      <Input
+                                        type="number"
+                                        value={currentSavings}
+                                        onChange={(e) => {
+                                          const discountVal = Math.max(0, Number(e.target.value));
+                                          const newAnnual = Math.max(0, m12 - discountVal);
+                                          setPlansForm((prev) =>
+                                            prev.map((item, i) =>
+                                              i === idx
+                                                ? {
+                                                    ...item,
+                                                    yearlyPriceNumber: newAnnual,
+                                                    yearlyPrice: `₹${newAnnual.toLocaleString("en-IN")}`,
+                                                  }
+                                                : item,
+                                            ),
+                                          );
+                                        }}
+                                        placeholder="e.g. 998"
+                                        className="pl-6 h-8 text-xs font-bold bg-[#080C14] border-slate-800 text-[#00E676] rounded-lg"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center justify-between pt-1 border-t border-amber-500/20 text-[11px]">
+                                    <span className="text-amber-400 font-bold">
+                                      Annual Price Set:
+                                    </span>
+                                    <span className="text-amber-400 font-extrabold bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                                      ₹{currentAnnual.toLocaleString("en-IN")}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center gap-1 pt-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newAnnual = Math.round(
+                                          (p.priceNumber || 0) * 12 * 0.833,
+                                        );
+                                        setPlansForm((prev) =>
+                                          prev.map((item, i) =>
+                                            i === idx
+                                              ? {
+                                                  ...item,
+                                                  yearlyPriceNumber: newAnnual,
+                                                  yearlyPrice: `₹${newAnnual.toLocaleString("en-IN")}`,
+                                                }
+                                              : item,
+                                          ),
+                                        );
+                                      }}
+                                      className="text-[9px] font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 px-2 py-0.5 rounded-md transition-colors"
+                                    >
+                                      2 Mos Free (17% Off)
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newAnnual = Math.round(
+                                          (p.priceNumber || 0) * 12 * 0.8,
+                                        );
+                                        setPlansForm((prev) =>
+                                          prev.map((item, i) =>
+                                            i === idx
+                                              ? {
+                                                  ...item,
+                                                  yearlyPriceNumber: newAnnual,
+                                                  yearlyPrice: `₹${newAnnual.toLocaleString("en-IN")}`,
+                                                }
+                                              : item,
+                                          ),
+                                        );
+                                      }}
+                                      className="text-[9px] font-bold text-[#00E676] bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 px-2 py-0.5 rounded-md transition-colors"
+                                    >
+                                      20% Off
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })()}
 
                           <div className="space-y-1.5">
                             <Label className="text-[11px] text-slate-400 font-medium">
@@ -2894,7 +3175,9 @@ function AdminConsolePage() {
                               onChange={(e) => {
                                 const val = Number(e.target.value);
                                 setPlansForm((prev) =>
-                                  prev.map((item, i) => (i === idx ? { ...item, extraMonths: val } : item))
+                                  prev.map((item, i) =>
+                                    i === idx ? { ...item, extraMonths: val } : item,
+                                  ),
                                 );
                               }}
                               className="h-9 text-xs font-bold bg-[#080C14] border-slate-800 text-emerald-400 rounded-xl"
@@ -2902,13 +3185,17 @@ function AdminConsolePage() {
                           </div>
 
                           <div className="space-y-1.5">
-                            <Label className="text-[11px] text-slate-400 font-medium">Tagline</Label>
+                            <Label className="text-[11px] text-slate-400 font-medium">
+                              Tagline
+                            </Label>
                             <Input
                               value={p.tagline}
                               onChange={(e) => {
                                 const val = e.target.value;
                                 setPlansForm((prev) =>
-                                  prev.map((item, i) => (i === idx ? { ...item, tagline: val } : item))
+                                  prev.map((item, i) =>
+                                    i === idx ? { ...item, tagline: val } : item,
+                                  ),
                                 );
                               }}
                               className="h-9 text-xs bg-[#080C14] border-slate-800 text-slate-200 rounded-xl"
@@ -2926,9 +3213,12 @@ function AdminConsolePage() {
                                   setPlansForm((prev) =>
                                     prev.map((item, i) =>
                                       i === idx
-                                        ? { ...item, features: [...item.features, "New feature item"] }
-                                        : item
-                                    )
+                                        ? {
+                                            ...item,
+                                            features: [...item.features, "New feature item"],
+                                          }
+                                        : item,
+                                    ),
                                   );
                                 }}
                                 className="text-[10px] font-bold text-[#00E676] hover:underline flex items-center gap-1 cursor-pointer"
@@ -2951,7 +3241,7 @@ function AdminConsolePage() {
                                           const newFeats = [...item.features];
                                           newFeats[fIdx] = val;
                                           return { ...item, features: newFeats };
-                                        })
+                                        }),
                                       );
                                     }}
                                     className="h-8 text-xs bg-[#080C14] border-slate-800 text-slate-200 rounded-lg focus:border-[#00E676]"
@@ -2962,9 +3252,11 @@ function AdminConsolePage() {
                                       setPlansForm((prev) =>
                                         prev.map((item, i) => {
                                           if (i !== idx) return item;
-                                          const newFeats = item.features.filter((_, fIndex) => fIndex !== fIdx);
+                                          const newFeats = item.features.filter(
+                                            (_, fIndex) => fIndex !== fIdx,
+                                          );
                                           return { ...item, features: newFeats };
-                                        })
+                                        }),
                                       );
                                     }}
                                     className="p-1 text-slate-500 hover:text-rose-400 transition-colors shrink-0"
@@ -3007,10 +3299,14 @@ function AdminConsolePage() {
                       paymentLogs.map((log) => (
                         <tr key={log.id} className="hover:bg-slate-800/30">
                           <td className="p-4 font-mono text-slate-300">{log.invoice_id}</td>
-                          <td className="p-4 font-bold text-white">{log.shop_name || "Platform Shop"}</td>
+                          <td className="p-4 font-bold text-white">
+                            {log.shop_name || "Platform Shop"}
+                          </td>
                           <td className="p-4 font-extrabold text-[#00E676]">₹{log.amount}</td>
                           <td className="p-4 capitalize">{log.plan}</td>
-                          <td className="p-4 uppercase text-slate-400">{log.payment_method || "Razorpay"}</td>
+                          <td className="p-4 uppercase text-slate-400">
+                            {log.payment_method || "Razorpay"}
+                          </td>
                           <td className="p-4">
                             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-[#00E676] border border-emerald-500/30">
                               {log.payment_status}
@@ -3030,7 +3326,9 @@ function AdminConsolePage() {
         {/* ================= REVIEWS TAB ================= */}
         {activeTab === "reviews" && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            <h2 className="font-display text-lg font-bold text-white">Google Review Links Manager</h2>
+            <h2 className="font-display text-lg font-bold text-white">
+              Google Review Links Manager
+            </h2>
             <div className="rounded-2xl border border-slate-800 bg-[#0D131F] p-5 shadow-xl space-y-3">
               {shops.map((shop) => {
                 const googleLink = (shop.features as any)?.google_review_link;
@@ -3077,7 +3375,8 @@ function AdminConsolePage() {
             </DialogTitle>
 
             <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/40 text-[#FFC45A] font-extrabold text-[10px] sm:text-xs font-mono shrink-0">
-              ID: BIZ-{managingShop?.slug.substring(0, 6).toUpperCase()}-{managingShop?.id.substring(0, 4).toUpperCase()}
+              ID: BIZ-{managingShop?.slug.substring(0, 6).toUpperCase()}-
+              {managingShop?.id.substring(0, 4).toUpperCase()}
             </span>
           </div>
 
@@ -3177,7 +3476,8 @@ function AdminConsolePage() {
                     onClick={() => handleSetMonths(customMonths)}
                     className="h-9 px-3.5 text-xs font-bold rounded-xl border-slate-800 bg-[#080C14] text-slate-200 hover:bg-slate-800"
                   >
-                    <Calendar className="size-3.5 mr-1.5" /> Set {customMonths} month{customMonths > 1 ? "s" : ""}
+                    <Calendar className="size-3.5 mr-1.5" /> Set {customMonths} month
+                    {customMonths > 1 ? "s" : ""}
                   </Button>
 
                   <Input
@@ -3195,7 +3495,14 @@ function AdminConsolePage() {
                     disabled={savingShop}
                     className="h-9 px-4 text-xs font-bold rounded-xl bg-[#00E676] text-[#080C14] hover:bg-[#00E676]/90"
                   >
-                    {savingShop ? "Saving..." : "Save Billing"}
+                    {savingShop ? (
+                      <span className="flex items-center gap-1.5">
+                        <Loader2 className="size-3.5 animate-spin" />
+                        <span>Saving...</span>
+                      </span>
+                    ) : (
+                      "Save Billing"
+                    )}
                   </Button>
                 </div>
 
@@ -3205,7 +3512,8 @@ function AdminConsolePage() {
                     <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-[#00E676]">
                       Paid
                     </span>{" "}
-                    ₹{editAmountPaid} recorded <CheckCircle2 className="size-3.5" /> Public access available
+                    ₹{editAmountPaid} recorded <CheckCircle2 className="size-3.5" /> Public access
+                    available
                   </p>
                 ) : (
                   <p className="text-xs font-semibold text-rose-400 pt-1">
@@ -3217,12 +3525,16 @@ function AdminConsolePage() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
                   <div className="p-3.5 rounded-xl border border-slate-800 bg-[#080C14]">
                     <p className="text-[10px] font-bold text-slate-400 uppercase">BILLING CYCLE</p>
-                    <p className="font-extrabold text-white text-sm mt-1 capitalize">{editBillingCycle}</p>
+                    <p className="font-extrabold text-white text-sm mt-1 capitalize">
+                      {editBillingCycle}
+                    </p>
                   </div>
 
                   <div className="p-3.5 rounded-xl border border-slate-800 bg-[#080C14]">
                     <p className="text-[10px] font-bold text-slate-400 uppercase">NEXT BILLING</p>
-                    <p className="font-extrabold text-slate-300 text-sm mt-1">{editEndDate ? formatDate(editEndDate) : "—"}</p>
+                    <p className="font-extrabold text-slate-300 text-sm mt-1">
+                      {editEndDate ? formatDate(editEndDate) : "—"}
+                    </p>
                   </div>
 
                   <div className="p-3.5 rounded-xl border border-slate-800 bg-[#080C14]">
@@ -3239,11 +3551,15 @@ function AdminConsolePage() {
 
                   <div className="p-3.5 rounded-xl border border-slate-800 bg-[#080C14]">
                     <p className="text-[10px] font-bold text-slate-400 uppercase">AUTO RENEW</p>
-                    <p className="font-extrabold text-white text-sm mt-1">{autoRenew ? "Yes" : "No"}</p>
+                    <p className="font-extrabold text-white text-sm mt-1">
+                      {autoRenew ? "Yes" : "No"}
+                    </p>
                   </div>
 
                   <div className="p-3.5 rounded-xl border border-slate-800 bg-[#080C14]">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">SUBSCRIPTION STATE</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">
+                      SUBSCRIPTION STATE
+                    </p>
                     <p className="font-extrabold text-[#00E676] text-sm mt-1 capitalize">
                       {subscriptionStateLabel(subscriptionState(shopPreviewForMetrics))}
                     </p>
@@ -3259,7 +3575,9 @@ function AdminConsolePage() {
                   <div className="p-3.5 rounded-xl border border-slate-800/80 bg-[#0D131F] flex items-center justify-between gap-4">
                     <div>
                       <p className="font-bold text-white text-xs">Auto Renew</p>
-                      <p className="text-[11px] text-slate-400">Automatically renew subscription on expiry</p>
+                      <p className="text-[11px] text-slate-400">
+                        Automatically renew subscription on expiry
+                      </p>
                     </div>
 
                     <button
@@ -3280,7 +3598,9 @@ function AdminConsolePage() {
                   <div className="p-3.5 rounded-xl border border-slate-800/80 bg-[#0D131F] flex items-center justify-between gap-4">
                     <div>
                       <p className="font-bold text-white text-xs">Grace Period (days)</p>
-                      <p className="text-[11px] text-slate-400">Days the shop stays active after expiry before suspension</p>
+                      <p className="text-[11px] text-slate-400">
+                        Days the shop stays active after expiry before suspension
+                      </p>
                     </div>
 
                     <Input
@@ -3335,7 +3655,9 @@ function AdminConsolePage() {
 
                   <div className="p-3.5 rounded-xl border border-slate-800 bg-[#080C14]">
                     <p className="text-[10px] font-bold text-slate-400 uppercase">BILLING CYCLE</p>
-                    <p className="font-extrabold text-white text-sm mt-1 capitalize">{editBillingCycle}</p>
+                    <p className="font-extrabold text-white text-sm mt-1 capitalize">
+                      {editBillingCycle}
+                    </p>
                   </div>
                 </div>
 
@@ -3432,7 +3754,9 @@ function AdminConsolePage() {
                         resetObj[key] = Boolean(defaults[key]);
                       }
                       setFeatureOverrides(resetObj);
-                      toast.info(`Reset feature access to ${editPlan} plan defaults! All plan features unlocked.`);
+                      toast.info(
+                        `Reset feature access to ${editPlan} plan defaults! All plan features unlocked.`,
+                      );
                     }}
                     className="h-9 px-3.5 text-xs font-bold rounded-xl border-slate-800 bg-[#080C14] text-slate-300 hover:text-white"
                   >
@@ -3451,8 +3775,12 @@ function AdminConsolePage() {
                     <div className="flex items-center gap-2.5">
                       <AlertTriangle className="size-4 text-rose-400 shrink-0" />
                       <div>
-                        <p className="font-bold text-white">Account is currently {managingShop.status}</p>
-                        <p className="text-[11px] text-rose-200/80">Public menu & shop owner dashboard access are currently disabled.</p>
+                        <p className="font-bold text-white">
+                          Account is currently {managingShop.status}
+                        </p>
+                        <p className="text-[11px] text-rose-200/80">
+                          Public menu & shop owner dashboard access are currently disabled.
+                        </p>
                       </div>
                     </div>
                     <Button
@@ -3621,9 +3949,12 @@ function AdminConsolePage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-slate-400 font-medium uppercase text-[10px]">BUSINESS ID</Label>
+                    <Label className="text-slate-400 font-medium uppercase text-[10px]">
+                      BUSINESS ID
+                    </Label>
                     <div className="h-10 px-3 bg-[#080C14] border border-slate-800/80 rounded-xl flex items-center font-bold font-mono text-white text-xs">
-                      BIZ-{managingShop?.slug.substring(0, 6).toUpperCase()}-{managingShop?.id.substring(0, 4).toUpperCase()}
+                      BIZ-{managingShop?.slug.substring(0, 6).toUpperCase()}-
+                      {managingShop?.id.substring(0, 4).toUpperCase()}
                     </div>
                   </div>
                 </div>
@@ -3650,7 +3981,9 @@ function AdminConsolePage() {
                       <h4 className="font-display text-base font-bold text-white flex items-center gap-2">
                         <Users className="size-4 text-[#00E676]" /> Customer & Account Info
                       </h4>
-                      <p className="text-slate-400 text-[11px] mt-0.5">Owner registration details and login identity.</p>
+                      <p className="text-slate-400 text-[11px] mt-0.5">
+                        Owner registration details and login identity.
+                      </p>
                     </div>
 
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[#00E676] font-extrabold text-[11px]">
@@ -3665,12 +3998,18 @@ function AdminConsolePage() {
                     </div>
 
                     <div className="p-3 rounded-xl bg-[#0D131F] border border-slate-800/60">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">OWNER USER ID</p>
-                      <p className="font-mono text-[#00E676] text-xs mt-1 truncate">{managingShop?.owner_id}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">
+                        OWNER USER ID
+                      </p>
+                      <p className="font-mono text-[#00E676] text-xs mt-1 truncate">
+                        {managingShop?.owner_id}
+                      </p>
                     </div>
 
                     <div className="p-3 rounded-xl bg-[#0D131F] border border-slate-800/60">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">PRIMARY PHONE</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">
+                        PRIMARY PHONE
+                      </p>
                       <Input
                         value={ownerPhone}
                         onChange={(e) => setOwnerPhone(e.target.value)}
@@ -3679,7 +4018,9 @@ function AdminConsolePage() {
                     </div>
 
                     <div className="p-3 rounded-xl bg-[#0D131F] border border-slate-800/60">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">WHATSAPP CONTACT</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">
+                        WHATSAPP CONTACT
+                      </p>
                       <Input
                         value={ownerWhatsapp}
                         onChange={(e) => setOwnerWhatsapp(e.target.value)}
@@ -3695,7 +4036,9 @@ function AdminConsolePage() {
                     </div>
 
                     <div className="p-3 rounded-xl bg-[#0D131F] border border-slate-800/60">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">PLATFORM ROLE</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">
+                        PLATFORM ROLE
+                      </p>
                       <p className="font-extrabold text-white text-xs mt-1">Shop Owner</p>
                     </div>
                   </div>
@@ -3716,7 +4059,9 @@ function AdminConsolePage() {
                   <div className="space-y-3">
                     {/* Customer Login Email */}
                     <div className="space-y-1">
-                      <Label className="text-slate-400 text-xs font-medium">Customer Login Email</Label>
+                      <Label className="text-slate-400 text-xs font-medium">
+                        Customer Login Email
+                      </Label>
                       <div className="flex gap-2">
                         <Input
                           value={customerEmail}
@@ -3739,7 +4084,9 @@ function AdminConsolePage() {
 
                     {/* Customer Account Password */}
                     <div className="space-y-1">
-                      <Label className="text-slate-400 text-xs font-medium">Customer Account Password</Label>
+                      <Label className="text-slate-400 text-xs font-medium">
+                        Customer Account Password
+                      </Label>
                       <div className="flex gap-2">
                         <div className="relative flex-1">
                           <Input
@@ -3753,7 +4100,11 @@ function AdminConsolePage() {
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-3 text-slate-400 hover:text-white"
                           >
-                            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                            {showPassword ? (
+                              <EyeOff className="size-4" />
+                            ) : (
+                              <Eye className="size-4" />
+                            )}
                           </button>
                         </div>
 
@@ -3791,7 +4142,11 @@ function AdminConsolePage() {
                             .eq("id", managingShop.id);
 
                           // Update profile email if changed
-                          if (managingShop.owner_id && customerEmail && !customerEmail.endsWith("@mylinkqr.com")) {
+                          if (
+                            managingShop.owner_id &&
+                            customerEmail &&
+                            !customerEmail.endsWith("@mylinkqr.com")
+                          ) {
                             await supabase
                               .from("profiles")
                               .update({ email: customerEmail })
@@ -3817,18 +4172,25 @@ function AdminConsolePage() {
                       disabled={savingShop}
                       onClick={async () => {
                         if (!customerEmail || customerEmail.endsWith("@mylinkqr.com")) {
-                          toast.error("No real email found for this account. Update the email first.");
+                          toast.error(
+                            "No real email found for this account. Update the email first.",
+                          );
                           return;
                         }
                         setSavingShop(true);
                         try {
-                          const { error } = await supabase.auth.resetPasswordForEmail(customerEmail, {
-                            redirectTo: `${window.location.origin}/auth/reset-password`,
-                          });
+                          const { error } = await supabase.auth.resetPasswordForEmail(
+                            customerEmail,
+                            {
+                              redirectTo: `${window.location.origin}/auth/reset-password`,
+                            },
+                          );
                           if (error) throw error;
                           toast.success(`✅ Password reset email sent to ${customerEmail}!`);
                         } catch (err) {
-                          toast.error(err instanceof Error ? err.message : "Failed to send reset email");
+                          toast.error(
+                            err instanceof Error ? err.message : "Failed to send reset email",
+                          );
                         } finally {
                           setSavingShop(false);
                         }
@@ -3873,7 +4235,14 @@ function AdminConsolePage() {
               disabled={savingShop}
               className="h-10 px-5 text-xs font-extrabold rounded-xl bg-[#00E676] text-[#080C14] hover:bg-[#00E676]/90 shadow-md shadow-[#00E676]/20"
             >
-              {savingShop ? "Saving..." : "Save Settings"}
+              {savingShop ? (
+                <span className="flex items-center gap-1.5">
+                  <Loader2 className="size-3.5 animate-spin" />
+                  <span>Saving...</span>
+                </span>
+              ) : (
+                "Save Settings"
+              )}
             </Button>
           </div>
         </DialogContent>

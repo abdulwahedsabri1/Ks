@@ -18,7 +18,7 @@ export function CTASection() {
             size="lg"
             className="rounded-full bg-background text-foreground hover:bg-background/90 h-14 px-8 text-lg w-full sm:w-auto"
           >
-            <Link to="/auth">Start your free trial</Link>
+            <Link to="/auth" search={{ tab: "signup", plan: "trial" }}>Start your free trial</Link>
           </Button>
           <p className="text-sm text-primary-foreground/70 sm:ml-4">
             No credit card required • Setup in 5 minutes

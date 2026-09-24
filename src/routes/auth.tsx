@@ -24,11 +24,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NICHES, slugify } from "@/lib/shop";
+import { NICHES, PLANS, slugify } from "@/lib/shop";
 import { analyzeEmail, checkRateLimit } from "@/lib/emailValidation";
+
+const authSearchSchema = z.object({
+  tab: z.enum(["login", "signup"]).optional(),
+  mode: z.enum(["login", "signup"]).optional(),
+  plan: z.string().optional(),
+  cycle: z.enum(["monthly", "yearly"]).optional(),
+  redirect: z.string().optional(),
+});
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  validateSearch: (search) => authSearchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "Sign in — MY Link QR" },
@@ -548,7 +557,9 @@ type AuthTab = "login" | "signup";
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<AuthTab>("login");
+  const search = Route.useSearch();
+  const initialTab: AuthTab = (search.tab || search.mode) ?? (search.plan ? "signup" : "login");
+  const [activeTab, setActiveTab] = useState<AuthTab>(initialTab);
   const [showForgot, setShowForgot] = useState(false);
   const isSigningUp = useRef(false);
 
@@ -594,7 +605,6 @@ function AuthPage() {
     toast.success("Terms accepted!");
     void handleSignup(undefined, true);
   }
-
 
   // Redirect if already logged in
   useEffect(() => {
@@ -1030,8 +1040,8 @@ function AuthPage() {
               transition={{ delay: 0.4, duration: 0.5 }}
               className="text-sm text-white/40"
             >
-              Join <span className="text-[#F5A623] font-bold">100+ businesses</span> already on
-              MY Link QR
+              Join <span className="text-[#F5A623] font-bold">100+ businesses</span> already on MY
+              Link QR
             </motion.p>
           </div>
         </div>
@@ -1053,6 +1063,46 @@ function AuthPage() {
               />
               <span className="font-bold text-xl text-white tracking-tight">MY Link QR</span>
             </Link>
+
+            {/* Selected Plan Banner */}
+            {search.plan && (() => {
+              const selectedPlanObj = PLANS.find((p) => p.id === search.plan) ?? {
+                id: search.plan,
+                name: search.plan.charAt(0).toUpperCase() + search.plan.slice(1),
+                price: search.plan === "trial" ? "Free" : "Custom",
+                yearlyPrice: search.plan === "trial" ? "Free" : "Custom",
+              };
+              const displayPrice = search.plan === "trial"
+                ? "Free"
+                : search.cycle === "yearly"
+                ? (selectedPlanObj.yearlyPrice || selectedPlanObj.price)
+                : selectedPlanObj.price;
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 rounded-2xl border border-[#F5A623]/40 bg-[#F5A623]/10 p-4 flex items-center justify-between shadow-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#F5A623] text-black font-extrabold flex items-center justify-center shrink-0 shadow-md">
+                      <Sparkles className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wider text-[#F5A623] font-bold">
+                        Selected Plan
+                      </p>
+                      <p className="text-sm font-bold text-white">
+                        {selectedPlanObj.name} Plan{" "}
+                        <span className="text-white/70 font-medium">({displayPrice})</span>
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#F5A623]/20 text-[#F5A623] border border-[#F5A623]/30 shrink-0">
+                    {search.plan === "trial" ? "7-Day Free" : search.cycle === "yearly" ? "Annual Billing" : "Monthly"}
+                  </span>
+                </motion.div>
+              );
+            })()}
 
             {/* Header */}
             <div className="mb-8">

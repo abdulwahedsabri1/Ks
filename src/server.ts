@@ -54,9 +54,16 @@ export default {
       );
 
       const url = new URL(request.url);
-      if (request.method === "GET" && url.pathname.startsWith("/shop/") && response.status === 200) {
+      if (
+        request.method === "GET" &&
+        url.pathname.startsWith("/shop/") &&
+        response.status === 200
+      ) {
         if (!secureHeaders.has("Cache-Control")) {
-          secureHeaders.set("Cache-Control", "public, max-age=15, s-maxage=30, stale-while-revalidate=60");
+          secureHeaders.set(
+            "Cache-Control",
+            "public, max-age=15, s-maxage=30, stale-while-revalidate=60",
+          );
         }
       }
 

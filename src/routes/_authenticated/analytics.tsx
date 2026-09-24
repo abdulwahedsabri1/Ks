@@ -43,9 +43,16 @@ export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({
     meta: [
       { title: "Analytics & Traffic Insights — MY Link QR" },
-      { name: "description", content: "Comprehensive real-time tracking of menu views, QR scans, and customer device analytics." },
+      {
+        name: "description",
+        content:
+          "Comprehensive real-time tracking of menu views, QR scans, and customer device analytics.",
+      },
       { property: "og:title", content: "Analytics — MY Link QR" },
-      { property: "og:description", content: "Track customer engagement, peak times, device breakdown and QR performance." },
+      {
+        property: "og:description",
+        content: "Track customer engagement, peak times, device breakdown and QR performance.",
+      },
     ],
   }),
   component: AnalyticsPage,
@@ -55,14 +62,13 @@ function AnalyticsPage() {
   const { user } = useAuth();
   const { data: isAdmin } = useIsAdmin(user?.id);
   const { data: shop } = useMyShop(user?.id);
-  
+
   const [days, setDays] = useState<number>(30);
-  
+
   const hasAnalytics = shopFeatures(shop).analytics;
 
-  const resetAt = (shop?.features as Record<string, unknown> | null)?.[
-    "analytics_reset_at"
-  ] as string | undefined;
+  const resetAt = (shop?.features as Record<string, unknown> | null)?.["analytics_reset_at"] as
+    string | undefined;
 
   const { data: events, isLoading, refetch, isRefetching } = useAnalytics(shop?.id, days, resetAt);
 
@@ -76,13 +82,28 @@ function AnalyticsPage() {
   const qrRatio = totalCount > 0 ? Math.round((scansCount / totalCount) * 100) : 0;
 
   // Device Breakdown
-  const deviceStats = useMemo<{ mobile: number; desktop: number; tablet: number; other: number }>(() => {
+  const deviceStats = useMemo<{
+    mobile: number;
+    desktop: number;
+    tablet: number;
+    other: number;
+  }>(() => {
     const counts = { mobile: 0, desktop: 0, tablet: 0, other: 0 };
     rows.forEach((r) => {
       const dev = (r.device || "mobile").toLowerCase();
-      if (dev.includes("mobile") || dev.includes("phone") || dev.includes("android") || dev.includes("iphone")) {
+      if (
+        dev.includes("mobile") ||
+        dev.includes("phone") ||
+        dev.includes("android") ||
+        dev.includes("iphone")
+      ) {
         counts.mobile++;
-      } else if (dev.includes("desktop") || dev.includes("windows") || dev.includes("mac") || dev.includes("linux")) {
+      } else if (
+        dev.includes("desktop") ||
+        dev.includes("windows") ||
+        dev.includes("mac") ||
+        dev.includes("linux")
+      ) {
         counts.desktop++;
       } else if (dev.includes("tablet") || dev.includes("ipad")) {
         counts.tablet++;
@@ -95,8 +116,11 @@ function AnalyticsPage() {
 
   // Timeline chart data (grouped by date)
   const timelineData = useMemo(() => {
-    const map = new Map<string, { date: string; displayDate: string; views: number; scans: number; total: number }>();
-    
+    const map = new Map<
+      string,
+      { date: string; displayDate: string; views: number; scans: number; total: number }
+    >();
+
     // Seed all days in selected range so graph is continuous
     for (let i = days - 1; i >= 0; i--) {
       const d = subDays(new Date(), i);
@@ -138,12 +162,16 @@ function AnalyticsPage() {
   }, [rows]);
 
   // Device pie chart data
-  const pieData = useMemo(() => [
-    { name: "Mobile", value: deviceStats.mobile, color: "#3B82F6" },
-    { name: "Desktop", value: deviceStats.desktop, color: "#10B981" },
-    { name: "Tablet", value: deviceStats.tablet, color: "#8B5CF6" },
-    { name: "Other", value: deviceStats.other, color: "#F59E0B" },
-  ].filter((d) => d.value > 0), [deviceStats]);
+  const pieData = useMemo(
+    () =>
+      [
+        { name: "Mobile", value: deviceStats.mobile, color: "#3B82F6" },
+        { name: "Desktop", value: deviceStats.desktop, color: "#10B981" },
+        { name: "Tablet", value: deviceStats.tablet, color: "#8B5CF6" },
+        { name: "Other", value: deviceStats.other, color: "#F59E0B" },
+      ].filter((d) => d.value > 0),
+    [deviceStats],
+  );
 
   // CSV Export handler
   const handleExportCSV = () => {
@@ -160,7 +188,9 @@ function AnalyticsPage() {
       r.id || "",
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...csvRows.map((e) => e.join(","))].join("\n");
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...csvRows.map((e) => e.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -181,7 +211,9 @@ function AnalyticsPage() {
         <div className="rounded-3xl border bg-card p-12 text-center shadow-sm">
           <Layers className="mx-auto h-12 w-12 text-muted-foreground/50" />
           <h3 className="mt-4 text-lg font-semibold">No Shop Connected</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Please create your shop profile on the dashboard to start tracking analytics.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Please create your shop profile on the dashboard to start tracking analytics.
+          </p>
         </div>
       ) : !hasAnalytics ? (
         <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-b from-amber-500/10 via-card to-card p-8 sm:p-12 shadow-xl text-center max-w-4xl mx-auto my-6 backdrop-blur-xl">
@@ -197,7 +229,9 @@ function AnalyticsPage() {
             Analytics & Traffic Insights Locked
           </h2>
           <p className="mt-2 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            Real-time scan tracking, customer engagement metrics, device breakdowns, and hourly rush heatmaps are exclusively available on the <strong className="text-amber-500 font-semibold">Premium Plan (₹799/mo)</strong>.
+            Real-time scan tracking, customer engagement metrics, device breakdowns, and hourly rush
+            heatmaps are exclusively available on the{" "}
+            <strong className="text-amber-500 font-semibold">Premium Plan (₹799/mo)</strong>.
           </p>
 
           {/* Feature list preview grid */}
@@ -208,7 +242,9 @@ function AnalyticsPage() {
               </div>
               <div>
                 <h4 className="text-xs font-bold text-foreground">Menu Views & QR Scans</h4>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Track direct digital visits vs physical QR code scans with conversion % ratios.</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Track direct digital visits vs physical QR code scans with conversion % ratios.
+                </p>
               </div>
             </div>
 
@@ -218,7 +254,9 @@ function AnalyticsPage() {
               </div>
               <div>
                 <h4 className="text-xs font-bold text-foreground">Device & Hardware Breakdown</h4>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Analyze visitor platforms (iPhone, Android, Tablet, Desktop) in real time.</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Analyze visitor platforms (iPhone, Android, Tablet, Desktop) in real time.
+                </p>
               </div>
             </div>
 
@@ -228,7 +266,9 @@ function AnalyticsPage() {
               </div>
               <div>
                 <h4 className="text-xs font-bold text-foreground">Hourly Peak Rush Heatmap</h4>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Discover your busiest lunch and dinner times to optimize staffing & specials.</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Discover your busiest lunch and dinner times to optimize staffing & specials.
+                </p>
               </div>
             </div>
 
@@ -238,26 +278,39 @@ function AnalyticsPage() {
               </div>
               <div>
                 <h4 className="text-xs font-bold text-foreground">1-Click CSV Data Export</h4>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Export detailed timestamped customer log files for reporting & business growth.</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Export detailed timestamped customer log files for reporting & business growth.
+                </p>
               </div>
             </div>
           </div>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link to="/dashboard">
-              <Button size="lg" className="h-12 px-8 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-sm shadow-lg shadow-amber-500/25 gap-2">
+              <Button
+                size="lg"
+                className="h-12 px-8 rounded-2xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-sm shadow-lg shadow-amber-500/25 gap-2"
+              >
                 <Sparkles className="h-4 w-4" /> Upgrade to Premium Plan (₹799/mo)
               </Button>
             </Link>
             {isAdmin ? (
               <Link to="/admin">
-                <Button variant="outline" size="lg" className="h-12 px-6 rounded-2xl text-sm font-semibold gap-1.5 text-purple-400 border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="h-12 px-6 rounded-2xl text-sm font-semibold gap-1.5 text-purple-400 border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20"
+                >
                   <ShieldCheck className="h-4 w-4" /> Set Plan in Admin Console
                 </Button>
               </Link>
             ) : (
               <Link to="/pricing">
-                <Button variant="outline" size="lg" className="h-12 px-6 rounded-2xl text-sm font-semibold gap-1.5">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="h-12 px-6 rounded-2xl text-sm font-semibold gap-1.5"
+                >
                   View All Plans <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -269,7 +322,9 @@ function AnalyticsPage() {
           {/* Header Controls */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border bg-card/60 p-4 backdrop-blur-sm">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Time Horizon:</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Time Horizon:
+              </span>
               <div className="flex rounded-xl bg-muted p-1">
                 {[7, 14, 30, 90].map((d) => (
                   <button
@@ -380,11 +435,16 @@ function AnalyticsPage() {
                   <div className="flex h-full flex-col items-center justify-center text-center p-6 text-muted-foreground">
                     <Activity className="h-8 w-8 text-muted-foreground/40 mb-2" />
                     <p className="text-sm font-medium">No activity recorded for this date range.</p>
-                    <p className="text-xs mt-1">Scan your shop QR code or visit the menu link to see live tracking!</p>
+                    <p className="text-xs mt-1">
+                      Scan your shop QR code or visit the menu link to see live tracking!
+                    </p>
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={timelineData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <AreaChart
+                      data={timelineData}
+                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                    >
                       <defs>
                         <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.4} />
@@ -487,9 +547,27 @@ function AnalyticsPage() {
               </div>
 
               <div className="space-y-2 pt-2 border-t text-xs">
-                <DeviceRow icon={Smartphone} label="Mobile" count={deviceStats.mobile} total={totalCount} color="bg-blue-500" />
-                <DeviceRow icon={Monitor} label="Desktop" count={deviceStats.desktop} total={totalCount} color="bg-emerald-500" />
-                <DeviceRow icon={Tablet} label="Tablet" count={deviceStats.tablet} total={totalCount} color="bg-purple-500" />
+                <DeviceRow
+                  icon={Smartphone}
+                  label="Mobile"
+                  count={deviceStats.mobile}
+                  total={totalCount}
+                  color="bg-blue-500"
+                />
+                <DeviceRow
+                  icon={Monitor}
+                  label="Desktop"
+                  count={deviceStats.desktop}
+                  total={totalCount}
+                  color="bg-emerald-500"
+                />
+                <DeviceRow
+                  icon={Tablet}
+                  label="Tablet"
+                  count={deviceStats.tablet}
+                  total={totalCount}
+                  color="bg-purple-500"
+                />
               </div>
             </div>
           </div>
@@ -516,9 +594,25 @@ function AnalyticsPage() {
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={hourlyData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                      <XAxis dataKey="label" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} interval={2} />
-                      <YAxis stroke="#888888" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
+                    <BarChart
+                      data={hourlyData}
+                      margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                    >
+                      <XAxis
+                        dataKey="label"
+                        stroke="#888888"
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
+                        interval={2}
+                      />
+                      <YAxis
+                        stroke="#888888"
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
+                        allowDecimals={false}
+                      />
                       <Tooltip
                         cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
                         contentStyle={{
@@ -532,7 +626,9 @@ function AnalyticsPage() {
                         {hourlyData.map((entry, index) => (
                           <Cell
                             key={`bar-${index}`}
-                            fill={entry.count > 5 ? "#F59E0B" : entry.count > 0 ? "#3B82F6" : "#334155"}
+                            fill={
+                              entry.count > 5 ? "#F59E0B" : entry.count > 0 ? "#3B82F6" : "#334155"
+                            }
                           />
                         ))}
                       </Bar>
@@ -553,14 +649,14 @@ function AnalyticsPage() {
                     Live
                   </span>
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Latest customer interactions
-                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">Latest customer interactions</p>
               </div>
 
               <div className="my-4 space-y-3 max-h-56 overflow-y-auto pr-1">
                 {rows.length === 0 ? (
-                  <p className="text-xs text-center text-muted-foreground py-8">No events logged yet.</p>
+                  <p className="text-xs text-center text-muted-foreground py-8">
+                    No events logged yet.
+                  </p>
                 ) : (
                   rows.slice(0, 10).map((row, idx) => (
                     <div
@@ -575,7 +671,11 @@ function AnalyticsPage() {
                               : "bg-blue-500/15 text-blue-500"
                           }`}
                         >
-                          {row.event_type === "scan" ? <QrCode className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                          {row.event_type === "scan" ? (
+                            <QrCode className="h-3.5 w-3.5" />
+                          ) : (
+                            <Eye className="h-3.5 w-3.5" />
+                          )}
                         </div>
                         <div>
                           <p className="font-semibold capitalize text-foreground">
@@ -587,7 +687,9 @@ function AnalyticsPage() {
                         </div>
                       </div>
                       <span className="text-[10px] font-medium text-muted-foreground">
-                        {row.created_at ? format(parseISO(row.created_at), "HH:mm, MMM d") : "Just now"}
+                        {row.created_at
+                          ? format(parseISO(row.created_at), "HH:mm, MMM d")
+                          : "Just now"}
                       </span>
                     </div>
                   ))
@@ -624,7 +726,9 @@ function StatCard({
   return (
     <div className="relative overflow-hidden rounded-3xl border bg-card p-5 shadow-sm transition-all hover:shadow-md">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</span>
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          {title}
+        </span>
         <div className={`rounded-xl p-2.5 ${bgColor}`}>
           <Icon className={`h-5 w-5 ${color}`} />
         </div>
@@ -667,4 +771,3 @@ function DeviceRow({
     </div>
   );
 }
-

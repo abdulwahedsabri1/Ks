@@ -8,8 +8,14 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
     return { amount: data.amount, receipt: data.receipt };
   })
   .handler(async ({ data }) => {
-    const keyId = process.env["RAZORPAY_KEY_ID"] || "rzp_live_Ta4juTNtUmcLxK";
-    const keySecret = process.env["RAZORPAY_KEY_SECRET"] || "M7UXpwv9dtrLHkz3sjfsPM6z";
+    const keyId = process.env["RAZORPAY_KEY_ID"] || process.env["VITE_RAZORPAY_KEY_ID"];
+    const keySecret = process.env["RAZORPAY_KEY_SECRET"];
+
+    if (!keyId || !keySecret) {
+      throw new Error(
+        "Payment gateway key credentials (RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET) are missing on the server environment.",
+      );
+    }
 
     const authHeader = "Basic " + btoa(`${keyId}:${keySecret}`);
     const amountInPaise = Math.max(100, Math.round((Number(data.amount) || 1) * 100));
@@ -65,7 +71,11 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
     },
   )
   .handler(async ({ data, context }) => {
-    const keySecret = process.env["RAZORPAY_KEY_SECRET"] || "M7UXpwv9dtrLHkz3sjfsPM6z";
+    const keySecret = process.env["RAZORPAY_KEY_SECRET"];
+
+    if (!keySecret) {
+      throw new Error("RAZORPAY_KEY_SECRET is missing on the server environment.");
+    }
 
     // Verify Signature if provided
     if (data.razorpay_signature && data.razorpay_signature !== "skip_verify") {
@@ -95,7 +105,13 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
 export const directActivatePlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator(
-    (data: { plan_name: string; amount?: number; transaction_id?: string; shop_id?: string; billing_cycle?: string }) => {
+    (data: {
+      plan_name: string;
+      amount?: number;
+      transaction_id?: string;
+      shop_id?: string;
+      billing_cycle?: string;
+    }) => {
       return {
         plan_name: data.plan_name,
         amount: data.amount,
@@ -231,22 +247,33 @@ async function executePlanActivation({
   else pName = "pro";
 
   let bonusExtra = 2;
+  let customAnnualPrice: number | null = null;
+  let customMonthlyPrice: number | null = null;
+
   try {
-    const { data: ps } = await supabaseAdmin
-      .from("platform_settings")
-      .select("custom_plans")
-      .eq("id", "platform-settings-internal")
+    const { data: systemShop } = await supabaseAdmin
+      .from("shops")
+      .select("features")
+      .eq("slug", "platform-settings-internal")
       .maybeSingle();
-    if (ps?.custom_plans && Array.isArray(ps.custom_plans)) {
-      const matchPlan = ps.custom_plans.find(
-        (cp: any) => cp.id && cp.id.toLowerCase() === pName
-      );
-      if (matchPlan && typeof matchPlan.extraMonths === "number") {
-        bonusExtra = matchPlan.extraMonths;
+
+    const customPlans = (systemShop?.features as Record<string, any> | null)?.["custom_plans"];
+    if (Array.isArray(customPlans)) {
+      const matchPlan = customPlans.find((cp: any) => cp.id && cp.id.toLowerCase() === pName);
+      if (matchPlan) {
+        if (typeof matchPlan.extraMonths === "number") {
+          bonusExtra = matchPlan.extraMonths;
+        }
+        if (typeof matchPlan.yearlyPriceNumber === "number" && matchPlan.yearlyPriceNumber > 0) {
+          customAnnualPrice = matchPlan.yearlyPriceNumber;
+        }
+        if (typeof matchPlan.priceNumber === "number" && matchPlan.priceNumber > 0) {
+          customMonthlyPrice = matchPlan.priceNumber;
+        }
       }
     }
   } catch (err) {
-    console.warn("Could not fetch extraMonths from platform_settings:", err);
+    console.warn("Could not fetch custom plans from platform-settings-internal:", err);
   }
 
   const isYearly = (billingCycle || "").toLowerCase() === "yearly";
@@ -254,10 +281,15 @@ async function executePlanActivation({
 
   let amount = amountPaid ?? 0;
   if (!amount || amount <= 0) {
-    if (pName === "basic") amount = isYearly ? 2490 : 249;
-    else if (pName === "pro") amount = isYearly ? 4990 : 499;
-    else if (pName === "premium") amount = isYearly ? 7990 : 799;
-    else amount = isYearly ? 4990 : 499;
+    if (isYearly) {
+      amount =
+        customAnnualPrice ??
+        (pName === "basic" ? 2739 : pName === "pro" ? 4790 : pName === "premium" ? 8789 : 4790);
+    } else {
+      amount =
+        customMonthlyPrice ??
+        (pName === "basic" ? 249 : pName === "pro" ? 499 : pName === "premium" ? 799 : 499);
+    }
   }
 
   const now = new Date();

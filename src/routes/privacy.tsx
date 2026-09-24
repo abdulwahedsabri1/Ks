@@ -58,7 +58,8 @@ function PrivacyPage() {
                 <li>To route WhatsApp orders directly to your provided business phone number.</li>
                 <li>To calculate scan analytics and view counters for your shop dashboard.</li>
                 <li>
-                  To enable authorized platform administrators to access and assist with merchant account management, troubleshooting, and onboarding.
+                  To enable authorized platform administrators to access and assist with merchant
+                  account management, troubleshooting, and onboarding.
                 </li>
                 <li>To send critical account updates, service notices, and billing receipts.</li>
               </ul>
@@ -80,7 +81,11 @@ function PrivacyPage() {
                 4. Administrator Access & Data Governance
               </h2>
               <p>
-                All business data, menu configurations, pricing details, and scan analytics collected on our platform are accessible by authorized system administrators of MY Link QR. This administrative access is strictly restricted to platform operations, technical support, server maintenance, menu setup assistance, and system security enforcement.
+                All business data, menu configurations, pricing details, and scan analytics
+                collected on our platform are accessible by authorized system administrators of MY
+                Link QR. This administrative access is strictly restricted to platform operations,
+                technical support, server maintenance, menu setup assistance, and system security
+                enforcement.
               </p>
             </section>
 

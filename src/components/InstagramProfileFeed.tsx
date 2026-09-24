@@ -29,7 +29,8 @@ const INSTAGRAM_REELS: InstagramReelItem[] = [
     videoUrl: "/mock/Visual_Show_different_busines.mp4",
     views: "12.4K",
     likes: "1,240",
-    caption: "Transform any business into a premium digital experience! 🚀 #mylinkqr #qrorder #restauranttech",
+    caption:
+      "Transform any business into a premium digital experience! 🚀 #mylinkqr #qrorder #restauranttech",
     tag: "Featured Reel",
   },
   {
@@ -37,7 +38,8 @@ const INSTAGRAM_REELS: InstagramReelItem[] = [
     videoUrl: "/mock/kj.mp4",
     views: "8.9K",
     likes: "942",
-    caption: "'Nobody care about your Small business posts' — Until you offer instant QR ordering! 💡",
+    caption:
+      "'Nobody care about your Small business posts' — Until you offer instant QR ordering! 💡",
     tag: "Growth Reel",
   },
   {
@@ -45,7 +47,8 @@ const INSTAGRAM_REELS: InstagramReelItem[] = [
     videoUrl: "/mock/dsf.mp4",
     views: "15.8K",
     likes: "2,180",
-    caption: "Restaurant Owner & AI Dashboard in action! Convert paper menus in seconds with AI OCR 📄⚡",
+    caption:
+      "Restaurant Owner & AI Dashboard in action! Convert paper menus in seconds with AI OCR 📄⚡",
     tag: "Dashboard",
   },
   {
@@ -180,7 +183,7 @@ export function InstagramProfileFeed() {
       {/* Story Highlights Bar */}
       <div className="flex items-center gap-4 py-1 overflow-x-auto no-scrollbar border-b border-border">
         <div className="flex flex-col items-center gap-1 shrink-0">
-          <div className="size-13 rounded-full p-0.5 border-2 border-pink-500/50">
+          <div className="size-12 rounded-full p-0.5 border-2 border-pink-500/50">
             <div className="w-full h-full rounded-full bg-muted flex items-center justify-center text-foreground font-semibold text-xs">
               <Sparkles className="size-5 text-amber-500" />
             </div>
@@ -287,7 +290,8 @@ export function InstagramProfileFeed() {
       {/* Footer Action */}
       <div className="pt-3 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
         <p className="text-xs text-muted-foreground">
-          Follow <strong className="text-foreground">@mylinkqr</strong> for new daily video demos & customer highlights!
+          Follow <strong className="text-foreground">@mylinkqr</strong> for new daily video demos &
+          customer highlights!
         </p>
         <a
           href="https://instagram.com/mylinkqr"
