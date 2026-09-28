@@ -29,6 +29,11 @@ import {
   Truck,
   Filter,
   Lock,
+  Eye,
+  ShoppingBag,
+  CreditCard,
+  MapPin,
+  Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -44,6 +49,7 @@ import {
   shopMapUrl,
   shopCatalogLabel,
   shopFeatures,
+  shopUpiId,
 } from "@/lib/shop";
 
 export const Route = createFileRoute("/_authenticated/qr")({
@@ -141,6 +147,197 @@ function drawInitials(
   ctx.restore();
 }
 
+function getFrameText(qrType: "menu" | "view_only" | "upi" | "map" | "review", catalogLabel: string) {
+  const catUpper = catalogLabel.toUpperCase();
+  switch (qrType) {
+    case "upi":
+      return {
+        standHeader: "SCAN & PAY ANY AMOUNT",
+        standSub: "Scan with GPay, PhonePe, Paytm, or BHIM",
+        posterHeader: "Scan to Pay with UPI",
+        posterFooter: "✨ Pay merchant instantly with custom amount",
+        luxuryHeader: "❖  SCAN & PAY MERCHANT UPI  ❖",
+        luxurySub: "Instant contactless payment on your phone",
+        cyberHeader: "⚡ INSTANT UPI SCAN & PAY",
+        cyberSub: "Direct payment via GPay, PhonePe, Paytm & BHIM",
+        nordicHeader: "SCAN & PAY MERCHANT",
+        nordicSub: "Scan to pay custom amount with UPI app",
+        royalHeader: "✦ SCAN & PAY WITH UPI ✦",
+        royalSub: "Instant touchless payment to merchant",
+        retroHeader: "★ SCAN & PAY ANY AMOUNT ★",
+        retroSub: "Pay instantly with any UPI app",
+        emeraldHeader: "SCAN & PAY WITH UPI",
+        emeraldSub: "Instant contactless merchant payment",
+        sunsetHeader: "SCAN & PAY MERCHANT",
+        sunsetSub: "Pay custom amount with your preferred UPI app",
+        monoHeader: "SCAN & PAY VIA UPI",
+        monoSub: "Direct merchant UPI payment",
+        prismHeader: "DIGITAL UPI SCAN & PAY",
+        prismSub: "Scan with GPay, PhonePe, Paytm or BHIM",
+        salonHeader: "SCAN & PAY SERVICES WITH UPI",
+        salonSub: "Touchless instant salon payment",
+        hotelHeader: "SCAN & PAY HOTEL SERVICES",
+        hotelSub: "Direct concierge & room service payment",
+        jewelryHeader: "SCAN & PAY STORE WITH UPI",
+        jewelrySub: "Instant boutique UPI payment",
+        medicalHeader: "SCAN & PAY CLINIC FEES",
+        medicalSub: "Touchless clinic fee payment",
+        fitnessHeader: "SCAN & PAY GYM MEMBERSHIP",
+        fitnessSub: "Instant fitness center UPI payment",
+        truckHeader: "EXPRESS UPI SCAN & PAY",
+        truckSub: "Scan to pay food order instantly",
+      };
+    case "view_only":
+      return {
+        standHeader: "SCAN FOR PRODUCT SHOWCASE",
+        standSub: "Browse all items, photos, and prices",
+        posterHeader: "Scan to View Catalog",
+        posterFooter: "✨ Browse items, photos & details",
+        luxuryHeader: "❖  PRODUCT SHOWCASE CATALOG  ❖",
+        luxurySub: "Instant contactless browsing on your phone",
+        cyberHeader: "⚡ DIGITAL PRODUCT SHOWCASE",
+        cyberSub: "Browse items, prices & store details",
+        nordicHeader: "VIEW PRODUCT CATALOG",
+        nordicSub: "Point your camera to browse live items",
+        royalHeader: "✦ PRODUCT SHOWCASE ✦",
+        royalSub: "Explore items & services on your phone",
+        retroHeader: "★ VIEW PRODUCTS ★",
+        retroSub: "Browse current prices & items",
+        emeraldHeader: "VIEW CATALOG & PRODUCTS",
+        emeraldSub: "Browse handcrafted items & offers",
+        sunsetHeader: "BROWSE CATALOG & ITEMS",
+        sunsetSub: "Explore items & business details",
+        monoHeader: "VIEW PRODUCT CATALOG",
+        monoSub: "Browse full product catalog",
+        prismHeader: "DIGITAL PRODUCT SHOWCASE",
+        prismSub: "Browse catalog on your phone",
+        salonHeader: "BROWSE SALON SERVICES",
+        salonSub: "View prices, treatments & details",
+        hotelHeader: "VIEW HOTEL SERVICES & MENU",
+        hotelSub: "Browse room service & amenities",
+        jewelryHeader: "VIEW JEWELRY COLLECTION",
+        jewelrySub: "Explore exclusive pieces & catalog",
+        medicalHeader: "VIEW CLINIC SERVICES & FEES",
+        medicalSub: "Browse doctor services & timing",
+        fitnessHeader: "VIEW GYM PLANS & CATALOG",
+        fitnessSub: "Browse workout plans & pricing",
+        truckHeader: "VIEW PRODUCT CATALOG",
+        truckSub: "Browse menu items & prices",
+      };
+    case "map":
+      return {
+        standHeader: "SCAN FOR GOOGLE MAPS LOCATION",
+        standSub: "Direct store location & directions",
+        posterHeader: "Scan for Store Location",
+        posterFooter: "✨ Open live directions in Google Maps",
+        luxuryHeader: "❖  STORE LOCATION MAP  ❖",
+        luxurySub: "Open directions on your phone",
+        cyberHeader: "⚡ GOOGLE MAPS LOCATION",
+        cyberSub: "Instant GPS direction & store map",
+        nordicHeader: "FIND OUR STORE LOCATION",
+        nordicSub: "Open live map directions",
+        royalHeader: "✦ STORE LOCATION ✦",
+        royalSub: "Get directions to our place",
+        retroHeader: "★ GOOGLE MAPS ★",
+        retroSub: "Open live store location",
+        emeraldHeader: "FIND OUR STORE LOCATION",
+        emeraldSub: "Get live directions on Google Maps",
+        sunsetHeader: "STORE LOCATION MAP",
+        sunsetSub: "Open live navigation directions",
+        monoHeader: "GOOGLE MAPS LOCATION",
+        monoSub: "Open store directions",
+        prismHeader: "STORE LOCATION MAP",
+        prismSub: "Instant map location navigation",
+        salonHeader: "FIND SALON LOCATION",
+        salonSub: "Get directions to our salon",
+        hotelHeader: "HOTEL LOCATION & MAP",
+        hotelSub: "Open hotel location directions",
+        jewelryHeader: "BOUTIQUE LOCATION MAP",
+        jewelrySub: "Find our store location",
+        medicalHeader: "CLINIC LOCATION & MAP",
+        medicalSub: "Get directions to our clinic",
+        fitnessHeader: "GYM LOCATION & MAP",
+        fitnessSub: "Find our gym location",
+        truckHeader: "FIND OUR LOCATION",
+        truckSub: "Open live location directions",
+      };
+    case "review":
+      return {
+        standHeader: "SCAN TO LEAVE A GOOGLE REVIEW",
+        standSub: "Share your rating & review on Google",
+        posterHeader: "Scan to Write Review",
+        posterFooter: "✨ Rate your experience on Google",
+        luxuryHeader: "❖  RATE & REVIEW BUSINESS  ❖",
+        luxurySub: "Share your experience on Google",
+        cyberHeader: "⚡ CLIENT REVIEWS & RATING",
+        cyberSub: "Instant feedback & Google review",
+        nordicHeader: "RATE YOUR EXPERIENCE",
+        nordicSub: "Share your review on Google",
+        royalHeader: "✦ LEAVE A REVIEW ✦",
+        royalSub: "Rate your visit on Google",
+        retroHeader: "★ GOOGLE REVIEWS ★",
+        retroSub: "Share your rating with us",
+        emeraldHeader: "SHARE YOUR REVIEW & RATING",
+        emeraldSub: "Rate your visit on Google",
+        sunsetHeader: "RATE YOUR EXPERIENCE",
+        sunsetSub: "Leave your review on Google",
+        monoHeader: "LEAVE A GOOGLE REVIEW",
+        monoSub: "Share your rating & feedback",
+        prismHeader: "RATE YOUR EXPERIENCE",
+        prismSub: "Leave a review on Google",
+        salonHeader: "RATE SALON EXPERIENCE",
+        salonSub: "Share your salon review on Google",
+        hotelHeader: "RATE HOTEL EXPERIENCE",
+        hotelSub: "Share your stay review on Google",
+        jewelryHeader: "RATE BOUTIQUE EXPERIENCE",
+        jewelrySub: "Share your feedback on Google",
+        medicalHeader: "RATE CLINIC EXPERIENCE",
+        medicalSub: "Share your feedback on Google",
+        fitnessHeader: "RATE GYM EXPERIENCE",
+        fitnessSub: "Share your gym review on Google",
+        truckHeader: "RATE YOUR EXPERIENCE",
+        truckSub: "Share your feedback on Google",
+      };
+    default:
+      return {
+        standHeader: `SCAN FOR DIGITAL ${catUpper}`,
+        standSub: "No app download required",
+        posterHeader: `Scan for Live ${catalogLabel}`,
+        posterFooter: "✨ Browse items & order instantly",
+        luxuryHeader: "❖  EXCLUSIVE DIGITAL MENU  ❖",
+        luxurySub: "Instant contactless browsing on your phone",
+        cyberHeader: "⚡ TOUCHLESS DIGITAL MENU",
+        cyberSub: "Instant order & direct WhatsApp chat",
+        nordicHeader: `DIGITAL ${catUpper}`,
+        nordicSub: "Point your camera to browse live items",
+        royalHeader: `✦ DIGITAL ${catUpper} ✦`,
+        royalSub: "Scan menu & place order instantly",
+        retroHeader: `★ DIGITAL ${catUpper} ★`,
+        retroSub: "Scan menu & order directly",
+        emeraldHeader: `DIGITAL ${catUpper}`,
+        emeraldSub: "Browse handcrafted items & order",
+        sunsetHeader: `DIGITAL ${catUpper}`,
+        sunsetSub: "Scan menu & place your order",
+        monoHeader: `DIGITAL ${catUpper}`,
+        monoSub: "Scan to view live menu",
+        prismHeader: `DIGITAL ${catUpper}`,
+        prismSub: "Scan to view live menu & order",
+        salonHeader: "SALON SERVICES & MENU",
+        salonSub: "Browse services & book treatment",
+        hotelHeader: "HOTEL SERVICES & MENU",
+        hotelSub: "Browse room service & amenities",
+        jewelryHeader: "JEWELRY CATALOG & MENU",
+        jewelrySub: "Explore luxury collection & order",
+        medicalHeader: "MEDICAL SERVICES & MENU",
+        medicalSub: "Browse clinic services & fees",
+        fitnessHeader: "GYM CATALOG & MENU",
+        fitnessSub: "Browse membership plans & pass",
+        truckHeader: "FOOD TRUCK MENU & ORDER",
+        truckSub: "Browse menu & order instantly",
+      };
+  }
+}
+
 export function QrPage() {
   const { user } = useAuth();
   const { data: isAdmin } = useIsAdmin(user?.id);
@@ -156,14 +353,30 @@ export function QrPage() {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const [qrType, setQrType] = useState<"menu" | "map" | "review">("menu");
+  const [qrType, setQrType] = useState<"menu" | "view_only" | "upi" | "map" | "review">("menu");
 
+  const upiId = shop ? shopUpiId(shop) : "";
   const menuUrl = shop ? `${publicShopUrl(shop.slug)}?src=qr` : "";
+  const viewOnlyUrl = shop ? `${publicShopUrl(shop.slug)}?src=qr&mode=view` : "";
+  const upiUrl =
+    shop && upiId
+      ? `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(shop.name)}&cu=INR`
+      : "";
   const mapUrl = shop ? shopMapUrl(shop) || "" : "";
   const reviewUrl = shop ? shopGoogleReviewLink(shop) || "" : "";
 
   const targetUrl =
-    qrType === "menu" ? menuUrl : qrType === "map" ? mapUrl : qrType === "review" ? reviewUrl : "";
+    qrType === "menu"
+      ? menuUrl
+      : qrType === "view_only"
+        ? viewOnlyUrl
+        : qrType === "upi"
+          ? upiUrl
+          : qrType === "map"
+            ? mapUrl
+            : qrType === "review"
+              ? reviewUrl
+              : "";
 
   const render = useCallback(async () => {
     if (!targetUrl || !canvasRef.current || !shop) return;
@@ -178,6 +391,8 @@ export function QrPage() {
       canvas.height = height;
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
+
+      const txt = getFrameText(qrType, catalogLabel);
 
       // 1. MINIMAL 1:1
       if (frameStyle === "clean") {
@@ -248,7 +463,7 @@ export function QrPage() {
         ctx.font = "bold 44px sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(`SCAN FOR DIGITAL ${catalogLabel.toUpperCase()}`, width / 2, 130);
+        ctx.fillText(txt.standHeader, width / 2, 130);
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 56px sans-serif";
@@ -313,7 +528,7 @@ export function QrPage() {
         ctx.fillStyle = "#FFC45A";
         ctx.font = "bold 38px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(`📱 Point phone camera at QR code`, width / 2, 1310);
+        ctx.fillText(`📱 ${txt.standSub}`, width / 2, 1310);
 
         ctx.fillStyle = "rgba(255,255,255,0.7)";
         ctx.font = "32px sans-serif";
@@ -356,7 +571,7 @@ export function QrPage() {
         ctx.fillStyle = "#100C09";
         ctx.font = "bold 44px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(`Scan for Live ${catalogLabel}`, width / 2, cy + 100);
+        ctx.fillText(txt.posterHeader, width / 2, cy + 100);
 
         const qrCanvas = document.createElement("canvas");
         const qrSize = 740;
@@ -408,7 +623,7 @@ export function QrPage() {
 
         ctx.fillStyle = "#100C09";
         ctx.font = "bold 32px sans-serif";
-        ctx.fillText(`✨ Browse items & order instantly`, width / 2, cy + cardH - 80);
+        ctx.fillText(txt.posterFooter, width / 2, cy + cardH - 80);
       }
       // 4. LUXURY OBSIDIAN & GOLD FRAME
       else if (frameStyle === "luxury_gold") {
@@ -428,7 +643,7 @@ export function QrPage() {
         ctx.fillStyle = "#D4AF37";
         ctx.font = "bold 36px serif";
         ctx.textAlign = "center";
-        ctx.fillText("❖  EXCLUSIVE DIGITAL MENU  ❖", width / 2, 150);
+        ctx.fillText(txt.luxuryHeader, width / 2, 150);
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 60px serif";
@@ -505,11 +720,11 @@ export function QrPage() {
 
         ctx.fillStyle = "#D4AF37";
         ctx.font = "bold 36px serif";
-        ctx.fillText("SCAN TO EXPLORE COLLECTION", width / 2, 1340);
+        ctx.fillText(txt.luxuryHeader, width / 2, 1340);
 
         ctx.fillStyle = "rgba(255,255,255,0.6)";
         ctx.font = "28px sans-serif";
-        ctx.fillText("Instant contactless browsing on your phone", width / 2, 1400);
+        ctx.fillText(txt.luxurySub, width / 2, 1400);
 
         ctx.fillStyle = "rgba(212, 175, 55, 0.4)";
         ctx.font = "24px serif";
@@ -541,7 +756,7 @@ export function QrPage() {
         ctx.fillStyle = "#06B6D4";
         ctx.font = "bold 34px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("⚡ TOUCHLESS DIGITAL MENU", width / 2, 136);
+        ctx.fillText(txt.cyberHeader, width / 2, 136);
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 58px sans-serif";
@@ -614,7 +829,7 @@ export function QrPage() {
 
         ctx.fillStyle = "rgba(255,255,255,0.7)";
         ctx.font = "30px sans-serif";
-        ctx.fillText("Instant order & direct WhatsApp chat", width / 2, 1370);
+        ctx.fillText(txt.cyberSub, width / 2, 1370);
 
         ctx.fillStyle = "rgba(255,255,255,0.35)";
         ctx.font = "26px sans-serif";
@@ -633,7 +848,7 @@ export function QrPage() {
         ctx.fillStyle = "#7C402B";
         ctx.font = "bold 32px serif";
         ctx.textAlign = "center";
-        ctx.fillText("WELCOME TO", width / 2, 130);
+        ctx.fillText(txt.nordicHeader, width / 2, 130);
 
         ctx.fillStyle = "#2D2825";
         ctx.font = "bold 60px serif";
@@ -746,7 +961,7 @@ export function QrPage() {
         ctx.fillStyle = "#A855F7";
         ctx.font = "bold 34px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("✨ INSTANT DIGITAL CATALOG", width / 2, gy + 110);
+        ctx.fillText(txt.royalHeader, width / 2, gy + 110);
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 60px sans-serif";
@@ -815,7 +1030,7 @@ export function QrPage() {
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 36px sans-serif";
-        ctx.fillText("Scan to Browse & Order Instantly", width / 2, gy + glassH - 140);
+        ctx.fillText(txt.royalSub, width / 2, gy + glassH - 140);
 
         ctx.fillStyle = "rgba(255,255,255,0.6)";
         ctx.font = "28px sans-serif";
@@ -843,7 +1058,7 @@ export function QrPage() {
         ctx.fillStyle = "#FFFDD0";
         ctx.font = "bold 38px serif";
         ctx.textAlign = "center";
-        ctx.fillText("★ VINTAGE BISTRO & DINER ★", width / 2, 140);
+        ctx.fillText(txt.retroHeader, width / 2, 140);
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 64px serif";
@@ -910,7 +1125,7 @@ export function QrPage() {
 
         ctx.fillStyle = "#FFFDD0";
         ctx.font = "bold 38px serif";
-        ctx.fillText("SCAN TO ORDER AT YOUR TABLE", width / 2, 1310);
+        ctx.fillText(txt.retroSub, width / 2, 1310);
 
         ctx.fillStyle = "rgba(255, 253, 208, 0.75)";
         ctx.font = "28px sans-serif";
@@ -933,7 +1148,7 @@ export function QrPage() {
         ctx.fillStyle = "#A7F3D0";
         ctx.font = "bold 32px serif";
         ctx.textAlign = "center";
-        ctx.fillText("🌿 NATURALLY CRAFTED", width / 2, 130);
+        ctx.fillText(txt.emeraldHeader, width / 2, 130);
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 58px serif";
@@ -941,7 +1156,7 @@ export function QrPage() {
 
         ctx.fillStyle = "rgba(167, 243, 208, 0.8)";
         ctx.font = "italic 30px serif";
-        ctx.fillText("Scan for Menu, Spa Services & Booking", width / 2, 280);
+        ctx.fillText(txt.emeraldSub, width / 2, 280);
 
         const cardW = 860;
         const cardH = 860;
@@ -1008,7 +1223,7 @@ export function QrPage() {
 
         ctx.fillStyle = "#A7F3D0";
         ctx.font = "bold 34px serif";
-        ctx.fillText("SCAN TO VIEW DIGITAL CATALOG", width / 2, 1310);
+        ctx.fillText(txt.emeraldSub, width / 2, 1310);
 
         ctx.fillStyle = "rgba(255,255,255,0.7)";
         ctx.font = "28px sans-serif";
@@ -1044,7 +1259,7 @@ export function QrPage() {
         ctx.fillStyle = "#FF9500";
         ctx.font = "bold 36px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("🍹 HAPPY HOUR & DIGITAL MENU", width / 2, cy + 110);
+        ctx.fillText(txt.sunsetHeader, width / 2, cy + 110);
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 64px sans-serif";
@@ -1098,7 +1313,7 @@ export function QrPage() {
 
         ctx.fillStyle = "#FF9500";
         ctx.font = "bold 36px sans-serif";
-        ctx.fillText("SCAN TO VIEW MENU & ORDER", width / 2, cy + cardH - 140);
+        ctx.fillText(txt.sunsetSub, width / 2, cy + cardH - 140);
 
         ctx.fillStyle = "rgba(255,255,255,0.7)";
         ctx.font = "28px sans-serif";
@@ -1117,7 +1332,7 @@ export function QrPage() {
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 34px monospace";
         ctx.textAlign = "center";
-        ctx.fillText("[ DIGITAL CATALOG ]", width / 2, 130);
+        ctx.fillText(`[ ${txt.monoHeader} ]`, width / 2, 130);
 
         ctx.font = "bold 64px sans-serif";
         ctx.fillText(shop.name.toUpperCase(), width / 2, 220);
@@ -1179,7 +1394,7 @@ export function QrPage() {
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 36px monospace";
-        ctx.fillText("POINT CAMERA TO ACCESS", width / 2, 1310);
+        ctx.fillText(txt.monoSub, width / 2, 1310);
 
         ctx.fillStyle = "rgba(255,255,255,0.5)";
         ctx.font = "26px sans-serif";
@@ -1211,7 +1426,7 @@ export function QrPage() {
         ctx.fillStyle = "#EC4899";
         ctx.font = "bold 34px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("✨ AI DIGITAL INTERFACE", width / 2, 136);
+        ctx.fillText(txt.prismHeader, width / 2, 136);
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 60px sans-serif";
@@ -1280,7 +1495,7 @@ export function QrPage() {
 
         ctx.fillStyle = "#06B6D4";
         ctx.font = "bold 38px sans-serif";
-        ctx.fillText("SCAN WITH ANY SMARTPHONE", width / 2, 1310);
+        ctx.fillText(txt.prismSub, width / 2, 1310);
 
         ctx.fillStyle = "rgba(255,255,255,0.7)";
         ctx.font = "30px sans-serif";
@@ -1308,7 +1523,7 @@ export function QrPage() {
         ctx.fillStyle = "#F472B6";
         ctx.font = "bold 34px serif";
         ctx.textAlign = "center";
-        ctx.fillText("✨ SALON & BEAUTY PRICE LIST ✨", width / 2, 140);
+        ctx.fillText(txt.salonHeader, width / 2, 140);
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 60px serif";
@@ -1379,7 +1594,7 @@ export function QrPage() {
 
         ctx.fillStyle = "#F472B6";
         ctx.font = "bold 36px serif";
-        ctx.fillText("SCAN FOR SERVICES & APPOINTMENTS", width / 2, 1310);
+        ctx.fillText(txt.salonSub, width / 2, 1310);
 
         ctx.fillStyle = "rgba(255,255,255,0.7)";
         ctx.font = "28px sans-serif";
@@ -1402,7 +1617,7 @@ export function QrPage() {
         ctx.fillStyle = "#F4D03F";
         ctx.font = "bold 36px serif";
         ctx.textAlign = "center";
-        ctx.fillText("🛎️ IN-ROOM DINING & SERVICES", width / 2, 140);
+        ctx.fillText(txt.hotelHeader, width / 2, 140);
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 64px serif";
@@ -1473,7 +1688,7 @@ export function QrPage() {
 
         ctx.fillStyle = "#F4D03F";
         ctx.font = "bold 36px serif";
-        ctx.fillText("SCAN FOR HOTEL MENU & CONCIERGE", width / 2, 1310);
+        ctx.fillText(txt.hotelSub, width / 2, 1310);
 
         ctx.fillStyle = "rgba(255,255,255,0.7)";
         ctx.font = "28px sans-serif";
@@ -1501,7 +1716,7 @@ export function QrPage() {
         ctx.fillStyle = "#E2E8F0";
         ctx.font = "bold 34px serif";
         ctx.textAlign = "center";
-        ctx.fillText("💎 FINE JEWELRY & WATCH CATALOG", width / 2, 140);
+        ctx.fillText(txt.jewelryHeader, width / 2, 140);
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 60px serif";
@@ -1572,7 +1787,7 @@ export function QrPage() {
 
         ctx.fillStyle = "#CBD5E1";
         ctx.font = "bold 34px serif";
-        ctx.fillText("SCAN TO VIEW EXCLUSIVE COLLECTION", width / 2, 1310);
+        ctx.fillText(txt.jewelrySub, width / 2, 1310);
 
         ctx.fillStyle = "rgba(255,255,255,0.7)";
         ctx.font = "28px sans-serif";
@@ -1594,7 +1809,7 @@ export function QrPage() {
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 34px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("🩺 CLINIC & APPOINTMENT DESK", width / 2, 126);
+        ctx.fillText(txt.medicalHeader, width / 2, 126);
 
         ctx.font = "bold 58px sans-serif";
         ctx.fillText(shop.name, width / 2, 230);
@@ -1660,7 +1875,7 @@ export function QrPage() {
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 36px sans-serif";
-        ctx.fillText("SCAN FOR DOCTOR SCHEDULE & SERVICES", width / 2, 1310);
+        ctx.fillText(txt.medicalSub, width / 2, 1310);
 
         ctx.fillStyle = "rgba(255,255,255,0.85)";
         ctx.font = "28px sans-serif";
@@ -1687,7 +1902,7 @@ export function QrPage() {
         ctx.fillStyle = "#22C55E";
         ctx.font = "bold 34px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("⚡ WORKOUT & MEMBERSHIP SCHEDULE", width / 2, 126);
+        ctx.fillText(txt.fitnessHeader, width / 2, 126);
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 60px sans-serif";
@@ -1758,14 +1973,14 @@ export function QrPage() {
 
         ctx.fillStyle = "#22C55E";
         ctx.font = "bold 38px sans-serif";
-        ctx.fillText("SCAN FOR GYM RATES & CLASS TIMINGS", width / 2, 1310);
+        ctx.fillText(txt.fitnessSub, width / 2, 1310);
 
         ctx.fillStyle = "rgba(255,255,255,0.7)";
         ctx.font = "28px sans-serif";
         ctx.fillText("Personal Training, Membership Plans & WhatsApp Booking", width / 2, 1370);
 
         ctx.fillStyle = "rgba(34, 197, 94, 0.4)";
-        ctx.font = "24px sans-serif";
+        ctx.font = "24px serif";
         ctx.fillText("Powered by MY Link QR", width / 2, 1490);
       }
       // 18. FOOD TRUCK & STREET FOOD
@@ -1780,7 +1995,7 @@ export function QrPage() {
         ctx.fillStyle = "#EAB308";
         ctx.font = "bold 36px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("🚀 EXPRESS ORDER & TOUCHLESS MENU", width / 2, 136);
+        ctx.fillText(txt.truckHeader, width / 2, 136);
 
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 64px sans-serif";
@@ -1843,14 +2058,14 @@ export function QrPage() {
 
         ctx.fillStyle = "#EAB308";
         ctx.font = "bold 38px sans-serif";
-        ctx.fillText("SKIP THE LINE — SCAN TO ORDER", width / 2, 1310);
+        ctx.fillText(txt.truckSub, width / 2, 1310);
 
         ctx.fillStyle = "rgba(255,255,255,0.75)";
         ctx.font = "28px sans-serif";
         ctx.fillText("Fast takeaways & direct WhatsApp confirmation", width / 2, 1370);
 
         ctx.fillStyle = "rgba(234, 179, 8, 0.4)";
-        ctx.font = "24px sans-serif";
+        ctx.font = "24px serif";
         ctx.fillText("Powered by MY Link QR", width / 2, 1490);
       }
 
@@ -1883,6 +2098,40 @@ export function QrPage() {
   const planLevels: Record<string, number> = { trial: 1, basic: 1, pro: 2, premium: 3 };
   const baseLevel = planLevels[currentPlanStr] ?? 1;
   const currentPlanLevel = feat.themes ? 3 : baseLevel;
+
+  const handleSelectQrType = (type: "menu" | "view_only" | "upi" | "map" | "review") => {
+    if (type === "menu" && baseLevel < 2) {
+      toast.error(
+        "Menu + Order QR is locked! Requires PRO plan. Upgrade your plan to unlock online & WhatsApp ordering.",
+        {
+          action: {
+            label: "Upgrade to PRO",
+            onClick: () => {
+              window.location.href = "/pricing";
+            },
+          },
+          duration: 6000,
+        },
+      );
+      return;
+    }
+    if (type === "upi" && baseLevel < 3) {
+      toast.error(
+        "UPI Scan & Pay QR is locked! Requires PREMIUM plan. Upgrade your plan to unlock merchant UPI QR.",
+        {
+          action: {
+            label: "Upgrade to PREMIUM",
+            onClick: () => {
+              window.location.href = "/pricing";
+            },
+          },
+          duration: 6000,
+        },
+      );
+      return;
+    }
+    setQrType(type);
+  };
 
   const minPlanLevels: Record<string, number> = { basic: 1, pro: 2, premium: 3 };
 
@@ -2137,39 +2386,90 @@ export function QrPage() {
               {/* Main Display Preview Card */}
               <div className="flex flex-col items-center justify-center rounded-3xl border bg-card p-4 sm:p-8 text-center shadow-sm w-full min-w-0 overflow-hidden">
                 {/* Target Link Selector */}
-                <div className="mb-6 flex w-full max-w-md rounded-xl bg-muted/60 p-1 sm:p-1.5 border gap-1">
+                <div className="mb-6 grid grid-cols-2 sm:grid-cols-5 w-full max-w-3xl rounded-2xl bg-muted/60 p-1.5 border gap-1">
                   <button
                     type="button"
-                    className={`flex-1 rounded-lg py-2 px-1 text-[11px] xs:text-xs sm:text-sm font-bold transition-all truncate min-w-0 ${
+                    className={`rounded-xl py-2 px-1 text-[11px] sm:text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 min-w-0 relative ${
                       qrType === "menu"
-                        ? "bg-background shadow text-amber-500 font-extrabold"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-background shadow text-amber-500 font-extrabold ring-1 ring-amber-500/20"
+                        : baseLevel < 2
+                          ? "text-muted-foreground/70 hover:text-foreground opacity-85"
+                          : "text-muted-foreground hover:text-foreground"
                     }`}
-                    onClick={() => setQrType("menu")}
+                    onClick={() => handleSelectQrType("menu")}
                   >
-                    {catalogLabel} Link
+                    <div className="flex items-center gap-1">
+                      <ShoppingBag className="size-3.5 shrink-0" />
+                      <span className="truncate">{catalogLabel} + Order</span>
+                    </div>
+                    {baseLevel < 2 && (
+                      <span className="text-[8px] font-extrabold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-500 border border-amber-500/30 uppercase tracking-wider flex items-center gap-0.5">
+                        <Lock className="size-2" /> PRO
+                      </span>
+                    )}
                   </button>
                   <button
                     type="button"
-                    className={`flex-1 rounded-lg py-2 px-1 text-[11px] xs:text-xs sm:text-sm font-bold transition-all truncate min-w-0 ${
+                    className={`rounded-xl py-2 px-1 text-[11px] sm:text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 min-w-0 ${
+                      qrType === "view_only"
+                        ? "bg-background shadow text-amber-500 font-extrabold ring-1 ring-amber-500/20"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    onClick={() => handleSelectQrType("view_only")}
+                  >
+                    <div className="flex items-center gap-1">
+                      <Eye className="size-3.5 shrink-0" />
+                      <span className="truncate">View Only QR</span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded-xl py-2 px-1 text-[11px] sm:text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 min-w-0 relative ${
+                      qrType === "upi"
+                        ? "bg-background shadow text-amber-500 font-extrabold ring-1 ring-amber-500/20"
+                        : baseLevel < 3
+                          ? "text-muted-foreground/70 hover:text-foreground opacity-85"
+                          : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    onClick={() => handleSelectQrType("upi")}
+                  >
+                    <div className="flex items-center gap-1">
+                      <CreditCard className="size-3.5 shrink-0" />
+                      <span className="truncate">UPI Scan & Pay</span>
+                    </div>
+                    {baseLevel < 3 && (
+                      <span className="text-[8px] font-extrabold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-500 border border-amber-500/30 uppercase tracking-wider flex items-center gap-0.5">
+                        <Lock className="size-2" /> PREMIUM
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded-xl py-2 px-1 text-[11px] sm:text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 min-w-0 ${
                       qrType === "map"
-                        ? "bg-background shadow text-amber-500 font-extrabold"
+                        ? "bg-background shadow text-amber-500 font-extrabold ring-1 ring-amber-500/20"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
-                    onClick={() => setQrType("map")}
+                    onClick={() => handleSelectQrType("map")}
                   >
-                    Map Link
+                    <div className="flex items-center gap-1">
+                      <MapPin className="size-3.5 shrink-0" />
+                      <span className="truncate">Map Location</span>
+                    </div>
                   </button>
                   <button
                     type="button"
-                    className={`flex-1 rounded-lg py-2 px-1 text-[11px] xs:text-xs sm:text-sm font-bold transition-all truncate min-w-0 ${
+                    className={`rounded-xl py-2 px-1 text-[11px] sm:text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 min-w-0 ${
                       qrType === "review"
-                        ? "bg-background shadow text-amber-500 font-extrabold"
+                        ? "bg-background shadow text-amber-500 font-extrabold ring-1 ring-amber-500/20"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
-                    onClick={() => setQrType("review")}
+                    onClick={() => handleSelectQrType("review")}
                   >
-                    Google Review
+                    <div className="flex items-center gap-1">
+                      <Star className="size-3.5 shrink-0" />
+                      <span className="truncate">Google Review</span>
+                    </div>
                   </button>
                 </div>
 
@@ -2196,7 +2496,11 @@ export function QrPage() {
                       </p>
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         {qrType === "menu" &&
-                          `This QR link opens your live public ${catalogLabel.toLowerCase()}. Customers can scan without signing in.`}
+                          `This QR link opens your live public ${catalogLabel.toLowerCase()} with online & WhatsApp ordering.`}
+                        {qrType === "view_only" &&
+                          `This QR link opens your product catalog in View-Only mode. Customers can browse all items, prices, images, and store info without the ordering/cart system.`}
+                        {qrType === "upi" &&
+                          `Scanning this QR with GPay, PhonePe, Paytm, or BHIM opens instant payment for ${shop.name} with custom amount entry to UPI ID: ${upiId}.`}
                         {qrType === "map" &&
                           "Customers scanning this will be redirected directly to your Google Maps location."}
                         {qrType === "review" &&
@@ -2242,6 +2546,8 @@ export function QrPage() {
                 ) : (
                   <div className="py-12 flex flex-col items-center justify-center opacity-90">
                     <p className="text-sm text-muted-foreground mb-4">
+                      {qrType === "upi" &&
+                        "You haven't configured a Merchant UPI ID in Shop Settings yet."}
                       {qrType === "map" &&
                         "You haven't added a Google Maps link in Shop Settings yet."}
                       {qrType === "review" &&

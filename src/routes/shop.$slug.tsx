@@ -17,6 +17,7 @@ import {
   Twitter,
   Globe,
   AlertTriangle,
+  Eye,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -489,11 +490,19 @@ function PublicMenu() {
   }
   const total = Math.max(0, subtotal - discountAmount);
 
+  const isViewOnly = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get("mode");
+    const order = params.get("order");
+    return mode === "view" || mode === "view_only" || mode === "product" || order === "false";
+  }, []);
+
   const visible = items.filter(
     (i) => i.is_available && (active === "all" || i.category_id === active),
   );
   const isCartEnabled = shopCartEnabled(shop);
-  const canOrder = features.ordering && isCartEnabled && !!shop.whatsapp;
+  const canOrder = !isViewOnly && features.ordering && isCartEnabled && !!shop.whatsapp;
 
   function change(id: string, delta: number) {
     setCart((c) => ({ ...c, [id]: Math.max(0, (c[id] ?? 0) + delta) }));

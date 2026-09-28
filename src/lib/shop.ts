@@ -173,6 +173,18 @@ export function shopOrderLabels(shop?: Pick<Shop, "features"> | null): OrderLabe
   };
 }
 
+export function shopUpiId(shop?: Pick<Shop, "features"> | null): string {
+  const f = shop?.features as Record<string, any> | undefined;
+  const val = f?.["upi_id"];
+  return typeof val === "string" ? val.trim() : "";
+}
+
+export function shopUpiQrUrl(shop?: Pick<Shop, "features"> | null): string {
+  const f = shop?.features as Record<string, any> | undefined;
+  const val = f?.["upi_qr_url"];
+  return typeof val === "string" ? val.trim() : "";
+}
+
 export type ThemeId =
   "luxury_dark" | "minimalist_light" | "warm_amber" | "emerald_bistro" | "neon_cyber" | "rose_gold";
 
