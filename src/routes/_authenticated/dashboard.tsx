@@ -58,7 +58,10 @@ import {
   shopFeatures,
   shopCartEnabled,
   calculatePlanSavings,
+  shopCustomDomain,
+  publicShopUrl,
 } from "@/lib/shop";
+import { Globe } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -228,6 +231,15 @@ function DashboardPage() {
                       <span className="rounded-full bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 text-[11px] font-mono font-bold text-amber-500 shrink-0">
                         {shopBusinessId(shop)}
                       </span>
+                      {shopCustomDomain(shop) ? (
+                        <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center gap-1">
+                          <Globe className="size-3" /> {shopCustomDomain(shop)}
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 text-[11px] font-mono font-semibold text-blue-600 dark:text-blue-400 shrink-0">
+                          /shop/{shop.slug}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -563,7 +575,7 @@ function DashboardPage() {
                     size="sm"
                     className="h-10 text-xs font-bold rounded-xl"
                   >
-                    <a href={`/shop/${shop.slug}`} target="_blank" rel="noreferrer">
+                    <a href={publicShopUrl(shop.slug, shopCustomDomain(shop))} target="_blank" rel="noreferrer">
                       <ExternalLink className="size-3.5 mr-1.5" /> View Public Shop
                     </a>
                   </Button>

@@ -48,15 +48,21 @@ export type Shop = {
 };
 
 export function shopTiming(shop?: Pick<Shop, "features"> | null) {
-  const val = shop?.features?.["timing"] as string | undefined;
-  return val && val.trim() ? val.trim() : undefined;
+  const val = shop?.features?.["timing"];
+  return typeof val === "string" && val.trim() ? val.trim() : undefined;
 }
 
 export function shopSocialLinks(shop?: Pick<Shop, "plan" | "features"> | null) {
-  const ig = (shop?.features?.["instagram_url"] || shop?.features?.["social_link"] || "") as string;
-  const fb = (shop?.features?.["facebook_url"] || "") as string;
-  const tw = (shop?.features?.["twitter_url"] || "") as string;
-  const web = (shop?.features?.["website_url"] || "") as string;
+  const rawIg = shop?.features?.["instagram_url"] ?? shop?.features?.["social_link"] ?? "";
+  const rawFb = shop?.features?.["facebook_url"] ?? "";
+  const rawTw = shop?.features?.["twitter_url"] ?? "";
+  const rawWeb = shop?.features?.["website_url"] ?? "";
+
+  const ig = typeof rawIg === "string" ? rawIg : "";
+  const fb = typeof rawFb === "string" ? rawFb : "";
+  const tw = typeof rawTw === "string" ? rawTw : "";
+  const web = typeof rawWeb === "string" ? rawWeb : "";
+
   return {
     instagram: ig.trim(),
     facebook: fb.trim(),
@@ -66,13 +72,13 @@ export function shopSocialLinks(shop?: Pick<Shop, "plan" | "features"> | null) {
 }
 
 export function shopMapUrl(shop?: Pick<Shop, "features"> | null) {
-  const val = shop?.features?.["map_url"] as string | undefined;
-  return val && val.trim() ? val.trim() : undefined;
+  const val = shop?.features?.["map_url"];
+  return typeof val === "string" && val.trim() ? val.trim() : undefined;
 }
 
 export function shopGoogleReviewLink(shop?: Pick<Shop, "plan" | "features"> | null) {
-  const val = shop?.features?.["google_review_link"] as string | undefined;
-  return val && val.trim() ? val.trim() : undefined;
+  const val = shop?.features?.["google_review_link"];
+  return typeof val === "string" && val.trim() ? val.trim() : undefined;
 }
 
 export function shopCartEnabled(shop?: Pick<Shop, "plan" | "features"> | null) {
@@ -109,9 +115,9 @@ export function shopEnquiryEnabled(shop?: Pick<Shop, "plan" | "features"> | null
 export function shopCatalogLabel(shop?: Pick<Shop, "niche" | "features"> | null): string {
   const f = shop?.features as Record<string, any> | undefined;
   const custom = f?.["catalog_label"];
-  if (custom && String(custom).trim()) return String(custom).trim();
+  if (typeof custom === "string" && custom.trim()) return custom.trim();
 
-  const niche = (shop?.niche || "").toLowerCase();
+  const niche = (typeof shop?.niche === "string" ? shop.niche : "").toLowerCase();
   if (
     niche.includes("salon") ||
     niche.includes("spa") ||
@@ -137,7 +143,7 @@ export function shopCatalogLabel(shop?: Pick<Shop, "niche" | "features"> | null)
 export function shopItemLabel(shop?: Pick<Shop, "niche" | "features"> | null): string {
   const f = shop?.features as Record<string, any> | undefined;
   const custom = f?.["item_label"];
-  if (custom && String(custom).trim()) return String(custom).trim();
+  if (typeof custom === "string" && custom.trim()) return custom.trim();
 
   const catalog = shopCatalogLabel(shop).toLowerCase();
   if (catalog === "services" || catalog.includes("service")) return "Service";
@@ -160,10 +166,10 @@ export function shopOrderLabels(shop?: Pick<Shop, "features"> | null): OrderLabe
   const tab = f?.["label_on_table"];
   const enq = f?.["label_enquiry"];
   return {
-    delivery: del && String(del).trim() ? String(del).trim() : "Delivery",
-    takeaway: tak && String(tak).trim() ? String(tak).trim() : "Take Away",
-    on_table: tab && String(tab).trim() ? String(tab).trim() : "On-Table Dining",
-    enquiry: enq && String(enq).trim() ? String(enq).trim() : "General Enquiry / Quote",
+    delivery: typeof del === "string" && del.trim() ? del.trim() : "Delivery",
+    takeaway: typeof tak === "string" && tak.trim() ? tak.trim() : "Take Away",
+    on_table: typeof tab === "string" && tab.trim() ? tab.trim() : "On-Table Dining",
+    enquiry: typeof enq === "string" && enq.trim() ? enq.trim() : "General Enquiry / Quote",
   };
 }
 
@@ -654,7 +660,7 @@ export const FEATURE_LABELS: Record<FeatureKey, string> = {
 export const FEATURE_KEYS = Object.keys(FEATURE_LABELS) as FeatureKey[];
 
 export function planOf(plan?: string | null): PlanFeatures {
-  if (!plan) return PLAN_FEATURES["trial"]!;
+  if (!plan || typeof plan !== "string") return PLAN_FEATURES["trial"]!;
   const normalized = plan.toLowerCase().trim();
   if (normalized.includes("basic")) return PLAN_FEATURES["basic"]!;
   if (normalized.includes("pro")) return PLAN_FEATURES["pro"]!;
@@ -836,8 +842,8 @@ export function paymentStatusColor(status?: string | null) {
   return found?.color ?? "slate";
 }
 
-export function planAmount(plan: string, cycle: string, customPlans?: PlanItem[]): number {
-  const normPlan = (plan || "pro").toLowerCase().trim();
+export function planAmount(plan?: string | null, cycle?: string | null, customPlans?: PlanItem[]): number {
+  const normPlan = (typeof plan === "string" ? plan : "pro").toLowerCase().trim();
   let foundItem: PlanItem | undefined;
 
   if (customPlans && customPlans.length > 0) {
@@ -885,9 +891,20 @@ export function shopBusinessId(shop?: Pick<Shop, "id" | "slug" | "business_id"> 
   return `BIZ-${prefix}-${suffix}`;
 }
 
+export function shopCustomDomain(shop?: Pick<Shop, "features"> | null): string | undefined {
+  const val = shop?.features?.["custom_domain"];
+  return typeof val === "string" && val.trim() ? val.trim() : undefined;
+}
+
 /** Public, share-safe URL for a shop menu. */
-export function publicShopUrl(slug: string) {
-  const path = `/shop/${slug}`;
+export function publicShopUrl(slug?: string | null, customDomain?: string | null) {
+  if (customDomain && typeof customDomain === "string" && customDomain.trim()) {
+    let domain = customDomain.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+    if (typeof window === "undefined") return `https://${domain}`;
+    return `${window.location.protocol}//${domain}`;
+  }
+  const safeSlug = typeof slug === "string" ? slug : String(slug || "");
+  const path = `/shop/${safeSlug}`;
   if (typeof window === "undefined") return path;
   return `${window.location.origin}${path}`;
 }
@@ -908,7 +925,8 @@ export const PLAN_LIMITS: Record<string, { items: number; categories: number }> 
   premium: { items: Infinity, categories: Infinity },
 };
 
-export function slugify(input: string) {
+export function slugify(input?: string | null) {
+  if (!input || typeof input !== "string") return "";
   return input
     .toLowerCase()
     .trim()

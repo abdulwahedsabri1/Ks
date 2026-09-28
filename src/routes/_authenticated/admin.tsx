@@ -55,12 +55,15 @@ import {
   subscriptionStateLabel,
   planOf,
   planAmount,
+  shopCustomDomain,
+  publicShopUrl,
   type Shop,
   type PlanItem,
   type FeatureKey,
   FEATURE_LABELS,
   FEATURE_KEYS,
 } from "@/lib/shop";
+import { Globe } from "lucide-react";
 import { useCustomPlans, savePlatformPlans, triggerCrossTabSync } from "@/hooks/useShopData";
 import {
   usePaymentSettings,
@@ -1936,12 +1939,19 @@ function AdminConsolePage() {
                           <div className="min-w-0">
                             <h3 className="font-bold text-sm text-white truncate">{shop.name}</h3>
                             <a
-                              href={`/shop/${shop.slug}`}
+                              href={publicShopUrl(shop.slug, shopCustomDomain(shop))}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-[11px] text-[#00E676] hover:underline font-medium block truncate"
+                              className="text-[11px] text-[#00E676] hover:underline font-medium flex items-center gap-1 truncate"
                             >
-                              /shop/{shop.slug}
+                              {shopCustomDomain(shop) ? (
+                                <>
+                                  <Globe className="size-3 shrink-0" />
+                                  <span>{shopCustomDomain(shop)}</span>
+                                </>
+                              ) : (
+                                <span>/shop/{shop.slug}</span>
+                              )}
                             </a>
                           </div>
                         </div>
@@ -2154,12 +2164,19 @@ function AdminConsolePage() {
                                     </span>
                                   </div>
                                   <a
-                                    href={`/shop/${shop.slug}`}
+                                    href={publicShopUrl(shop.slug, shopCustomDomain(shop))}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-[11px] text-[#00E676] hover:underline font-medium block truncate mt-0.5"
+                                    className="text-[11px] text-[#00E676] hover:underline font-medium flex items-center gap-1 truncate mt-0.5"
                                   >
-                                    /shop/{shop.slug}
+                                    {shopCustomDomain(shop) ? (
+                                      <>
+                                        <Globe className="size-3 shrink-0" />
+                                        <span>{shopCustomDomain(shop)}</span>
+                                      </>
+                                    ) : (
+                                      <span>/shop/{shop.slug}</span>
+                                    )}
                                   </a>
                                 </div>
                               </div>

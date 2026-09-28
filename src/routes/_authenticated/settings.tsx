@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Lock, Copy, Check, Loader2 } from "lucide-react";
+import { Lock, Copy, Check, Loader2, Globe, Link as LinkIcon, ExternalLink } from "lucide-react";
 import {
   NICHES,
   shopBusinessId,
@@ -31,11 +31,15 @@ import {
   shopSocialLinks,
   shopTiming,
   shopMapUrl,
+  shopCustomDomain,
+  publicShopUrl,
+  slugify,
   AVAILABLE_LANGUAGES,
   type ThemeId,
   type Coupon,
   type Shop,
 } from "@/lib/shop";
+import { invalidatePublicShopCache } from "@/lib/menu.functions";
 
 function safeStr(val: unknown): string {
   if (typeof val === "string") return val.trim();
@@ -47,6 +51,7 @@ function computeLiveShop(shop: Shop, form: any): Shop {
   const currentFeatures = (shop.features as Record<string, any>) || {};
   const updatedFeatures = {
     ...currentFeatures,
+    custom_domain: safeStr(form["custom_domain"]),
     timing: safeStr(form["timing"]),
     map_url: safeStr(form["map_url"]),
     social_link: safeStr(form["instagram_url"]),
@@ -76,6 +81,7 @@ function computeLiveShop(shop: Shop, form: any): Shop {
 
   return {
     ...shop,
+    slug: safeStr(form["slug"]) || shop.slug,
     name: safeStr(form["name"]) || shop.name,
     tagline: safeStr(form["tagline"]) || null,
     niche: safeStr(form["niche"]) || shop.niche,
@@ -112,6 +118,8 @@ function SettingsPage() {
   const feat = shopFeatures(shop);
   const [form, setForm] = useState({
     name: "",
+    slug: "",
+    custom_domain: "",
     tagline: "",
     niche: NICHES[0]!,
     whatsapp: "",
@@ -148,12 +156,20 @@ function SettingsPage() {
   const [uploadingMedia, setUploadingMedia] = useState<string | null>(null);
   const [testUpiAmount, setTestUpiAmount] = useState<number>(240);
   const [copiedId, setCopiedId] = useState(false);
+  const [copiedShopUrl, setCopiedShopUrl] = useState(false);
 
   const handleCopyBizId = (id: string) => {
     navigator.clipboard.writeText(id);
     setCopiedId(true);
     toast.success("Business ID copied!");
     setTimeout(() => setCopiedId(false), 2000);
+  };
+
+  const handleCopyShopUrl = (url: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedShopUrl(true);
+    toast.success("Public Shop Link copied!");
+    setTimeout(() => setCopiedShopUrl(false), 2000);
   };
 
   const [newCoupon, setNewCoupon] = useState({
@@ -213,6 +229,8 @@ function SettingsPage() {
     const labels = shopOrderLabels(shop);
     setForm({
       name: safeStr(shop.name),
+      slug: safeStr(shop.slug),
+      custom_domain: safeStr(shopCustomDomain(shop)),
       tagline: safeStr(shop.tagline),
       niche: safeStr(shop.niche) || NICHES[0]!,
       whatsapp: safeStr(shop.whatsapp),
@@ -257,9 +275,28 @@ function SettingsPage() {
     }
     setSaving(true);
     try {
+      const formattedSlug = slugify(form.slug || shop.name);
+
+      if (formattedSlug !== shop.slug) {
+        const { data: existing } = await supabase
+          .from("shops")
+          .select("id")
+          .eq("slug", formattedSlug)
+          .neq("id", shop.id);
+
+        if (existing && existing.length > 0) {
+          toast.error(
+            `The URL handle "${formattedSlug}" is already taken by another shop. Please choose a different handle.`,
+          );
+          setSaving(false);
+          return;
+        }
+      }
+
       const currentFeatures = shop.features || {};
       const updatedFeatures = {
         ...currentFeatures,
+        custom_domain: safeStr(form.custom_domain),
         timing: safeStr(form.timing),
         map_url: safeStr(form.map_url),
         social_link: safeStr(form.instagram_url),
@@ -289,6 +326,7 @@ function SettingsPage() {
 
       const updates = {
         name: safeStr(form.name) || shop.name,
+        slug: formattedSlug,
         tagline: safeStr(form.tagline) || null,
         niche: safeStr(form.niche) || shop.niche,
         whatsapp: safeStr(form.whatsapp) || null,
@@ -305,6 +343,8 @@ function SettingsPage() {
       qc.setQueryData(["my-shop", user?.id], optimisticShop);
       qc.setQueryData(["my-shop", shop.id], optimisticShop);
       triggerCrossTabSync(shop.id, user?.id);
+      invalidatePublicShopCache(shop.slug);
+      invalidatePublicShopCache(formattedSlug);
 
       // 2. Direct Supabase DB write with timing tracker
       const startTime = Date.now();
@@ -327,6 +367,7 @@ function SettingsPage() {
       }
 
       await qc.invalidateQueries({ queryKey: ["my-shop"] });
+      await qc.invalidateQueries({ queryKey: ["admin-all-shops"] });
 
       // Minimum 700ms delay to ensure the user clearly sees the animated loader screen processing
       const elapsed = Date.now() - startTime;
@@ -334,7 +375,7 @@ function SettingsPage() {
         await new Promise((r) => setTimeout(r, 700 - elapsed));
       }
 
-      toast.success("✨ Settings saved successfully!");
+      toast.success("✨ Settings & Custom Domain saved successfully!");
     } catch (err) {
       console.error("Failed to save shop settings:", err);
       toast.error("Failed to save settings: " + (err instanceof Error ? err.message : String(err)));
@@ -476,6 +517,107 @@ function SettingsPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Custom Shop Link Section */}
+          <div className="space-y-4 pt-4 border-t border-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium text-lg flex items-center gap-2 text-foreground">
+                  <LinkIcon className="size-5 text-amber-500" /> Custom Shop Link
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Customize your public shop URL handle. Synchronizes instantly across website, shop dashboard, and admin panel.
+                </p>
+              </div>
+              <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded-full font-semibold shrink-0">
+                Real-Time Sync
+              </span>
+            </div>
+
+            {/* Custom Shop Link / Handle Card */}
+            <div className="space-y-3 rounded-xl border bg-muted/20 p-4">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="s-slug" className="text-xs font-semibold flex items-center gap-2">
+                  <span>Custom Shop Link Handle</span>
+                  <span className="text-muted-foreground font-mono text-[11px]">
+                    /shop/<span className="text-amber-500 font-bold">{slugify(form.slug || form.name)}</span>
+                  </span>
+                </Label>
+                {!feat.custom_domain ? (
+                  <span className="text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                    <Lock className="size-3" /> Locked (Premium Plan)
+                  </span>
+                ) : (
+                  <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                    <Check className="size-3" /> Unlocked (Premium Plan)
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-mono">/shop/</span>
+                  <Input
+                    id="s-slug"
+                    value={form.slug}
+                    disabled={!feat.custom_domain}
+                    onChange={(e) => updateForm((prev) => ({ ...prev, slug: slugify(e.target.value) }))}
+                    placeholder="my-shop-name"
+                    className={`pl-16 h-10 font-mono text-sm font-semibold ${
+                      !feat.custom_domain
+                        ? "bg-muted/60 opacity-70 cursor-not-allowed text-muted-foreground border-amber-500/20"
+                        : "text-amber-600 dark:text-amber-400 border-amber-500/40"
+                    }`}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCopyShopUrl(publicShopUrl(form.slug || shop.slug, form.custom_domain))}
+                  className="h-10 px-3 text-xs font-semibold shrink-0"
+                  title="Copy full public shop URL"
+                >
+                  {copiedShopUrl ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="h-10 px-3 text-xs font-semibold shrink-0 border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
+                >
+                  <a href={publicShopUrl(form.slug || shop.slug, form.custom_domain)} target="_blank" rel="noreferrer">
+                    <ExternalLink className="size-4" />
+                  </a>
+                </Button>
+              </div>
+
+              <p className="text-[11px] text-muted-foreground">
+                Your menu will be accessible at: <code className="text-amber-500 font-mono font-bold">{publicShopUrl(form.slug || shop.slug, form.custom_domain)}</code>
+              </p>
+
+              {!feat.custom_domain && (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 flex items-center justify-between gap-3 mt-3">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-bold text-amber-500 flex items-center gap-1.5">
+                      <Lock className="size-3.5" /> Locked Feature — Custom Shop Link
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Upgrade to the Premium plan to unlock custom URL link editing for your shop.
+                    </p>
+                  </div>
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="outline"
+                    className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold"
+                  >
+                    <a href="/pricing">Upgrade to Premium</a>
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

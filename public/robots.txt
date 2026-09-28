@@ -1,14 +1,12 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /analytics
+Disallow: /settings
+Disallow: /menu
+Disallow: /qr
+Disallow: /themes
+Disallow: /onboarding
+
+Sitemap: https://mylinkqr.com/sitemap.xml

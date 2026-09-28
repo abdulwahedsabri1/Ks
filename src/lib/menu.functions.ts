@@ -60,14 +60,41 @@ export const getPublicShop = createServerFn({ method: "GET" })
     }
 
     const db = getSharedPublicClient();
-    const { data: shop } = await db
+    let shop: any = null;
+
+    const { data: directShops } = await db
       .from("shops")
       .select(
         "id, owner_id, slug, name, niche, tagline, description, logo_url, cover_url, whatsapp, phone, address, currency, theme_color, plan, status, created_at, plan_started_at, plan_expires_at, features",
       )
-      .eq("slug", data.slug)
+      .or(`slug.eq.${data.slug},slug.ilike.${data.slug}`)
       .eq("status", "active")
-      .maybeSingle();
+      .limit(1);
+
+    if (directShops && directShops.length > 0) {
+      shop = directShops[0];
+    } else {
+      // Fallback: search by custom_domain in features JSON
+      const { data: allActive } = await db
+        .from("shops")
+        .select(
+          "id, owner_id, slug, name, niche, tagline, description, logo_url, cover_url, whatsapp, phone, address, currency, theme_color, plan, status, created_at, plan_started_at, plan_expires_at, features",
+        )
+        .eq("status", "active")
+        .limit(100);
+
+      if (allActive && allActive.length > 0) {
+        shop = allActive.find((s: any) => {
+          const dom = s.features?.custom_domain;
+          return (
+            dom &&
+            typeof dom === "string" &&
+            dom.trim().toLowerCase().replace(/^https?:\/\//i, "").replace(/\/+$/, "") ===
+              slugKey.replace(/^https?:\/\//i, "").replace(/\/+$/, "")
+          );
+        });
+      }
+    }
 
     if (!shop) {
       publicShopCache.set(slugKey, { data: null, timestamp: now });
