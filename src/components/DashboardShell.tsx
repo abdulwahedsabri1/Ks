@@ -343,7 +343,7 @@ export function DashboardShell({
         )}
 
         {/* Main Body Content Container */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-24 lg:pb-8">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full min-w-0 overflow-x-hidden pb-24 lg:pb-8">
           {isPending ? (
             <div className="flex flex-col items-center justify-center rounded-3xl border bg-card p-6 sm:p-12 text-center mt-4 sm:mt-8 shadow-sm">
               <div className="rounded-full bg-yellow-500/10 p-4 border border-yellow-500/20">

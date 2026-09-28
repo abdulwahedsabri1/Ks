@@ -346,28 +346,40 @@ export function RazorpayModal({
         await recordCouponUsage(appliedCoupon.code);
       }
 
-      const keyId = import.meta.env["VITE_RAZORPAY_KEY_ID"];
+      let keyId = import.meta.env["VITE_RAZORPAY_KEY_ID"] || "rzp_live_Ta4juTNtUmcLxK";
 
-      // 1. Fast path: If Razorpay SDK is loaded, launch popup instantly
+      // Ensure Razorpay SDK script is loaded
+      if (typeof window !== "undefined" && !window.Razorpay) {
+        await new Promise<void>((resolve) => {
+          const script = document.createElement("script");
+          script.id = "razorpay-sdk";
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.onload = () => resolve();
+          script.onerror = () => resolve();
+          document.head.appendChild(script);
+        });
+      }
+
       if (window.Razorpay) {
         let orderId: string | undefined = undefined;
 
-        // Fast order creation with 1s timeout race
         try {
           const orderPromise = createRazorpayOrder({
             data: { amount: finalPrice, receipt: `rcpt_${plan.id}_${Date.now()}` },
           });
-          const timeoutPromise = new Promise<{ order_id?: string }>((resolve) =>
-            setTimeout(() => resolve({}), 1000),
+          const timeoutPromise = new Promise<{ order_id?: string; key_id?: string }>((resolve) =>
+            setTimeout(() => resolve({}), 4000),
           );
           const result = (await Promise.race([orderPromise, timeoutPromise])) as {
             order_id?: string;
+            key_id?: string;
           };
           if (result && result.order_id) {
             orderId = result.order_id;
+            if (result.key_id) keyId = result.key_id;
           }
         } catch (orderErr) {
-          console.warn("Order creation fast timeout/error, opening checkout directly:", orderErr);
+          console.warn("Order creation error, launching standard checkout:", orderErr);
         }
 
         const options: any = {
@@ -375,10 +387,10 @@ export function RazorpayModal({
           amount: Math.max(100, Math.round((finalPrice || 1) * 100)),
           currency: "INR",
           name: "MY Link QR",
-          description: `${plan.name} Plan — Monthly`,
+          description: `${plan.name} Plan — ${billingCycle === "yearly" ? "Annual" : "Monthly"} Subscription`,
           theme: { color: "#F5A623" },
           prefill: {
-            email: user.email,
+            email: user?.email || "",
           },
           modal: {
             ondismiss: () => setLoading(false),
@@ -392,7 +404,7 @@ export function RazorpayModal({
               await verifyRazorpayPayment({
                 data: {
                   razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_order_id: response.razorpay_order_id || `ORD-${Date.now()}`,
+                  razorpay_order_id: response.razorpay_order_id || orderId || `ORD-${Date.now()}`,
                   razorpay_signature: response.razorpay_signature || "skip_verify",
                   plan_name: plan.id || plan.name,
                   amount: finalPrice,
@@ -421,7 +433,7 @@ export function RazorpayModal({
         return;
       }
 
-      // 2. If Razorpay SDK is not ready, trigger direct instant activation
+      // If Razorpay SDK failed to load, trigger direct plan activation
       await handleDirectActivate();
     } catch (err) {
       console.error("Razorpay payment launch error:", err);

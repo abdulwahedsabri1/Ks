@@ -328,10 +328,10 @@ function SettingsPage() {
 
       await qc.invalidateQueries({ queryKey: ["my-shop"] });
 
-      // Minimum 500ms delay to ensure the user clearly sees the animated loader symbol processing
+      // Minimum 700ms delay to ensure the user clearly sees the animated loader screen processing
       const elapsed = Date.now() - startTime;
-      if (elapsed < 500) {
-        await new Promise((r) => setTimeout(r, 500 - elapsed));
+      if (elapsed < 700) {
+        await new Promise((r) => setTimeout(r, 700 - elapsed));
       }
 
       toast.success("✨ Settings saved successfully!");
@@ -395,10 +395,28 @@ function SettingsPage() {
       description="Branding and contact details."
       isAdmin={isAdmin}
     >
+      {/* Full Screen Loading Overlay when saving */}
+      {saving && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/65 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="flex flex-col items-center gap-3.5 rounded-3xl bg-card/95 border border-amber-500/40 p-6 sm:p-8 shadow-2xl text-center max-w-xs mx-4">
+            <div className="relative flex items-center justify-center size-14">
+              <div className="absolute inset-0 rounded-full border-4 border-amber-500/20 border-t-amber-500 animate-spin" />
+              <Loader2 className="size-7 text-amber-500 animate-spin shrink-0" />
+            </div>
+            <div>
+              <p className="font-bold text-base text-foreground">Saving Changes…</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                Updating your shop settings and syncing real-time data
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {!shop ? (
         <p className="text-sm text-muted-foreground">Create your shop on the dashboard first.</p>
       ) : (
-        <div className="max-w-2xl space-y-4 rounded-2xl border bg-card p-6">
+        <div className="max-w-2xl space-y-4 rounded-2xl border bg-card p-4 sm:p-6 w-full min-w-0">
           <div className="flex items-center justify-between border-b pb-3 mb-2">
             <h3 className="text-xs font-bold tracking-widest uppercase text-muted-foreground">
               Business Details

@@ -2133,14 +2133,14 @@ export function QrPage() {
               Create your shop on the dashboard first.
             </p>
           ) : (
-            <div className="grid gap-6 lg:grid-cols-[1fr_440px] items-start">
+            <div className="grid gap-6 lg:grid-cols-[1fr_360px] xl:grid-cols-[1fr_420px] items-start w-full min-w-0">
               {/* Main Display Preview Card */}
-              <div className="flex flex-col items-center justify-center rounded-3xl border bg-card p-6 sm:p-8 text-center shadow-sm">
+              <div className="flex flex-col items-center justify-center rounded-3xl border bg-card p-4 sm:p-8 text-center shadow-sm w-full min-w-0 overflow-hidden">
                 {/* Target Link Selector */}
-                <div className="mb-6 flex w-full max-w-md rounded-xl bg-muted/60 p-1.5 border">
+                <div className="mb-6 flex w-full max-w-md rounded-xl bg-muted/60 p-1 sm:p-1.5 border gap-1">
                   <button
                     type="button"
-                    className={`flex-1 rounded-lg py-2 text-xs sm:text-sm font-bold transition-all ${
+                    className={`flex-1 rounded-lg py-2 px-1 text-[11px] xs:text-xs sm:text-sm font-bold transition-all truncate min-w-0 ${
                       qrType === "menu"
                         ? "bg-background shadow text-amber-500 font-extrabold"
                         : "text-muted-foreground hover:text-foreground"
@@ -2151,7 +2151,7 @@ export function QrPage() {
                   </button>
                   <button
                     type="button"
-                    className={`flex-1 rounded-lg py-2 text-xs sm:text-sm font-bold transition-all ${
+                    className={`flex-1 rounded-lg py-2 px-1 text-[11px] xs:text-xs sm:text-sm font-bold transition-all truncate min-w-0 ${
                       qrType === "map"
                         ? "bg-background shadow text-amber-500 font-extrabold"
                         : "text-muted-foreground hover:text-foreground"
@@ -2162,7 +2162,7 @@ export function QrPage() {
                   </button>
                   <button
                     type="button"
-                    className={`flex-1 rounded-lg py-2 text-xs sm:text-sm font-bold transition-all ${
+                    className={`flex-1 rounded-lg py-2 px-1 text-[11px] xs:text-xs sm:text-sm font-bold transition-all truncate min-w-0 ${
                       qrType === "review"
                         ? "bg-background shadow text-amber-500 font-extrabold"
                         : "text-muted-foreground hover:text-foreground"
@@ -2174,12 +2174,12 @@ export function QrPage() {
                 </div>
 
                 {targetUrl ? (
-                  <div className="w-full flex flex-col items-center">
+                  <div className="w-full flex flex-col items-center min-w-0">
                     {/* Fixed Aspect Ratio Responsive Wrapper */}
                     <div
-                      className={`mx-auto w-full max-w-[340px] sm:max-w-[380px] ${
+                      className={`mx-auto w-full max-w-[270px] xs:max-w-[320px] sm:max-w-[380px] ${
                         frameStyle === "clean" ? "aspect-square" : "aspect-[3/4]"
-                      } rounded-3xl bg-white p-4 sm:p-5 shadow-2xl shadow-black/10 ring-1 ring-black/5 flex items-center justify-center relative overflow-hidden transition-all duration-300`}
+                      } rounded-3xl bg-white p-3.5 sm:p-5 shadow-2xl shadow-black/10 ring-1 ring-black/5 flex items-center justify-center relative overflow-hidden transition-all duration-300`}
                     >
                       <canvas
                         ref={canvasRef}
@@ -2190,8 +2190,8 @@ export function QrPage() {
                     </div>
 
                     {/* Target URL details */}
-                    <div className="mt-6 space-y-1.5 max-w-md mx-auto">
-                      <p className="break-all text-xs sm:text-sm font-mono font-bold text-amber-500 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20 inline-block">
+                    <div className="mt-5 space-y-1.5 max-w-md mx-auto w-full px-2 min-w-0">
+                      <p className="break-all text-[11px] sm:text-sm font-mono font-bold text-amber-500 bg-amber-500/10 px-2.5 py-1.5 rounded-lg border border-amber-500/20 inline-block max-w-full">
                         {targetUrl}
                       </p>
                       <p className="text-xs text-muted-foreground leading-relaxed">
@@ -2205,37 +2205,37 @@ export function QrPage() {
                     </div>
 
                     {/* Primary Download & Share Buttons */}
-                    <div className="mt-6 flex flex-wrap items-center justify-center gap-3 w-full max-w-md">
+                    <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full max-w-md">
                       <Button
                         asChild
                         size="lg"
-                        className="bg-[#F5A623] hover:bg-[#e09615] text-black font-bold text-xs sm:text-sm h-11 px-6 rounded-xl shadow-md flex-1 min-w-[140px]"
+                        className="bg-[#F5A623] hover:bg-[#e09615] text-black font-bold text-xs sm:text-sm h-11 px-4 rounded-xl shadow-md w-full justify-center"
                         disabled={!png}
                       >
                         <a href={png} download={`${shop.slug}-${qrType}-${frameStyle}-qr.png`}>
-                          <Download className="mr-2 size-4" /> Download PNG
+                          <Download className="mr-1.5 size-4 shrink-0" /> Download PNG
                         </a>
                       </Button>
                       <Button
                         variant="outline"
                         size="lg"
-                        className="h-11 px-5 text-xs sm:text-sm font-bold rounded-xl border-border flex-1 min-w-[130px]"
+                        className="h-11 px-4 text-xs sm:text-sm font-bold rounded-xl border-border w-full justify-center"
                         onClick={handleCopyLink}
                       >
                         {copied ? (
-                          <Check className="mr-2 size-4 text-green-500" />
+                          <Check className="mr-1.5 size-4 text-green-500 shrink-0" />
                         ) : (
-                          <Copy className="mr-2 size-4" />
+                          <Copy className="mr-1.5 size-4 shrink-0" />
                         )}
                         {copied ? "Copied!" : "Copy Link"}
                       </Button>
                       <Button
                         variant="secondary"
                         size="lg"
-                        className="h-11 px-4 text-xs font-bold rounded-xl flex-1 min-w-[120px]"
+                        className="h-11 px-4 text-xs font-bold rounded-xl w-full justify-center"
                         onClick={handlePrint}
                       >
-                        <Printer className="mr-2 size-4" /> Print Card
+                        <Printer className="mr-1.5 size-4 shrink-0" /> Print Card
                       </Button>
                     </div>
                   </div>
@@ -2255,20 +2255,20 @@ export function QrPage() {
               </div>
 
               {/* Customization Options Column */}
-              <div className="space-y-6">
+              <div className="space-y-6 min-w-0 w-full">
                 {/* Frame Theme Picker with Category Filter Tabs */}
-                <div className="space-y-4 rounded-3xl border bg-card p-6 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-bold text-base flex items-center gap-2">
-                      <Layers className="size-4 text-amber-500" /> Business Category Themes
+                <div className="space-y-4 rounded-3xl border bg-card p-4 sm:p-6 shadow-sm w-full min-w-0">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <h2 className="font-bold text-sm sm:text-base flex items-center gap-2">
+                      <Layers className="size-4 text-amber-500 shrink-0" /> Business Category Themes
                     </h2>
-                    <span className="text-[11px] font-bold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                      18 Custom Themes
+                    <span className="text-[10px] sm:text-[11px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 shrink-0">
+                      18 Themes
                     </span>
                   </div>
 
                   {/* Business Category Filter Tabs */}
-                  <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
                     {categoryTabs.map((tab) => (
                       <button
                         key={tab.id}
@@ -2285,7 +2285,7 @@ export function QrPage() {
                     ))}
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[380px] overflow-y-auto pr-1">
+                  <div className="grid grid-cols-2 gap-2.5 max-h-[420px] overflow-y-auto pr-1">
                     {filteredFrames.map((opt) => {
                       const requiredLevel = minPlanLevels[opt.minPlan] ?? 1;
                       const isLocked = currentPlanLevel < requiredLevel;
@@ -2295,7 +2295,7 @@ export function QrPage() {
                           key={opt.id}
                           type="button"
                           onClick={() => handleSelectTheme(opt)}
-                          className={`flex flex-col items-start p-3 rounded-2xl border-2 text-left relative transition-all ${
+                          className={`flex flex-col items-start p-2.5 sm:p-3 rounded-2xl border-2 text-left relative transition-all min-w-0 ${
                             frameStyle === opt.id
                               ? "border-amber-500 bg-amber-500/10 text-amber-500 font-bold shadow-sm"
                               : isLocked
@@ -2303,30 +2303,30 @@ export function QrPage() {
                                 : "border-border hover:border-amber-500/50 hover:bg-muted/40"
                           }`}
                         >
-                          <div className="flex items-center justify-between w-full mb-2">
+                          <div className="flex items-center justify-between w-full mb-1.5 gap-1">
                             <div
                               className={
                                 frameStyle === opt.id
-                                  ? "text-amber-500"
+                                  ? "text-amber-500 shrink-0"
                                   : isLocked
-                                    ? "text-muted-foreground/60"
-                                    : "text-muted-foreground"
+                                    ? "text-muted-foreground/60 shrink-0"
+                                    : "text-muted-foreground shrink-0"
                               }
                             >
                               {opt.icon}
                             </div>
                             {isLocked ? (
-                              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 border border-amber-500/40 uppercase tracking-wider flex items-center gap-1">
-                                <Lock className="size-2.5" /> {opt.minPlan.toUpperCase()}
+                              <span className="text-[8px] sm:text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 border border-amber-500/40 uppercase tracking-wider flex items-center gap-0.5 shrink-0">
+                                <Lock className="size-2" /> {opt.minPlan.toUpperCase()}
                               </span>
                             ) : (
-                              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-muted/80 text-muted-foreground uppercase tracking-wider">
+                              <span className="text-[8px] sm:text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-muted/80 text-muted-foreground uppercase tracking-wider shrink-0">
                                 {opt.tag}
                               </span>
                             )}
                           </div>
                           <span
-                            className={`text-xs font-semibold leading-tight ${isLocked ? "text-muted-foreground" : ""}`}
+                            className={`text-xs font-semibold leading-tight truncate w-full ${isLocked ? "text-muted-foreground" : ""}`}
                           >
                             {opt.label}
                           </span>
@@ -2337,7 +2337,7 @@ export function QrPage() {
                 </div>
 
                 {/* Color & Logo Controls */}
-                <div className="space-y-5 rounded-3xl border bg-card p-6 shadow-sm">
+                <div className="space-y-5 rounded-3xl border bg-card p-4 sm:p-6 shadow-sm w-full min-w-0">
                   <h2 className="font-bold text-base flex items-center gap-2">
                     <Palette className="size-4 text-amber-500" /> Color Palette & Logo
                   </h2>
