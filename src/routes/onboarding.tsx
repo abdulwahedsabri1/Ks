@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Facebook,
   Twitter,
+  MessageCircle,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -59,6 +60,7 @@ function OnboardingPage() {
   const [facebook, setFacebook] = useState("");
   const [twitter, setTwitter] = useState("");
   const [website, setWebsite] = useState("");
+  const [whatsappGroup, setWhatsappGroup] = useState("");
 
   const { user } = useAuth();
   const { data: shop } = useMyShop(user?.id);
@@ -79,6 +81,7 @@ function OnboardingPage() {
       if (socials.facebook) setFacebook(socials.facebook);
       if (socials.twitter) setTwitter(socials.twitter);
       if (socials.website) setWebsite(socials.website);
+      if (socials.whatsapp_group) setWhatsappGroup(socials.whatsapp_group);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shop]);
@@ -189,15 +192,17 @@ function OnboardingPage() {
         const fb = cleanUrl(facebook);
         const tw = cleanUrl(twitter);
         const web = cleanUrl(website);
+        const waGrp = cleanUrl(whatsappGroup);
         const gr = cleanUrl(googleReviewLink);
 
-        if (ig || fb || tw || web || gr || newFeatures) {
+        if (ig || fb || tw || web || waGrp || gr || newFeatures) {
           newFeatures = {
             ...(newFeatures || {}),
             ...(ig ? { instagram_url: ig } : {}),
             ...(fb ? { facebook_url: fb } : {}),
             ...(tw ? { twitter_url: tw } : {}),
             ...(web ? { website_url: web } : {}),
+            ...(waGrp ? { whatsapp_group_url: waGrp, whatsapp_group: waGrp } : {}),
             ...(gr ? { google_review_link: gr } : {}),
           };
         }
@@ -310,6 +315,8 @@ function OnboardingPage() {
             {step === 3 && (
               <Step3
                 key="step3"
+                whatsappGroup={whatsappGroup}
+                setWhatsappGroup={setWhatsappGroup}
                 instagram={instagram}
                 setInstagram={setInstagram}
                 facebook={facebook}
@@ -555,6 +562,8 @@ function Step2({
 // ── Step 3: Social Links ──────────────────────────────────────────────────────
 
 function Step3({
+  whatsappGroup,
+  setWhatsappGroup,
   instagram,
   setInstagram,
   facebook,
@@ -568,6 +577,8 @@ function Step3({
   saving,
   feat,
 }: {
+  whatsappGroup: string;
+  setWhatsappGroup: (v: string) => void;
   instagram: string;
   setInstagram: (v: string) => void;
   facebook: string;
@@ -592,6 +603,17 @@ function Step3({
       placeholder: "https://instagram.com/yourbusiness",
       locked: feat ? !feat.social_link : false,
       upgradeText: "Basic",
+    },
+    {
+      id: "whatsapp-group-input",
+      icon: MessageCircle,
+      color: "text-emerald-400",
+      label: "WhatsApp Group",
+      value: whatsappGroup,
+      setter: setWhatsappGroup,
+      placeholder: "https://chat.whatsapp.com/...",
+      locked: feat ? !feat.advanced_social_links : false,
+      upgradeText: "Pro",
     },
     {
       id: "facebook-input",

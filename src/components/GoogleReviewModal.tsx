@@ -32,18 +32,142 @@ interface GoogleReviewModalProps {
 
 type Step = "rating" | "feedback" | "google" | "success";
 
-const REVIEW_TEMPLATES = [
-  "Excellent service and great quality! Highly recommended.",
-  "Amazing experience! Will definitely visit again.",
-  "The staff was very friendly and the quality exceeded my expectations.",
-  "Outstanding quality and quick service. 5 stars well deserved!",
-  "One of the best experiences I have had. Highly recommended to everyone.",
-  "Loved the atmosphere and the attention to detail. Top notch!",
-  "A truly wonderful experience. Great value for money and superb service.",
-  "Fantastic! Everything from start to finish was handled perfectly.",
-  "Very professional and welcoming. I'll be recommending this to my friends.",
-  "Exceeded all my expectations. Absolutely flawless execution and service.",
-];
+export function getCategoryReviewTemplates(niche?: string | null, shopName?: string): string[] {
+  const name = shopName ? shopName : "this place";
+  const cleanNiche = (niche || "").trim().toLowerCase();
+
+  if (cleanNiche.includes("restaurant") || cleanNiche.includes("food truck")) {
+    return [
+      `Delicious food, great taste, and quick service at ${name}! Highly recommended.`,
+      `Loved the fresh flavors and wonderful presentation at ${name}. Will definitely order again!`,
+      `Exquisite menu options, cozy seating, and polite staff. 5 stars well deserved!`,
+      `The food quality at ${name} exceeded my expectations. Fresh ingredients and authentic taste.`,
+      `Outstanding dining experience! Quick delivery and hot, fresh food.`,
+      `One of the best dining spots in town! Great portion sizes and fair pricing.`,
+      `Fantastic food quality and super helpful staff. Highly recommended!`,
+      `Every dish we ordered was full of flavor. Absolutely loved ${name}!`,
+    ];
+  }
+
+  if (cleanNiche.includes("cafe") || cleanNiche.includes("coffee")) {
+    return [
+      `Amazing coffee and fantastic vibe at ${name}! Perfect place to unwind.`,
+      `Loved the peaceful ambiance, delicious snacks, and rich coffee brew at ${name}.`,
+      `Great spot for catching up with friends or working! Outstanding hospitality.`,
+      `The beverages and desserts at ${name} were top notch. Super friendly barista!`,
+      `Cozy atmosphere, fast service, and delicious cafe menu items!`,
+    ];
+  }
+
+  if (cleanNiche.includes("bakery") || cleanNiche.includes("sweet")) {
+    return [
+      `Freshly baked goods, delicious sweets, and amazing quality at ${name}!`,
+      `Loved the soft cakes, fresh pastries, and authentic sweets from ${name}. 10/10!`,
+      `Best bakery in town! Fresh ingredients, top hygiene, and delightful flavor.`,
+      `Superb packaging and heavenly dessert options. Will definitely visit again!`,
+      `Everything was fresh, rich in taste, and delivered with great care.`,
+    ];
+  }
+
+  if (cleanNiche.includes("salon") || cleanNiche.includes("spa")) {
+    return [
+      `Exceptional styling and grooming service at ${name}! Highly professional staff.`,
+      `Very relaxing environment, polite staff, and top-tier beauty care at ${name}.`,
+      `Best haircut and skin consultation I have received! Exceeded expectations.`,
+      `Super hygienic, friendly staff, and premium service products. 5 stars!`,
+      `Left feeling completely rejuvenated. Highly recommended to everyone!`,
+    ];
+  }
+
+  if (cleanNiche.includes("gym") || cleanNiche.includes("fitness")) {
+    return [
+      `Top-notch workout equipment, clean facility, and motivating trainers at ${name}!`,
+      `Great fitness environment! Certified trainers who guide you personally at ${name}.`,
+      `Extremely clean, spacious gym with modern workout gear and energetic vibes.`,
+      `Best fitness center in the area. Friendly community and great results!`,
+    ];
+  }
+
+  if (cleanNiche.includes("hotel") || cleanNiche.includes("resort")) {
+    return [
+      `Cozy rooms, peaceful ambiance, and hospitable staff at ${name}! Perfect stay.`,
+      `Clean rooms, great room service, and stunning property view at ${name}.`,
+      `Warm hospitality, seamless check-in, and great amenities. Will return soon!`,
+      `Luxury experience at reasonable prices. Super helpful staff and great service.`,
+    ];
+  }
+
+  if (
+    cleanNiche.includes("boutique") ||
+    cleanNiche.includes("textile") ||
+    cleanNiche.includes("cloth")
+  ) {
+    return [
+      `Stunning clothing collection and premium fabric quality at ${name}!`,
+      `Loved the unique designs, perfect fitting, and customer support at ${name}. 5 stars!`,
+      `Great variety of outfits for all occasions. Excellent pricing and service.`,
+      `Best fashion shopping experience! Highly recommended for trendy collections.`,
+    ];
+  }
+
+  if (cleanNiche.includes("jewelry") || cleanNiche.includes("jewel")) {
+    return [
+      `Exquisite jewelry collection, transparent pricing, and elegant designs at ${name}!`,
+      `Outstanding craftsmanship, certified purity, and courteous staff assistance at ${name}.`,
+      `Beautiful designs and trustworthy service. A delightful shopping experience.`,
+      `Superb collection of modern and traditional jewelry pieces!`,
+    ];
+  }
+
+  if (cleanNiche.includes("grocery") || cleanNiche.includes("supermarket")) {
+    return [
+      `Fresh groceries, well-organized aisles, and fast checkout at ${name}!`,
+      `Wide range of daily essentials at great prices at ${name}. Very hygienic store.`,
+      `Always stock fresh produce and quality household items. Highly convenient!`,
+      `Friendly store staff and fast billing experience.`,
+    ];
+  }
+
+  if (
+    cleanNiche.includes("medical") ||
+    cleanNiche.includes("pharmacy") ||
+    cleanNiche.includes("clinic")
+  ) {
+    return [
+      `Extremely professional healthcare service and genuine care at ${name}!`,
+      `Prompt consultation, clean facility, and polite medical staff at ${name}.`,
+      `Quick medicine availability, helpful staff, and compassionate care.`,
+      `Highly knowledgeable practitioners and smooth appointment experience.`,
+    ];
+  }
+
+  if (cleanNiche.includes("real estate") || cleanNiche.includes("property")) {
+    return [
+      `Transparent dealings, professional guidance, and great property options at ${name}!`,
+      `Very reliable real estate consultation at ${name}. Made property buying stress-free.`,
+      `Honest advice, smooth documentation process, and highly supportive team.`,
+    ];
+  }
+
+  if (cleanNiche.includes("electronics") || cleanNiche.includes("gadget")) {
+    return [
+      `Genuine electronic products, competitive pricing, and great guidance at ${name}!`,
+      `Excellent gadget selection, helpful staff, and quick post-sales service at ${name}.`,
+      `Best place for buying authentic electronics and accessories!`,
+    ];
+  }
+
+  return [
+    `Excellent service and great quality at ${name}! Highly recommended.`,
+    `Amazing experience at ${name}! Will definitely visit again.`,
+    `The staff at ${name} was very friendly and the quality exceeded my expectations.`,
+    `Outstanding quality and quick service at ${name}. 5 stars well deserved!`,
+    `One of the best experiences I have had at ${name}. Highly recommended!`,
+    `Loved the atmosphere and attention to detail at ${name}. Top notch!`,
+    `A truly wonderful experience at ${name}. Great value for money and superb service.`,
+    `Very professional and welcoming staff at ${name}. I'll definitely recommend it!`,
+  ];
+}
 
 const EMOJIS = ["😊", "👍", "🔥", "❤️", "🌟", "👌", "✨", "🎉", "💯", "🙌"];
 
@@ -449,18 +573,31 @@ export function GoogleReviewModal({ open, onClose, shop }: GoogleReviewModalProp
                       </div>
                     </div>
 
-                    {/* Suggested templates */}
+                    {/* Suggested category AI templates */}
                     <div>
-                      <p className="text-xs text-white/40 mb-2">
-                        💡 Suggested templates (click to use):
-                      </p>
-                      <div className="flex flex-col gap-1.5 max-h-32 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/20 transition-colors">
-                        {REVIEW_TEMPLATES.map((t) => (
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs text-white/50 font-medium">
+                          💡 Suggested templates for <span className="text-amber-400 font-semibold">{shop.niche || "this business"}</span>:
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const templates = getCategoryReviewTemplates(shop.niche, shop.name);
+                            const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
+                            if (randomTemplate) setReviewText(randomTemplate);
+                          }}
+                          className="text-[11px] font-bold text-amber-400 hover:text-amber-300 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full transition-all hover:scale-105"
+                        >
+                          ✨ Auto-AI Draft
+                        </button>
+                      </div>
+                      <div className="flex flex-col gap-1.5 max-h-36 overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/20 transition-colors">
+                        {getCategoryReviewTemplates(shop.niche, shop.name).map((t) => (
                           <button
                             key={t}
                             type="button"
                             onClick={() => setReviewText(t)}
-                            className="text-left text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-lg px-2.5 py-2 border border-white/5 transition-colors"
+                            className="text-left text-xs text-white/70 hover:text-white hover:bg-white/10 rounded-lg px-2.5 py-2 border border-white/5 transition-all active:scale-[0.99]"
                           >
                             {t}
                           </button>

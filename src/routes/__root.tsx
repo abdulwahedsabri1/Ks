@@ -154,12 +154,15 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+import { CookieConsent } from "@/components/CookieConsent";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <CookieConsent />
     </QueryClientProvider>
   );
 }

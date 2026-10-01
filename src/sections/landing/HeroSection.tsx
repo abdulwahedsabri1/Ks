@@ -83,6 +83,9 @@ export function HeroSection() {
               <img
                 src="/hero_qr.jpg"
                 alt="Premium Restaurant QR Display"
+                loading="eager"
+                // @ts-ignore
+                fetchpriority="high"
                 className="object-cover w-full h-full"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />

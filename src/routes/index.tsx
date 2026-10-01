@@ -19,6 +19,28 @@ export const Route = createFileRoute("/")({
           "Create QR menus, business profiles, catalogs, and customer experiences in minutes.",
       },
       { property: "og:title", content: "MY Link QR — Premium QR Menus & Digital Experiences" },
+      { property: "og:url", content: "https://mylinkqr.com/" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "MY Link QR",
+          operatingSystem: "Web",
+          applicationCategory: "BusinessApplication",
+          offers: {
+            "@type": "Offer",
+            price: "0",
+            priceCurrency: "INR",
+          },
+          description:
+            "Create interactive QR menus, digital catalogs, business cards, and online ordering experiences in minutes.",
+        }),
+      },
     ],
   }),
   component: LandingPage,

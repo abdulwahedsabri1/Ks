@@ -57,17 +57,20 @@ export function shopSocialLinks(shop?: Pick<Shop, "plan" | "features"> | null) {
   const rawFb = shop?.features?.["facebook_url"] ?? "";
   const rawTw = shop?.features?.["twitter_url"] ?? "";
   const rawWeb = shop?.features?.["website_url"] ?? "";
+  const rawWaGroup = shop?.features?.["whatsapp_group_url"] ?? shop?.features?.["whatsapp_group"] ?? "";
 
   const ig = typeof rawIg === "string" ? rawIg : "";
   const fb = typeof rawFb === "string" ? rawFb : "";
   const tw = typeof rawTw === "string" ? rawTw : "";
   const web = typeof rawWeb === "string" ? rawWeb : "";
+  const waGroup = typeof rawWaGroup === "string" ? rawWaGroup : "";
 
   return {
     instagram: ig.trim(),
     facebook: fb.trim(),
     twitter: tw.trim(),
     website: web.trim(),
+    whatsapp_group: waGroup.trim(),
   };
 }
 
@@ -650,7 +653,7 @@ export type FeatureKey =
 export const FEATURE_LABELS: Record<FeatureKey, string> = {
   logo_cover: "Business logo & cover photo",
   social_link: "Instagram link",
-  advanced_social_links: "Facebook, Twitter & Website links",
+  advanced_social_links: "WhatsApp Group, Facebook, Twitter & Website links",
   opening_hours: "Opening hours display",
   ai: "AI menu generator & photo scan",
   ordering: "WhatsApp ordering & cart",
@@ -979,6 +982,7 @@ export function buildWhatsAppOrder(
     notes?: string;
     type?: "delivery" | "takeaway" | "on_table" | "enquiry";
     location?: string | null;
+    gpsLink?: string | null;
     coupon?: Coupon;
   },
 ) {
@@ -1034,6 +1038,9 @@ export function buildWhatsAppOrder(
   }
   if (details?.location) {
     textParts.push(`Location: ${details.location}`);
+  }
+  if (details?.gpsLink) {
+    textParts.push(`📍 Google Maps Pin: ${details.gpsLink}`);
   }
   if (details?.name) {
     textParts.push(`Name: ${details.name}`);

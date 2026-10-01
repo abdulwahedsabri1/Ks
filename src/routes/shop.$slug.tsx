@@ -267,6 +267,7 @@ function PublicMenu() {
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryCity, setDeliveryCity] = useState("");
   const [deliveryPincode, setDeliveryPincode] = useState("");
+  const [gpsLink, setGpsLink] = useState("");
   const [isLocating, setIsLocating] = useState(false);
 
   const fetchLocation = () => {
@@ -330,9 +331,12 @@ function PublicMenu() {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
+          const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+          setGpsLink(mapUrl);
+
           let foundAddress = false;
 
-          // 1. Try BigDataCloud reverse geocoding (CORS friendly, fast)
+          // 1. Try BigDataCloud reverse geocoding
           try {
             const res = await fetch(
               `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
@@ -389,19 +393,18 @@ function PublicMenu() {
             }
           }
 
-          // 3. Final fallback: set readable GPS location string
           if (!foundAddress) {
-            setDeliveryAddress(`GPS Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+            setDeliveryAddress(`GPS Coordinates (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`);
           }
 
           setIsLocating(false);
-          toast.success("Location retrieved via GPS!");
+          toast.success("🎯 Exact location captured via GPS!");
         },
         async (error) => {
           console.warn("GPS Geolocation error/denied:", error);
           void tryIpLocation("Location detected via Network / IP!");
         },
-        { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
       );
     } else {
       void tryIpLocation("Location detected via Network / IP!");
@@ -615,6 +618,16 @@ function PublicMenu() {
               const socials = shopSocialLinks(shop);
               return (
                 <>
+                  {socials.whatsapp_group && (
+                    <a
+                      href={socials.whatsapp_group}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all hover:scale-105"
+                    >
+                      <MessageCircle className="size-3.5 shrink-0 text-emerald-400" /> Join WhatsApp Group
+                    </a>
+                  )}
                   {socials.instagram && (
                     <a
                       href={socials.instagram}
@@ -861,9 +874,9 @@ function PublicMenu() {
 
       <Dialog open={isCartOpen} onOpenChange={setIsCartOpen}>
         <DialogContent
-          className={`max-h-[90vh] overflow-y-auto sm:max-w-md ${theme.card} ${theme.text} ${theme.border}`}
+          className={`w-[calc(100vw-1.25rem)] max-w-lg max-h-[88vh] overflow-y-auto p-4 sm:p-6 rounded-2xl shadow-2xl ${theme.card} ${theme.text} ${theme.border}`}
         >
-          <DialogHeader>
+          <DialogHeader className="pb-2 border-b border-white/5">
             <DialogTitle className="text-xl font-display font-bold">Your Order</DialogTitle>
           </DialogHeader>
 
@@ -1000,6 +1013,20 @@ function PublicMenu() {
                         onChange={(e) => setDeliveryAddress(e.target.value)}
                         className={`bg-transparent ${theme.border} ${theme.text} placeholder:opacity-40`}
                       />
+                      {gpsLink && (
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-2 mt-1">
+                          <MapPin className="size-3.5 shrink-0 text-emerald-400" />
+                          <span className="truncate">Exact GPS Pin Attached</span>
+                          <a
+                            href={gpsLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="ml-auto underline hover:text-emerald-300 shrink-0 font-bold"
+                          >
+                            View Map ↗
+                          </a>
+                        </div>
+                      )}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -1180,6 +1207,7 @@ function PublicMenu() {
                                 .filter(Boolean)
                                 .join(", ")
                             : null,
+                        gpsLink: orderType === "delivery" ? gpsLink : null,
                       })}
                       target="_blank"
                       rel="noreferrer"

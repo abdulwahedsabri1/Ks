@@ -33,8 +33,14 @@ function ContactPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !message) {
+    if (!name.trim() || !email.trim() || !message.trim()) {
       toast.error("Please fill in your name, email, and message.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      toast.error("Please enter a valid email address.");
       return;
     }
 

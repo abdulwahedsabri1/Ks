@@ -48,7 +48,7 @@ const COMPARE_ROWS: CompRow[] = [
   { feature: "Business logo & cover photo", trial: false, basic: true, pro: true, premium: true },
   { feature: "Instagram link", trial: false, basic: true, pro: true, premium: true },
   {
-    feature: "Advanced social media links (Facebook, X, Website)",
+    feature: "Advanced social media links (WhatsApp Group, Facebook, X, Website)",
     trial: false,
     basic: false,
     pro: true,

@@ -59,6 +59,8 @@ function computeLiveShop(shop: Shop, form: any): Shop {
     facebook_url: safeStr(form["facebook_url"]),
     twitter_url: safeStr(form["twitter_url"]),
     website_url: safeStr(form["website_url"]),
+    whatsapp_group_url: safeStr(form["whatsapp_group_url"]),
+    whatsapp_group: safeStr(form["whatsapp_group_url"]),
     google_review_link: safeStr(form["google_review_link"]),
     cart_enabled: form["cart_enabled"],
     ordering_enabled: form["cart_enabled"],
@@ -133,6 +135,7 @@ function SettingsPage() {
     facebook_url: "",
     twitter_url: "",
     website_url: "",
+    whatsapp_group_url: "",
     google_review_link: "",
     cart_enabled: true,
     delivery: true,
@@ -244,6 +247,7 @@ function SettingsPage() {
       facebook_url: safeStr(shopSocialLinks(shop).facebook),
       twitter_url: safeStr(shopSocialLinks(shop).twitter),
       website_url: safeStr(shopSocialLinks(shop).website),
+      whatsapp_group_url: safeStr(shopSocialLinks(shop).whatsapp_group),
       google_review_link: safeStr(shopGoogleReviewLink(shop)),
       cart_enabled: shopCartEnabled(shop),
       delivery: shopDeliveryEnabled(shop),
@@ -304,6 +308,8 @@ function SettingsPage() {
         facebook_url: safeStr(form.facebook_url),
         twitter_url: safeStr(form.twitter_url),
         website_url: safeStr(form.website_url),
+        whatsapp_group_url: safeStr(form.whatsapp_group_url),
+        whatsapp_group: safeStr(form.whatsapp_group_url),
         google_review_link: safeStr(form.google_review_link),
         cart_enabled: form.cart_enabled,
         ordering_enabled: form.cart_enabled,
@@ -366,16 +372,7 @@ function SettingsPage() {
         qc.setQueryData(["my-shop", shop.id], persistedShop);
       }
 
-      await qc.invalidateQueries({ queryKey: ["my-shop"] });
-      await qc.invalidateQueries({ queryKey: ["admin-all-shops"] });
-
-      // Minimum 700ms delay to ensure the user clearly sees the animated loader screen processing
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 700) {
-        await new Promise((r) => setTimeout(r, 700 - elapsed));
-      }
-
-      toast.success("✨ Settings & Custom Domain saved successfully!");
+      toast.success("✨ Settings saved successfully!");
     } catch (err) {
       console.error("Failed to save shop settings:", err);
       toast.error("Failed to save settings: " + (err instanceof Error ? err.message : String(err)));
@@ -675,11 +672,11 @@ function SettingsPage() {
             {!feat.advanced_social_links ? (
               <div className="rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/5 p-4 mt-2">
                 <Label className="text-muted-foreground line-through opacity-70">
-                  Advanced Social Links (Facebook, X, Website)
+                  Advanced Social Links (WhatsApp Group, Facebook, X, Website)
                 </Label>
                 <div className="mt-1 flex items-center justify-between gap-4">
                   <p className="text-sm text-muted-foreground">
-                    Unlock Facebook, Twitter / X, and Website links in the Pro plan.
+                    Unlock WhatsApp Group, Facebook, Twitter / X, and Website links in the Pro plan.
                   </p>
                   <Button
                     asChild
@@ -693,6 +690,13 @@ function SettingsPage() {
               </div>
             ) : (
               <>
+                <Text
+                  id="s-whatsapp-group"
+                  label="WhatsApp Group URL"
+                  placeholder="https://chat.whatsapp.com/..."
+                  value={form.whatsapp_group_url}
+                  onChange={(v) => updateForm((prev) => ({ ...prev, whatsapp_group_url: v }))}
+                />
                 <Text
                   id="s-facebook"
                   label="Facebook URL"
@@ -1421,17 +1425,19 @@ function Text({
   id,
   label,
   value,
+  placeholder,
   onChange,
 }: {
   id: string;
   label: string;
   value: string;
+  placeholder?: string;
   onChange: (v: string) => void;
 }) {
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
-      <Input id={id} value={value} onChange={(e) => onChange(e.target.value)} />
+      <Input id={id} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
