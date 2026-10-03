@@ -100,14 +100,14 @@ export function HeroSection() {
                 x: { duration: 0.8, delay: 0.8 },
                 y: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 },
               }}
-              className="absolute top-12 -left-8 sm:-left-16 glass-card rounded-2xl p-4 pr-6 flex items-center gap-4"
+              className="absolute top-6 left-2 sm:-left-12 glass-card rounded-2xl p-3 sm:p-4 pr-4 sm:pr-6 flex items-center gap-3 sm:gap-4 shadow-lg z-20"
             >
-              <div className="flex size-10 items-center justify-center rounded-full bg-primary/20 text-primary">
-                <QrCode className="size-5" />
+              <div className="flex size-9 sm:size-10 items-center justify-center rounded-full bg-primary/20 text-primary shrink-0">
+                <QrCode className="size-4 sm:size-5" />
               </div>
               <div>
-                <p className="font-display font-semibold text-foreground">1,284 scans today</p>
-                <p className="text-xs text-muted-foreground">Royal Biryani · Hyderabad</p>
+                <p className="font-display font-semibold text-xs sm:text-sm text-foreground">1,284 scans today</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">Royal Biryani · Hyderabad</p>
               </div>
             </motion.div>
 
@@ -120,10 +120,10 @@ export function HeroSection() {
                 x: { duration: 0.8, delay: 1.1 },
                 y: { duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.5 },
               }}
-              className="absolute bottom-16 -right-4 sm:-right-12 glass-card rounded-2xl p-4 pr-6 flex items-center gap-4"
+              className="absolute bottom-6 right-2 sm:-right-8 glass-card rounded-2xl p-3 sm:p-4 pr-4 sm:pr-6 flex items-center gap-3 sm:gap-4 shadow-lg z-20"
             >
-              <div className="flex size-10 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-500">
-                <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex size-9 sm:size-10 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-500 shrink-0">
+                <svg className="size-4 sm:size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -133,8 +133,8 @@ export function HeroSection() {
                 </svg>
               </div>
               <div>
-                <p className="font-display font-semibold text-foreground">+42% repeat visits</p>
-                <p className="text-xs text-muted-foreground">after menu refresh</p>
+                <p className="font-display font-semibold text-xs sm:text-sm text-foreground">+42% repeat visits</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">after menu refresh</p>
               </div>
             </motion.div>
           </motion.div>
