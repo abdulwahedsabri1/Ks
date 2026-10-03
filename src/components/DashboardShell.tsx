@@ -24,6 +24,8 @@ import { useMyShop } from "@/hooks/useShopData";
 import { useAuth } from "@/hooks/useAuth";
 import { publicShopUrl, shopCatalogLabel, shopFeatures } from "@/lib/shop";
 
+import { getNicheCategoryIcon } from "@/lib/niche-icons";
+
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/menu", label: "Menu & Items", icon: UtensilsCrossed },
@@ -51,6 +53,7 @@ export function DashboardShell({
   const { data: shop } = useMyShop(user?.id);
   const isPending = shop?.status === "pending";
   const catalogLabel = shopCatalogLabel(shop);
+  const DynamicMenuIcon = getNicheCategoryIcon(shop?.niche, catalogLabel);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   async function signOut() {
@@ -108,7 +111,7 @@ export function DashboardShell({
           {!isPending &&
             NAV.map((item) => {
               const isActive = pathname === item.to;
-              const Icon = item.icon;
+              const Icon = item.to === "/menu" ? DynamicMenuIcon : item.icon;
               const isAnalyticsLocked =
                 item.to === "/analytics" && shop && !shopFeatures(shop).analytics;
               return (
@@ -288,7 +291,7 @@ export function DashboardShell({
                 {!isPending &&
                   NAV.map((item) => {
                     const isActive = pathname === item.to;
-                    const Icon = item.icon;
+                    const Icon = item.to === "/menu" ? DynamicMenuIcon : item.icon;
                     return (
                       <Link
                         key={item.to}
@@ -373,7 +376,7 @@ export function DashboardShell({
               ...(isAdmin ? [{ to: "/admin", label: "Admin", icon: Shield } as const] : []),
             ].map((item) => {
               const isActive = pathname === item.to;
-              const Icon = item.icon;
+              const Icon = item.to === "/menu" ? DynamicMenuIcon : item.icon;
               const displayLabel = item.label === "Menu & Items" ? catalogLabel : item.label;
               return (
                 <Link

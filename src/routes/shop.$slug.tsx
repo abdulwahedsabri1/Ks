@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { UpiPaymentBox } from "@/components/UpiPaymentBox";
 import { getPublicShop } from "@/lib/menu.functions";
+import { getNicheCategoryIcon } from "@/lib/niche-icons";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -695,6 +696,7 @@ function PublicMenu() {
             active={active === "all"}
             onClick={() => setActive("all")}
             theme={theme}
+            niche={shop.niche}
           />
           {categories.map((c: any) => (
             <Chip
@@ -703,6 +705,7 @@ function PublicMenu() {
               active={active === c.id}
               onClick={() => setActive(c.id)}
               theme={theme}
+              niche={shop.niche}
             />
           ))}
         </div>
@@ -1351,24 +1354,27 @@ function Chip({
   active,
   onClick,
   theme,
+  niche,
 }: {
   label: string;
   active: boolean;
   onClick: () => void;
-
   theme: any;
+  niche?: string;
 }) {
+  const Icon = getNicheCategoryIcon(niche, label);
   return (
     <motion.button
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className={`whitespace-nowrap rounded-full border px-4 py-1.5 text-[13px] font-medium transition-colors ${
+      className={`whitespace-nowrap rounded-full border px-4 py-1.5 text-[13px] font-medium transition-colors flex items-center gap-1.5 ${
         active
           ? `border-transparent ${theme.accent} ${theme.cartText}`
           : `${theme.border} bg-transparent ${theme.textMuted} ${theme.textMutedHover}`
       }`}
     >
-      {label}
+      <Icon className="size-3.5 shrink-0" />
+      <span>{label}</span>
     </motion.button>
   );
 }
