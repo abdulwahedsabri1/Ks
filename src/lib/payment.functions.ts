@@ -372,7 +372,7 @@ async function executePlanActivation({
       google_reviews: false,
       custom_domain: false,
       priority_support: false,
-      coupons: true,
+      coupons: false,
       upi: false,
     },
     premium: ALL_FEATURES,

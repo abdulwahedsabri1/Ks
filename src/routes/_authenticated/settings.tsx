@@ -954,7 +954,7 @@ function SettingsPage() {
             {!feat.coupons ? (
               <div className="rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/5 p-4">
                 <p className="text-sm text-muted-foreground mb-3">
-                  Unlock discount and coupon codes in Pro or Premium plans.
+                  Unlock discount and coupon codes in the Premium plan.
                 </p>
                 <Button
                   asChild
