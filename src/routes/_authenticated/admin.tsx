@@ -1785,7 +1785,7 @@ function AdminConsolePage() {
       </div>
 
       {/* Main Body Container */}
-      <main className="p-3.5 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      <main className="p-3.5 sm:p-6 lg:p-8 max-w-[1700px] mx-auto space-y-6">
         {/* ================= OVERVIEW TAB ================= */}
         {activeTab === "overview" && (
           <div className="space-y-6 animate-in fade-in duration-200">
@@ -2167,28 +2167,28 @@ function AdminConsolePage() {
                 <table className="w-full text-left text-xs">
                   <thead className="bg-[#0A0F1A] border-b border-slate-800 text-slate-400 font-extrabold uppercase tracking-wider text-[11px]">
                     <tr>
-                      <th className="py-3.5 px-5">SHOP</th>
-                      <th className="py-3.5 px-4">NICHE</th>
-                      <th className="py-3.5 px-4">PLAN</th>
-                      <th className="py-3.5 px-4">PAYMENT</th>
-                      <th className="py-3.5 px-4">RANK / PRIORITY</th>
-                      <th className="py-3.5 px-4">BILLING</th>
-                      <th className="py-3.5 px-4">EXPIRY</th>
-                      <th className="py-3.5 px-4">STATUS</th>
-                      <th className="py-3.5 px-5 text-right">ACTIONS</th>
+                      <th className="py-3.5 px-5 min-w-[280px]">SHOP</th>
+                      <th className="py-3.5 px-4 min-w-[130px]">NICHE</th>
+                      <th className="py-3.5 px-4 min-w-[120px]">PLAN</th>
+                      <th className="py-3.5 px-4 min-w-[120px]">PAYMENT</th>
+                      <th className="py-3.5 px-4 min-w-[190px]">RANK / PRIORITY</th>
+                      <th className="py-3.5 px-4 min-w-[100px]">BILLING</th>
+                      <th className="py-3.5 px-4 min-w-[120px]">EXPIRY</th>
+                      <th className="py-3.5 px-4 min-w-[100px]">STATUS</th>
+                      <th className="py-3.5 px-5 text-right min-w-[140px]">ACTIONS</th>
                     </tr>
                   </thead>
 
                   <tbody className="divide-y divide-slate-800/60">
                     {shopsLoading ? (
                       <tr>
-                        <td colSpan={8} className="p-8 text-center text-slate-500 animate-pulse">
+                        <td colSpan={9} className="p-8 text-center text-slate-500 animate-pulse">
                           Fetching shops from database…
                         </td>
                       </tr>
                     ) : filteredShops.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="p-8 text-center text-slate-500">
+                        <td colSpan={9} className="p-8 text-center text-slate-500">
                           No shops found matching your search filter.
                         </td>
                       </tr>
@@ -2213,8 +2213,8 @@ function AdminConsolePage() {
                                 )}
 
                                 <div className="min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-bold text-sm text-white truncate">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-bold text-sm text-white whitespace-nowrap">
                                       {shop.name}
                                     </span>
                                     <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
