@@ -130,8 +130,21 @@ export function usePaymentSettings() {
         .subscribe();
     } catch {}
 
+    const handleLocalUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ["payment_settings"] });
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", handleLocalUpdate);
+      window.addEventListener("payment_settings_updated", handleLocalUpdate);
+    }
+
     return () => {
       if (channel) supabase.removeChannel(channel);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("storage", handleLocalUpdate);
+        window.removeEventListener("payment_settings_updated", handleLocalUpdate);
+      }
     };
   }, [queryClient]);
 
@@ -148,6 +161,7 @@ export async function savePaymentSettings(
     const merged = { ...parsed, ...updatedSettings };
     localStorage.setItem("mylink_payment_settings", JSON.stringify(merged));
     window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new CustomEvent("payment_settings_updated", { detail: merged }));
   }
 
   try {

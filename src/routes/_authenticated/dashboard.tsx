@@ -486,24 +486,30 @@ function DashboardPage() {
 
                             return (
                               <>
-                                {isYearly && sav.monthly12x > sav.yearlyPrice && (
+                                {isYearly && sav.monthly12x > sav.yearlyPrice ? (
                                   <div className="text-[11px] text-muted-foreground line-through font-semibold mb-0.5 text-right">
                                     12x Regular: ₹{sav.monthly12x.toLocaleString("en-IN")}
                                   </div>
-                                )}
+                                ) : !isYearly && sav.hasMonthlyDiscount ? (
+                                  <div className="text-[11px] text-muted-foreground font-semibold mb-0.5 text-right">
+                                    <span className="line-through">Regular: ₹{sav.originalMonthlyPrice}/mo</span>
+                                  </div>
+                                ) : null}
                                 <div className="flex items-center justify-between gap-2 mb-1">
                                   <h4 className="font-display text-base font-bold text-foreground">
                                     {p.name}
                                   </h4>
-                                  <span className="font-display text-xl font-extrabold text-amber-500">
-                                    ₹{price}
-                                    <span className="text-xs font-normal text-muted-foreground">
-                                      /{isYearly ? "yr" : "mo"}
+                                  <div className="text-right">
+                                    <span className="font-display text-xl font-extrabold text-amber-500">
+                                      ₹{price}
+                                      <span className="text-xs font-normal text-muted-foreground">
+                                        /{isYearly ? "yr" : "mo"}
+                                      </span>
                                     </span>
-                                  </span>
+                                  </div>
                                 </div>
 
-                                {isYearly && (
+                                {isYearly ? (
                                   <div className="mb-2 space-y-1">
                                     {sav.savingsAmount > 0 && (
                                       <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30 inline-block mr-1">
@@ -518,6 +524,14 @@ function DashboardPage() {
                                         : "12 Months Access"}
                                       )
                                     </p>
+                                  </div>
+                                ) : (
+                                  <div className="mb-2 space-y-1">
+                                    {sav.hasMonthlyDiscount && (
+                                      <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30 inline-block">
+                                        💥 SAVE ₹{sav.monthlySavingsAmount}/mo ({sav.monthlyDiscountPercent}% OFF MONTHLY DISCOUNT)
+                                      </span>
+                                    )}
                                   </div>
                                 )}
                               </>
@@ -575,7 +589,11 @@ function DashboardPage() {
                     size="sm"
                     className="h-10 text-xs font-bold rounded-xl"
                   >
-                    <a href={publicShopUrl(shop.slug, shopCustomDomain(shop))} target="_blank" rel="noreferrer">
+                    <a
+                      href={publicShopUrl(shop.slug, shopCustomDomain(shop))}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       <ExternalLink className="size-3.5 mr-1.5" /> View Public Shop
                     </a>
                   </Button>

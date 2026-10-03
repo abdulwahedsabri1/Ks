@@ -24,7 +24,9 @@ export function useRealtimeActiveShops() {
     try {
       const { data, error } = await supabase
         .from("shops")
-        .select("id, name, slug, niche, tagline, logo_url, status, theme_color, created_at, features");
+        .select(
+          "id, name, slug, niche, tagline, logo_url, status, theme_color, created_at, features",
+        );
 
       if (!error && data) {
         // Map rank and keep all valid shops (active and suspended)
@@ -32,7 +34,12 @@ export function useRealtimeActiveShops() {
           .filter((s) => s.slug)
           .map((s) => {
             const rawRank = s.features?.["rank"];
-            const rankNum = typeof rawRank === "number" ? rawRank : (typeof rawRank === "string" ? parseInt(rawRank, 10) : 9999);
+            const rankNum =
+              typeof rawRank === "number"
+                ? rawRank
+                : typeof rawRank === "string"
+                  ? parseInt(rawRank, 10)
+                  : 9999;
             return {
               ...s,
               rank: isNaN(rankNum) ? 9999 : rankNum,
@@ -65,20 +72,18 @@ export function useRealtimeActiveShops() {
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
     try {
-      channel = supabase
-        .channel(channelName)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "shops",
-          },
-          () => {
-            fetchActiveShops();
-          }
-        );
-      
+      channel = supabase.channel(channelName).on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "shops",
+        },
+        () => {
+          fetchActiveShops();
+        },
+      );
+
       channel.subscribe();
     } catch (err) {
       console.warn("Failed to subscribe to realtime active shops:", err);

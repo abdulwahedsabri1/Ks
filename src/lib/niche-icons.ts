@@ -23,10 +23,18 @@ import type { ComponentType } from "react";
 /**
  * Returns the matching Lucide Icon component based on business niche or category name.
  */
-export function getNicheCategoryIcon(niche?: string | null, label?: string | null): ComponentType<{ className?: string }> {
+export function getNicheCategoryIcon(
+  niche?: string | null,
+  label?: string | null,
+): ComponentType<{ className?: string }> {
   const combined = `${niche || ""} ${label || ""}`.toLowerCase().trim();
 
-  if (combined.includes("bakery") || combined.includes("cake") || combined.includes("sweet") || combined.includes("dessert")) {
+  if (
+    combined.includes("bakery") ||
+    combined.includes("cake") ||
+    combined.includes("sweet") ||
+    combined.includes("dessert")
+  ) {
     return Cake;
   }
   if (combined.includes("cafe") || combined.includes("coffee") || combined.includes("tea")) {
@@ -42,16 +50,31 @@ export function getNicheCategoryIcon(niche?: string | null, label?: string | nul
   ) {
     return UtensilsCrossed;
   }
-  if (combined.includes("salon") || combined.includes("barber") || combined.includes("hair") || combined.includes("beauty")) {
+  if (
+    combined.includes("salon") ||
+    combined.includes("barber") ||
+    combined.includes("hair") ||
+    combined.includes("beauty")
+  ) {
     return Scissors;
   }
   if (combined.includes("spa") || combined.includes("massage") || combined.includes("wellness")) {
     return Sparkles;
   }
-  if (combined.includes("gym") || combined.includes("fitness") || combined.includes("workout") || combined.includes("trainer")) {
+  if (
+    combined.includes("gym") ||
+    combined.includes("fitness") ||
+    combined.includes("workout") ||
+    combined.includes("trainer")
+  ) {
     return Dumbbell;
   }
-  if (combined.includes("hotel") || combined.includes("resort") || combined.includes("lodge") || combined.includes("stay")) {
+  if (
+    combined.includes("hotel") ||
+    combined.includes("resort") ||
+    combined.includes("lodge") ||
+    combined.includes("stay")
+  ) {
     return Hotel;
   }
   if (
@@ -64,7 +87,12 @@ export function getNicheCategoryIcon(niche?: string | null, label?: string | nul
   ) {
     return Shirt;
   }
-  if (combined.includes("jewelry") || combined.includes("jewel") || combined.includes("gold") || combined.includes("diamond")) {
+  if (
+    combined.includes("jewelry") ||
+    combined.includes("jewel") ||
+    combined.includes("gold") ||
+    combined.includes("diamond")
+  ) {
     return Gem;
   }
   if (
@@ -76,10 +104,20 @@ export function getNicheCategoryIcon(niche?: string | null, label?: string | nul
   ) {
     return ShoppingCart;
   }
-  if (combined.includes("medical") || combined.includes("pharmacy") || combined.includes("chemist") || combined.includes("medicine")) {
+  if (
+    combined.includes("medical") ||
+    combined.includes("pharmacy") ||
+    combined.includes("chemist") ||
+    combined.includes("medicine")
+  ) {
     return Pill;
   }
-  if (combined.includes("clinic") || combined.includes("doctor") || combined.includes("hospital") || combined.includes("health")) {
+  if (
+    combined.includes("clinic") ||
+    combined.includes("doctor") ||
+    combined.includes("hospital") ||
+    combined.includes("health")
+  ) {
     return Stethoscope;
   }
   if (
@@ -93,10 +131,20 @@ export function getNicheCategoryIcon(niche?: string | null, label?: string | nul
   if (combined.includes("computer") || combined.includes("laptop") || combined.includes("tech")) {
     return Laptop;
   }
-  if (combined.includes("real estate") || combined.includes("property") || combined.includes("builder") || combined.includes("housing")) {
+  if (
+    combined.includes("real estate") ||
+    combined.includes("property") ||
+    combined.includes("builder") ||
+    combined.includes("housing")
+  ) {
     return Home;
   }
-  if (combined.includes("auto") || combined.includes("car") || combined.includes("garage") || combined.includes("vehicle")) {
+  if (
+    combined.includes("auto") ||
+    combined.includes("car") ||
+    combined.includes("garage") ||
+    combined.includes("vehicle")
+  ) {
     return Car;
   }
 

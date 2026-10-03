@@ -28,11 +28,22 @@ export function Navbar() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div
             className={`flex items-center justify-between rounded-full border border-border transition-all duration-300 ${
-              scrolled ? "bg-card/80 shadow-soft backdrop-blur-md px-6 py-3" : "bg-card/40 px-6 py-4"
+              scrolled
+                ? "bg-card/80 shadow-soft backdrop-blur-md px-6 py-3"
+                : "bg-card/40 px-6 py-4"
             }`}
           >
             <div className="flex items-center">
-              <Link to="/" className="flex items-center gap-2 group">
+              <Link
+                to="/"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
+                className="flex items-center gap-2 group cursor-pointer"
+                title="Go to Home Page"
+              >
                 <img
                   src="/favicon.ico"
                   alt="MY Link QR Logo"
@@ -59,12 +70,6 @@ export function Navbar() {
                 Live Previews
               </Link>
               <Link
-                to="/showcase"
-                className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
-              >
-                Showcase
-              </Link>
-              <Link
                 to="/shops"
                 className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg font-medium"
               >
@@ -85,114 +90,107 @@ export function Navbar() {
               </Link>
             </nav>
 
-          <div className="hidden md:flex items-center gap-4">
-            <Link
-              to="/auth"
-              search={{ tab: "login" }}
-              className="text-sm font-medium text-foreground hover:text-primary transition-colors px-3 py-1.5"
-            >
-              Sign in
-            </Link>
-            <Button
-              asChild
-              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 shadow-glow"
-            >
-              <Link to="/auth" search={{ tab: "signup", plan: "trial" }}>
-                Start free
+            <div className="hidden md:flex items-center gap-4">
+              <Link
+                to="/auth"
+                search={{ tab: "login" }}
+                className="text-sm font-medium text-foreground hover:text-primary transition-colors px-3 py-1.5"
+              >
+                Sign in
               </Link>
-            </Button>
-          </div>
+              <Button
+                asChild
+                className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 shadow-glow"
+              >
+                <Link to="/auth" search={{ tab: "signup", plan: "trial" }}>
+                  Start free
+                </Link>
+              </Button>
+            </div>
 
-          {/* Mobile Menu Button */}
-          <div className="flex md:hidden">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-foreground hover:text-primary transition-colors"
-            >
-              {mobileMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
-            </button>
+            {/* Mobile Menu Button */}
+            <div className="flex md:hidden">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 text-foreground hover:text-primary transition-colors"
+              >
+                {mobileMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Menu Dropdown */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute left-4 right-4 top-24 rounded-2xl border border-border bg-card/95 p-6 shadow-lift backdrop-blur-xl md:hidden"
-          >
-            <nav className="flex flex-col gap-6">
-              <Link
-                to="/features"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
-              >
-                Features
-              </Link>
-              <Link
-                to="/previews"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
-              >
-                Live Previews
-              </Link>
-              <Link
-                to="/showcase"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
-              >
-                Showcase
-              </Link>
-              <Link
-                to="/shops"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
-              >
-                Shops Directory
-              </Link>
-              <Link
-                to="/demo"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg font-semibold text-primary flex items-center gap-2"
-              >
-                <span className="size-2 rounded-full bg-primary inline-block animate-pulse" /> Watch
-                Demo
-              </Link>
-              <Link
-                to="/pricing"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
-              >
-                Pricing
-              </Link>
-              <div className="h-px bg-border my-2" />
-              <div className="flex flex-col gap-4">
+        {/* Mobile Menu Dropdown */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute left-4 right-4 top-24 rounded-2xl border border-border bg-card/95 p-6 shadow-lift backdrop-blur-xl md:hidden"
+            >
+              <nav className="flex flex-col gap-6">
                 <Link
-                  to="/auth"
+                  to="/features"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-center text-lg font-medium text-foreground hover:text-primary transition-colors"
+                  className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Sign in
+                  Features
                 </Link>
-                <Button
-                  asChild
-                  className="w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 py-6 text-lg"
+                <Link
+                  to="/previews"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
                 >
-                  <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
-                    Start free
+                  Live Previews
+                </Link>
+                <Link
+                  to="/shops"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Shops Directory
+                </Link>
+                <Link
+                  to="/demo"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-lg font-semibold text-primary flex items-center gap-2"
+                >
+                  <span className="size-2 rounded-full bg-primary inline-block animate-pulse" />{" "}
+                  Watch Demo
+                </Link>
+                <Link
+                  to="/pricing"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Pricing
+                </Link>
+                <div className="h-px bg-border my-2" />
+                <div className="flex flex-col gap-4">
+                  <Link
+                    to="/auth"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-center text-lg font-medium text-foreground hover:text-primary transition-colors"
+                  >
+                    Sign in
                   </Link>
-                </Button>
-              </div>
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                  <Button
+                    asChild
+                    className="w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 py-6 text-lg"
+                  >
+                    <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                      Start free
+                    </Link>
+                  </Button>
+                </div>
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      <RealtimeActiveShopsModal open={shopsModalOpen} onOpenChange={setShopsModalOpen} />
-    </header>
+        <RealtimeActiveShopsModal open={shopsModalOpen} onOpenChange={setShopsModalOpen} />
+      </header>
     </>
   );
 }

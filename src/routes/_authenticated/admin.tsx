@@ -2065,11 +2065,14 @@ function AdminConsolePage() {
                           </label>
                           <select
                             value={
-                              typeof (shop.features as Record<string, any> | null)?.["rank"] === "number"
+                              typeof (shop.features as Record<string, any> | null)?.["rank"] ===
+                              "number"
                                 ? (shop.features as Record<string, any>)["rank"]
                                 : 9999
                             }
-                            onChange={(e) => handleQuickRankChange(shop, parseInt(e.target.value, 10))}
+                            onChange={(e) =>
+                              handleQuickRankChange(shop, parseInt(e.target.value, 10))
+                            }
                             disabled={savingShop}
                             className="w-full px-2 py-1.5 rounded-xl text-xs font-bold bg-[#080C14] border border-amber-500/40 text-amber-300 focus:outline-none truncate"
                           >
@@ -2296,7 +2299,9 @@ function AdminConsolePage() {
                               <div className="flex items-center gap-1.5">
                                 <select
                                   value={
-                                    typeof (shop.features as Record<string, any> | null)?.["rank"] === "number"
+                                    typeof (shop.features as Record<string, any> | null)?.[
+                                      "rank"
+                                    ] === "number"
                                       ? (shop.features as Record<string, any>)["rank"]
                                       : 9999
                                   }
@@ -2307,7 +2312,10 @@ function AdminConsolePage() {
                                   title="Admin Display Rank - Controls store position on public directory & navbar"
                                   className="px-2 py-1 rounded-xl text-[11px] font-bold bg-slate-800 border border-amber-500/40 text-amber-300 cursor-pointer focus:outline-none focus:border-amber-400"
                                 >
-                                  <option value={1} className="bg-[#0D131F] text-amber-300 font-bold">
+                                  <option
+                                    value={1}
+                                    className="bg-[#0D131F] text-amber-300 font-bold"
+                                  >
                                     🥇 Rank #1 (Top)
                                   </option>
                                   <option value={2} className="bg-[#0D131F] text-slate-200">
@@ -3172,43 +3180,217 @@ function AdminConsolePage() {
 
                           {p.id !== "trial" &&
                             (() => {
-                              const m12 = (p.priceNumber || 0) * 12;
+                              const currentMonthly = p.priceNumber || 0;
+                              const originalMonthly =
+                                typeof p.originalPriceNumber === "number" && p.originalPriceNumber > 0
+                                  ? p.originalPriceNumber
+                                  : 0;
+                              const hasMonthlyDiscount = originalMonthly > currentMonthly;
+                              const monthlySavings = hasMonthlyDiscount ? originalMonthly - currentMonthly : 0;
+                              const monthlyPct =
+                                originalMonthly > 0
+                                  ? Math.round((monthlySavings / originalMonthly) * 100)
+                                  : p.monthlyDiscountPercent || 0;
+
+                              const m12 = currentMonthly * 12;
                               const currentAnnual =
-                                p.yearlyPriceNumber ?? (p.priceNumber ? p.priceNumber * 12 : 0);
+                                p.yearlyPriceNumber ?? (currentMonthly ? currentMonthly * 12 : 0);
                               const currentSavings = Math.max(0, m12 - currentAnnual);
                               const currentPct =
                                 m12 > 0 ? Math.round((currentSavings / m12) * 100) : 0;
 
                               return (
-                                <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 space-y-2">
-                                  <div className="flex items-center justify-between text-xs">
-                                    <span className="text-slate-400 text-[11px] font-medium">
-                                      12x Monthly Total:
-                                    </span>
-                                    <span className="line-through text-slate-400 font-bold">
-                                      ₹{m12.toLocaleString("en-IN")}
-                                    </span>
-                                  </div>
-
-                                  <div className="space-y-1">
-                                    <div className="flex items-center justify-between">
-                                      <Label className="text-[10px] text-slate-300 font-bold">
-                                        Discount Amount (₹ Off)
-                                      </Label>
-                                      <span className="text-[10px] font-extrabold text-[#00E676]">
-                                        {currentPct}% OFF
+                                <div className="space-y-3">
+                                  {/* Monthly Discount & Strikethrough Config */}
+                                  <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-2.5 space-y-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                      <span className="text-slate-300 text-[11px] font-bold">
+                                        Monthly Discount (% Off):
+                                      </span>
+                                      <span className="text-[10px] font-extrabold text-[#00E676] bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                                        {monthlyPct > 0 ? `${monthlyPct}% OFF` : "Regular"}
                                       </span>
                                     </div>
-                                    <div className="relative">
-                                      <span className="absolute left-2.5 top-2 font-bold text-[#00E676] text-xs">
-                                        ₹
+
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div className="space-y-1">
+                                        <Label className="text-[10px] text-slate-400 font-medium">
+                                          Regular Price (₹/mo)
+                                        </Label>
+                                        <div className="relative">
+                                          <span className="absolute left-2 top-2 font-bold text-slate-400 text-[11px]">
+                                            ₹
+                                          </span>
+                                          <Input
+                                            type="number"
+                                            value={originalMonthly || ""}
+                                            onChange={(e) => {
+                                              const orig = Number(e.target.value);
+                                              setPlansForm((prev) =>
+                                                prev.map((item, i) =>
+                                                  i === idx
+                                                    ? {
+                                                        ...item,
+                                                        originalPriceNumber: orig,
+                                                        originalPrice: orig ? `₹${orig}/mo` : undefined,
+                                                      }
+                                                    : item,
+                                                ),
+                                              );
+                                            }}
+                                            placeholder="e.g. 299"
+                                            className="pl-5 h-8 text-xs font-bold bg-[#080C14] border-slate-800 text-slate-400 line-through rounded-lg"
+                                          />
+                                        </div>
+                                      </div>
+
+                                      <div className="space-y-1">
+                                        <Label className="text-[10px] text-slate-400 font-medium">
+                                          Monthly Savings (₹)
+                                        </Label>
+                                        <div className="relative">
+                                          <span className="absolute left-2 top-2 font-bold text-[#00E676] text-[11px]">
+                                            ₹
+                                          </span>
+                                          <Input
+                                            type="number"
+                                            value={monthlySavings}
+                                            onChange={(e) => {
+                                              const sav = Math.max(0, Number(e.target.value));
+                                              const newOrig = currentMonthly + sav;
+                                              setPlansForm((prev) =>
+                                                prev.map((item, i) =>
+                                                  i === idx
+                                                    ? {
+                                                        ...item,
+                                                        originalPriceNumber: newOrig,
+                                                        originalPrice: newOrig ? `₹${newOrig}/mo` : undefined,
+                                                      }
+                                                    : item,
+                                                ),
+                                              );
+                                            }}
+                                            placeholder="e.g. 50"
+                                            className="pl-5 h-8 text-xs font-bold bg-[#080C14] border-slate-800 text-[#00E676] rounded-lg"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-1 pt-1 overflow-x-auto">
+                                      {[10, 15, 20, 25, 30, 50].map((pct) => (
+                                        <button
+                                          key={pct}
+                                          type="button"
+                                          onClick={() => {
+                                            const newOrig = Math.round(currentMonthly / (1 - pct / 100));
+                                            setPlansForm((prev) =>
+                                              prev.map((item, i) =>
+                                                i === idx
+                                                  ? {
+                                                      ...item,
+                                                      originalPriceNumber: newOrig,
+                                                      originalPrice: `₹${newOrig}/mo`,
+                                                      monthlyDiscountPercent: pct,
+                                                    }
+                                                  : item,
+                                              ),
+                                            );
+                                          }}
+                                          className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-emerald-500/15 border border-emerald-500/30 text-[#00E676] hover:bg-emerald-500/25 transition-colors whitespace-nowrap"
+                                        >
+                                          {pct}% Off
+                                        </button>
+                                      ))}
+                                      {hasMonthlyDiscount && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setPlansForm((prev) =>
+                                              prev.map((item, i) =>
+                                                i === idx
+                                                  ? {
+                                                      ...item,
+                                                      originalPriceNumber: undefined,
+                                                      originalPrice: undefined,
+                                                      monthlyDiscountPercent: undefined,
+                                                    }
+                                                  : item,
+                                              ),
+                                            );
+                                          }}
+                                          className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-rose-500/15 border border-rose-500/30 text-rose-400 hover:bg-rose-500/25 transition-colors whitespace-nowrap"
+                                        >
+                                          Clear
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Annual Discount Config */}
+                                  <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 space-y-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                      <span className="text-slate-400 text-[11px] font-medium">
+                                        12x Monthly Total:
                                       </span>
-                                      <Input
-                                        type="number"
-                                        value={currentSavings}
-                                        onChange={(e) => {
-                                          const discountVal = Math.max(0, Number(e.target.value));
-                                          const newAnnual = Math.max(0, m12 - discountVal);
+                                      <span className="line-through text-slate-400 font-bold">
+                                        ₹{m12.toLocaleString("en-IN")}
+                                      </span>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      <div className="flex items-center justify-between">
+                                        <Label className="text-[10px] text-slate-300 font-bold">
+                                          Discount Amount (₹ Off)
+                                        </Label>
+                                        <span className="text-[10px] font-extrabold text-[#00E676]">
+                                          {currentPct}% OFF
+                                        </span>
+                                      </div>
+                                      <div className="relative">
+                                        <span className="absolute left-2.5 top-2 font-bold text-[#00E676] text-xs">
+                                          ₹
+                                        </span>
+                                        <Input
+                                          type="number"
+                                          value={currentSavings}
+                                          onChange={(e) => {
+                                            const discountVal = Math.max(0, Number(e.target.value));
+                                            const newAnnual = Math.max(0, m12 - discountVal);
+                                            setPlansForm((prev) =>
+                                              prev.map((item, i) =>
+                                                i === idx
+                                                  ? {
+                                                      ...item,
+                                                      yearlyPriceNumber: newAnnual,
+                                                      yearlyPrice: `₹${newAnnual.toLocaleString("en-IN")}`,
+                                                    }
+                                                  : item,
+                                              ),
+                                            );
+                                          }}
+                                          placeholder="e.g. 998"
+                                          className="pl-6 h-8 text-xs font-bold bg-[#080C14] border-slate-800 text-[#00E676] rounded-lg"
+                                        />
+                                      </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-1 border-t border-amber-500/20 text-[11px]">
+                                      <span className="text-amber-400 font-bold">
+                                        Annual Price Set:
+                                      </span>
+                                      <span className="text-amber-400 font-extrabold bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
+                                        ₹{currentAnnual.toLocaleString("en-IN")}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-1 pt-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newAnnual = Math.round(
+                                            (p.priceNumber || 0) * 12 * 0.833,
+                                          );
                                           setPlansForm((prev) =>
                                             prev.map((item, i) =>
                                               i === idx
@@ -3221,66 +3403,33 @@ function AdminConsolePage() {
                                             ),
                                           );
                                         }}
-                                        placeholder="e.g. 998"
-                                        className="pl-6 h-8 text-xs font-bold bg-[#080C14] border-slate-800 text-[#00E676] rounded-lg"
-                                      />
+                                        className="text-[9px] font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 px-2 py-0.5 rounded-md transition-colors"
+                                      >
+                                        2 Mos Free (17% Off)
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const newAnnual = Math.round(
+                                            (p.priceNumber || 0) * 12 * 0.8,
+                                          );
+                                          setPlansForm((prev) =>
+                                            prev.map((item, i) =>
+                                              i === idx
+                                                ? {
+                                                    ...item,
+                                                    yearlyPriceNumber: newAnnual,
+                                                    yearlyPrice: `₹${newAnnual.toLocaleString("en-IN")}`,
+                                                  }
+                                                : item,
+                                            ),
+                                          );
+                                        }}
+                                        className="text-[9px] font-bold text-[#00E676] bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 px-2 py-0.5 rounded-md transition-colors"
+                                      >
+                                        20% Off
+                                      </button>
                                     </div>
-                                  </div>
-
-                                  <div className="flex items-center justify-between pt-1 border-t border-amber-500/20 text-[11px]">
-                                    <span className="text-amber-400 font-bold">
-                                      Annual Price Set:
-                                    </span>
-                                    <span className="text-amber-400 font-extrabold bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
-                                      ₹{currentAnnual.toLocaleString("en-IN")}
-                                    </span>
-                                  </div>
-
-                                  <div className="flex items-center gap-1 pt-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const newAnnual = Math.round(
-                                          (p.priceNumber || 0) * 12 * 0.833,
-                                        );
-                                        setPlansForm((prev) =>
-                                          prev.map((item, i) =>
-                                            i === idx
-                                              ? {
-                                                  ...item,
-                                                  yearlyPriceNumber: newAnnual,
-                                                  yearlyPrice: `₹${newAnnual.toLocaleString("en-IN")}`,
-                                                }
-                                              : item,
-                                          ),
-                                        );
-                                      }}
-                                      className="text-[9px] font-bold text-amber-300 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 px-2 py-0.5 rounded-md transition-colors"
-                                    >
-                                      2 Mos Free (17% Off)
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const newAnnual = Math.round(
-                                          (p.priceNumber || 0) * 12 * 0.8,
-                                        );
-                                        setPlansForm((prev) =>
-                                          prev.map((item, i) =>
-                                            i === idx
-                                              ? {
-                                                  ...item,
-                                                  yearlyPriceNumber: newAnnual,
-                                                  yearlyPrice: `₹${newAnnual.toLocaleString("en-IN")}`,
-                                                }
-                                              : item,
-                                          ),
-                                        );
-                                      }}
-                                      className="text-[9px] font-bold text-[#00E676] bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 px-2 py-0.5 rounded-md transition-colors"
-                                    >
-                                      20% Off
-                                    </button>
                                   </div>
                                 </div>
                               );

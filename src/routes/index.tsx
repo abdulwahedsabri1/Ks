@@ -8,6 +8,8 @@ import { QRShowcaseSection } from "@/sections/landing/QRShowcaseSection";
 import { PricingSection } from "@/sections/landing/PricingSection";
 import { CTASection } from "@/sections/landing/CTASection";
 import { Footer } from "@/sections/landing/Footer";
+import { InstagramProfileFeed } from "@/components/InstagramProfileFeed";
+import { Instagram } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -56,6 +58,25 @@ function LandingPage() {
         <BusinessPreviewSection />
         <ThemesSection />
         <QRShowcaseSection />
+
+        {/* Live Instagram Feed & Video Reels Section */}
+        <section id="instagram" className="py-20 md:py-28 bg-[#100C09] border-t border-white/5 relative overflow-hidden">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center mb-12">
+              <div className="inline-flex items-center gap-2 rounded-full border border-pink-500/30 bg-pink-500/10 px-4 py-1.5 text-xs font-bold text-pink-400 mb-4">
+                <Instagram className="size-3.5" /> Live Instagram Videos & Demos
+              </div>
+              <h2 className="font-display text-4xl sm:text-5xl font-bold tracking-tight text-white mb-4">
+                See <span className="text-gradient italic">MY Link QR</span> in Action
+              </h2>
+              <p className="text-slate-400 text-sm sm:text-base">
+                Follow <strong className="text-white">@mylinkqr.in</strong> for live video walkthroughs, restaurant customer case studies, and daily shorts.
+              </p>
+            </div>
+            <InstagramProfileFeed />
+          </div>
+        </section>
+
         <PricingSection />
         <CTASection />
       </main>

@@ -4,7 +4,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRealtimeActiveShops } from "@/hooks/useRealtimeActiveShops";
 import { publicShopUrl } from "@/lib/shop";
-import { ExternalLink, Search, Store, Sparkles, RefreshCw, AlertCircle, AlertTriangle, ShieldCheck } from "lucide-react";
+import {
+  ExternalLink,
+  Search,
+  Store,
+  Sparkles,
+  RefreshCw,
+  AlertCircle,
+  AlertTriangle,
+  ShieldCheck,
+} from "lucide-react";
 
 export function RealtimeActiveShopsModal({
   open,
@@ -18,12 +27,15 @@ export function RealtimeActiveShopsModal({
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
 
   const activeCount = shops.filter((s) => s.status === "active").length;
-  const suspendedCount = shops.filter((s) => s.status === "suspended" || s.status === "cancelled").length;
+  const suspendedCount = shops.filter(
+    (s) => s.status === "suspended" || s.status === "cancelled",
+  ).length;
 
   const filteredShops = shops.filter((s) => {
     // Status filter
     if (statusFilter === "active" && s.status !== "active") return false;
-    if (statusFilter === "suspended" && (s.status !== "suspended" && s.status !== "cancelled")) return false;
+    if (statusFilter === "suspended" && s.status !== "suspended" && s.status !== "cancelled")
+      return false;
 
     // Search query
     const query = search.toLowerCase().trim();
@@ -64,7 +76,8 @@ export function RealtimeActiveShopsModal({
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            View all platform stores from the admin panel (both active and suspended). Click any store to inspect its live status or menu.
+            View all platform stores from the admin panel (both active and suspended). Click any
+            store to inspect its live status or menu.
           </p>
         </DialogHeader>
 
@@ -121,7 +134,9 @@ export function RealtimeActiveShopsModal({
           {loading ? (
             <div className="py-12 text-center space-y-3">
               <RefreshCw className="size-6 text-amber-500 animate-spin mx-auto opacity-80" />
-              <p className="text-xs text-muted-foreground">Syncing platform stores from server...</p>
+              <p className="text-xs text-muted-foreground">
+                Syncing platform stores from server...
+              </p>
             </div>
           ) : filteredShops.length === 0 ? (
             <div className="py-10 text-center space-y-2 bg-muted/20 rounded-2xl border border-border p-6">
@@ -164,16 +179,24 @@ export function RealtimeActiveShopsModal({
                           {shop.name}
                         </h4>
                         {shop.rank && shop.rank < 9999 && (
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${
-                            shop.rank === 1
-                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                          <span
+                            className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${
+                              shop.rank === 1
+                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                                : shop.rank === 2
+                                  ? "bg-muted/80 text-foreground border border-border"
+                                  : shop.rank === 3
+                                    ? "bg-amber-700/20 text-amber-400 border border-amber-700/30"
+                                    : "bg-muted/50 text-muted-foreground border border-border"
+                            }`}
+                          >
+                            {shop.rank === 1
+                              ? "🥇 Rank #1"
                               : shop.rank === 2
-                                ? "bg-muted/80 text-foreground border border-border"
+                                ? "🥈 Rank #2"
                                 : shop.rank === 3
-                                  ? "bg-amber-700/20 text-amber-400 border border-amber-700/30"
-                                  : "bg-muted/50 text-muted-foreground border border-border"
-                          }`}>
-                            {shop.rank === 1 ? "🥇 Rank #1" : shop.rank === 2 ? "🥈 Rank #2" : shop.rank === 3 ? "🥉 Rank #3" : `Rank #${shop.rank}`}
+                                  ? "🥉 Rank #3"
+                                  : `Rank #${shop.rank}`}
                           </span>
                         )}
                         {isSuspended ? (
@@ -192,9 +215,13 @@ export function RealtimeActiveShopsModal({
                     </div>
                   </div>
 
-                  <div className={`flex items-center gap-1.5 text-xs font-semibold shrink-0 pl-2 ${
-                    isSuspended ? "text-rose-400 opacity-90" : "text-amber-500 opacity-80 group-hover:opacity-100"
-                  }`}>
+                  <div
+                    className={`flex items-center gap-1.5 text-xs font-semibold shrink-0 pl-2 ${
+                      isSuspended
+                        ? "text-rose-400 opacity-90"
+                        : "text-amber-500 opacity-80 group-hover:opacity-100"
+                    }`}
+                  >
                     <span>{isSuspended ? "View Status" : "Open Shop"}</span>
                     <ExternalLink className="size-3.5 group-hover:translate-x-0.5 transition-transform" />
                   </div>
@@ -206,7 +233,8 @@ export function RealtimeActiveShopsModal({
 
         <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1 text-muted-foreground">
-            <Sparkles className="size-3 text-amber-500" /> Showing {filteredShops.length} stores ({activeCount} active, {suspendedCount} suspended)
+            <Sparkles className="size-3 text-amber-500" /> Showing {filteredShops.length} stores (
+            {activeCount} active, {suspendedCount} suspended)
           </span>
           <Button
             size="sm"
@@ -221,4 +249,3 @@ export function RealtimeActiveShopsModal({
     </Dialog>
   );
 }
-

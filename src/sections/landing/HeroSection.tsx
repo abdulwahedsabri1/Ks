@@ -106,8 +106,12 @@ export function HeroSection() {
                 <QrCode className="size-4 sm:size-5" />
               </div>
               <div>
-                <p className="font-display font-semibold text-xs sm:text-sm text-foreground">1,284 scans today</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Royal Biryani · Hyderabad</p>
+                <p className="font-display font-semibold text-xs sm:text-sm text-foreground">
+                  1,284 scans today
+                </p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">
+                  Royal Biryani · Hyderabad
+                </p>
               </div>
             </motion.div>
 
@@ -123,7 +127,12 @@ export function HeroSection() {
               className="absolute bottom-6 right-2 sm:-right-8 glass-card rounded-2xl p-3 sm:p-4 pr-4 sm:pr-6 flex items-center gap-3 sm:gap-4 shadow-lg z-20"
             >
               <div className="flex size-9 sm:size-10 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-500 shrink-0">
-                <svg className="size-4 sm:size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  className="size-4 sm:size-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -133,7 +142,9 @@ export function HeroSection() {
                 </svg>
               </div>
               <div>
-                <p className="font-display font-semibold text-xs sm:text-sm text-foreground">+42% repeat visits</p>
+                <p className="font-display font-semibold text-xs sm:text-sm text-foreground">
+                  +42% repeat visits
+                </p>
                 <p className="text-[10px] sm:text-xs text-muted-foreground">after menu refresh</p>
               </div>
             </motion.div>

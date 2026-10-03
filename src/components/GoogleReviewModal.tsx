@@ -577,13 +577,18 @@ export function GoogleReviewModal({ open, onClose, shop }: GoogleReviewModalProp
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-xs text-white/50 font-medium">
-                          💡 Suggested templates for <span className="text-amber-400 font-semibold">{shop.niche || "this business"}</span>:
+                          💡 Suggested templates for{" "}
+                          <span className="text-amber-400 font-semibold">
+                            {shop.niche || "this business"}
+                          </span>
+                          :
                         </p>
                         <button
                           type="button"
                           onClick={() => {
                             const templates = getCategoryReviewTemplates(shop.niche, shop.name);
-                            const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
+                            const randomTemplate =
+                              templates[Math.floor(Math.random() * templates.length)];
                             if (randomTemplate) setReviewText(randomTemplate);
                           }}
                           className="text-[11px] font-bold text-amber-400 hover:text-amber-300 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full transition-all hover:scale-105"

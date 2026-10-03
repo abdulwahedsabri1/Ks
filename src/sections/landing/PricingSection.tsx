@@ -154,11 +154,18 @@ export function PricingSection() {
                     return (
                       <>
                         <div className="flex flex-col mb-2">
-                          {isYearly && sav.monthly12x > sav.yearlyPrice && (
+                          {isYearly && sav.monthly12x > sav.yearlyPrice ? (
                             <div className="flex items-center gap-2 text-xs text-[#3A2818]/50 line-through font-semibold">
                               <span>12x Regular: ₹{sav.monthly12x.toLocaleString("en-IN")}</span>
                             </div>
-                          )}
+                          ) : !isYearly && sav.hasMonthlyDiscount ? (
+                            <div className="flex items-center gap-2 text-xs text-[#3A2818]/50 font-semibold">
+                              <span className="line-through">Regular: ₹{sav.originalMonthlyPrice}/mo</span>
+                              <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-500/15 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                                {sav.monthlyDiscountPercent}% OFF
+                              </span>
+                            </div>
+                          ) : null}
                           <div className="flex items-baseline gap-1">
                             <span className="font-display text-4xl font-extrabold text-[#100C09]">
                               {priceDisplayOf(p)}
@@ -193,10 +200,16 @@ export function PricingSection() {
                             </div>
                           </div>
                         ) : (
-                          <div className="mb-6 pb-4 border-b border-black/10">
-                            <span className="text-[11px] text-[#3A2818]/50 font-medium">
-                              Billed monthly, cancel anytime
-                            </span>
+                          <div className="mb-6 pb-4 border-b border-black/10 space-y-1.5">
+                            {sav.hasMonthlyDiscount ? (
+                              <div className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-emerald-800 bg-emerald-500/15 px-2.5 py-0.5 rounded-md border border-emerald-500/30">
+                                💥 SAVE ₹{sav.monthlySavingsAmount}/mo ({sav.monthlyDiscountPercent}% OFF MONTHLY DISCOUNT)
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-[#3A2818]/50 font-medium">
+                                Billed monthly, cancel anytime
+                              </span>
+                            )}
                           </div>
                         )}
                       </>

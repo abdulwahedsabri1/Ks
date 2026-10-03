@@ -329,4 +329,3 @@ export function UpiPaymentBox({
     </div>
   );
 }
-

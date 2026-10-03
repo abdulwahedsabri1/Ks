@@ -886,7 +886,8 @@ export function BusinessPreviewSection() {
 
                                   <div>
                                     {(() => {
-                                      const categoryConfig = getCategoryInstructionsConfig(activeTab);
+                                      const categoryConfig =
+                                        getCategoryInstructionsConfig(activeTab);
                                       return (
                                         <>
                                           <div className="flex items-center justify-between mb-0.5">

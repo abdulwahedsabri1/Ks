@@ -32,10 +32,12 @@ export function RealtimeActiveShopsShowcase() {
               Real-Time Backend Sync Active
             </div>
             <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-              Explore Active Public Shops <span className="text-amber-400 text-lg">({shops.length})</span>
+              Explore Active Public Shops{" "}
+              <span className="text-amber-400 text-lg">({shops.length})</span>
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl">
-              Live businesses using MY Link QR. Click any active shop below to open its live interactive menu. Suspended stores are automatically filtered out.
+              Live businesses using MY Link QR. Click any active shop below to open its live
+              interactive menu. Suspended stores are automatically filtered out.
             </p>
           </div>
 

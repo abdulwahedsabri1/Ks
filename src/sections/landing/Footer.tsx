@@ -29,12 +29,12 @@ export function Footer() {
               salons, and creators.
             </p>
             <a
-              href="https://instagram.com/mylinkqr"
+              href="https://instagram.com/mylinkqr.in"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-xs font-semibold text-pink-500 hover:text-pink-400 bg-pink-500/10 border border-pink-500/20 px-3 py-1.5 rounded-full transition-colors"
             >
-              <Instagram className="size-3.5" /> instagram/mylinkqr
+              <Instagram className="size-3.5" /> instagram.com/mylinkqr.in
             </a>
           </div>
 

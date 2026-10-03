@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import {
   Smartphone,
@@ -21,6 +21,8 @@ import {
   CreditCard,
   Flame,
   Star,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const features = [
@@ -148,112 +150,131 @@ const features = [
 ];
 
 export function FeaturesSection() {
-  const targetRef = useRef<HTMLDivElement | null>(null);
-  const { scrollYProgress } = useScroll({
-    target: targetRef,
-  });
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const x = useTransform(scrollYProgress, [0, 1], ["1%", "-82%"]);
+  const scroll = (direction: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = direction === "left" ? -400 : 400;
+      scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
+  };
 
   return (
-    <section
-      ref={targetRef}
-      id="features"
-      className="relative h-[350vh] bg-[#FDFBF7] text-[#100C09]"
-    >
-      <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
-        {/* Ambient background glows */}
-        <div className="absolute top-1/4 left-10 w-96 h-96 bg-[#F5A623]/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-1/4 right-10 w-96 h-96 bg-amber-200/40 rounded-full blur-[120px] pointer-events-none" />
+    <section id="features" className="relative py-16 md:py-24 bg-[#FDFBF7] text-[#100C09] overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="absolute top-1/4 left-10 w-96 h-96 bg-[#F5A623]/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-10 w-96 h-96 bg-amber-200/40 rounded-full blur-[120px] pointer-events-none" />
 
-        <div className="flex flex-col w-full h-full justify-between py-12 md:py-16">
-          {/* Header */}
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 shrink-0">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-              <div>
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F5A623]/15 border border-[#F5A623]/30 text-xs font-bold uppercase tracking-widest text-[#D99A2B] mb-4"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Top Features & ROI Engine
-                </motion.div>
-                <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#100C09]">
-                  Everything you need to <span className="italic text-[#F5A623]">succeed</span>
-                </h2>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Link
-                  to="/features"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#100C09] text-[#FFC45A] hover:bg-[#F5A623] hover:text-white transition-all text-xs font-bold shadow-md"
-                >
-                  <span>Explore All 16 Features</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </div>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F5A623]/15 border border-[#F5A623]/30 text-xs font-bold uppercase tracking-widest text-[#D99A2B] mb-4"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Top Features & ROI Engine
+            </motion.div>
+            <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#100C09]">
+              Everything you need to <span className="italic text-[#F5A623]">succeed</span>
+            </h2>
           </div>
 
-          {/* Horizontal Scrolling Track */}
-          <div className="relative w-full overflow-hidden my-auto py-6">
-            <motion.div style={{ x }} className="flex gap-6 md:gap-8 px-4 sm:px-8 w-max">
-              {features.map((feature) => (
-                <div
-                  key={feature.number}
-                  className={`group relative w-[300px] sm:w-[380px] md:w-[440px] shrink-0 rounded-3xl bg-white border p-6 sm:p-8 md:p-10 shadow-xl transition-all duration-300 hover:shadow-2xl flex flex-col justify-between overflow-hidden ${
-                    feature.highlight
-                      ? "border-emerald-500/60 ring-2 ring-emerald-500/20 hover:border-emerald-500"
-                      : "border-black/10 hover:border-[#F5A623]/50"
-                  }`}
-                >
-                  {/* Subtle Card Background Gradient */}
+          <div className="flex items-center gap-3">
+            {/* Scroll Control Arrows */}
+            <div className="flex items-center gap-2 mr-2">
+              <button
+                type="button"
+                onClick={() => scroll("left")}
+                aria-label="Scroll left"
+                className="size-10 rounded-full border border-black/10 bg-white hover:bg-[#F5A623] hover:text-white transition-all flex items-center justify-center shadow-sm active:scale-95"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => scroll("right")}
+                aria-label="Scroll right"
+                className="size-10 rounded-full border border-black/10 bg-white hover:bg-[#F5A623] hover:text-white transition-all flex items-center justify-center shadow-sm active:scale-95"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+            </div>
+
+            <Link
+              to="/features"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#100C09] text-[#FFC45A] hover:bg-[#F5A623] hover:text-white transition-all text-xs font-bold shadow-md"
+            >
+              <span>Explore All 16 Features</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Horizontal Line Single-Row Container */}
+        <div
+          ref={scrollContainerRef}
+          className="flex gap-6 overflow-x-auto snap-x snap-mandatory py-4 pb-6 no-scrollbar scroll-smooth"
+        >
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.number}
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.05, duration: 0.4 }}
+              className={`group relative w-[320px] sm:w-[380px] md:w-[420px] shrink-0 snap-start rounded-3xl bg-white border p-6 sm:p-8 shadow-xl transition-all duration-300 hover:shadow-2xl flex flex-col justify-between overflow-hidden ${
+                feature.highlight
+                  ? "border-emerald-500/60 ring-2 ring-emerald-500/20 hover:border-emerald-500"
+                  : "border-black/10 hover:border-[#F5A623]/50"
+              }`}
+            >
+              {/* Subtle Card Background Gradient */}
+              <div
+                className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-20 group-hover:opacity-100 transition-opacity duration-500`}
+              />
+
+              {/* Card Top */}
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-6">
+                  <span className="font-mono text-3xl sm:text-4xl font-extrabold text-[#100C09]/20 group-hover:text-[#F5A623] transition-colors duration-300">
+                    {feature.number}
+                  </span>
                   <div
-                    className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-20 group-hover:opacity-100 transition-opacity duration-500`}
-                  />
-
-                  {/* Card Top */}
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-6 sm:mb-8">
-                      <span className="font-mono text-3xl sm:text-4xl font-extrabold text-[#100C09]/20 group-hover:text-[#F5A623] transition-colors duration-300">
-                        {feature.number}
-                      </span>
-                      <div
-                        className={`size-12 sm:size-14 rounded-2xl border flex items-center justify-center transition-all duration-300 shadow-md ${
-                          feature.highlight
-                            ? "bg-emerald-600 text-white border-emerald-400 group-hover:scale-110"
-                            : "bg-[#100C09] text-[#FFC45A] border-black/10 group-hover:scale-110 group-hover:bg-[#F5A623] group-hover:text-white"
-                        }`}
-                      >
-                        <feature.icon className="size-6 sm:size-7" />
-                      </div>
-                    </div>
-
-                    <div className="mb-3">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider border ${feature.badgeColor}`}
-                      >
-                        {feature.tag}
-                      </span>
-                    </div>
-
-                    <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#100C09] mb-3 group-hover:text-[#F5A623] transition-colors duration-300">
-                      {feature.title}
-                    </h3>
-                  </div>
-
-                  {/* Card Bottom */}
-                  <div className="relative z-10 pt-4 border-t border-black/10 mt-6">
-                    <p className="text-sm sm:text-base text-[#3A2818]/80 leading-relaxed font-medium">
-                      {feature.description}
-                    </p>
+                    className={`size-12 sm:size-14 rounded-2xl border flex items-center justify-center transition-all duration-300 shadow-md ${
+                      feature.highlight
+                        ? "bg-emerald-600 text-white border-emerald-400 group-hover:scale-110"
+                        : "bg-[#100C09] text-[#FFC45A] border-black/10 group-hover:scale-110 group-hover:bg-[#F5A623] group-hover:text-white"
+                    }`}
+                  >
+                    <feature.icon className="size-6 sm:size-7" />
                   </div>
                 </div>
-              ))}
+
+                <div className="mb-3">
+                  <span
+                    className={`inline-block px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider border ${feature.badgeColor}`}
+                  >
+                    {feature.tag}
+                  </span>
+                </div>
+
+                <h3 className="font-display text-2xl font-bold text-[#100C09] mb-3 group-hover:text-[#F5A623] transition-colors duration-300">
+                  {feature.title}
+                </h3>
+              </div>
+
+              {/* Card Bottom */}
+              <div className="relative z-10 pt-4 border-t border-black/10 mt-6">
+                <p className="text-sm text-[#3A2818]/80 leading-relaxed font-medium">
+                  {feature.description}
+                </p>
+              </div>
             </motion.div>
-          </div>
+          ))}
         </div>
       </div>
     </section>

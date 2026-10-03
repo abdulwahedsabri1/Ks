@@ -123,12 +123,12 @@ export function InstagramProfileFeed() {
           {/* Top Bar: Handle, Verified, Follow Buttons */}
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-1.5">
-              mylinkqr
+              mylinkqr.in
               <CheckCircle2 className="size-4 fill-sky-500 text-white" />
             </h2>
             <div className="flex items-center gap-2">
               <a
-                href="https://instagram.com/mylinkqr"
+                href="https://instagram.com/mylinkqr.in"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white text-xs font-bold hover:opacity-90 transition-opacity shadow-md flex items-center gap-1.5"
@@ -136,7 +136,7 @@ export function InstagramProfileFeed() {
                 <UserPlus className="size-3.5" /> Follow
               </a>
               <a
-                href="https://instagram.com/mylinkqr"
+                href="https://instagram.com/mylinkqr.in"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-4 py-1.5 rounded-xl bg-muted text-foreground text-xs font-semibold hover:bg-muted/80 transition-colors flex items-center gap-1.5"
@@ -169,12 +169,12 @@ export function InstagramProfileFeed() {
             <p>🔗 Menu • Booking • Orders • Services • More</p>
             <p>📌 Turn Your Customers Digital.</p>
             <a
-              href="https://instagram.com/mylinkqr"
+              href="https://instagram.com/mylinkqr.in"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-pink-500 font-bold hover:underline"
             >
-              <Instagram className="size-3.5" /> instagram.com/mylinkqr
+              <Instagram className="size-3.5" /> instagram.com/mylinkqr.in
             </a>
           </div>
         </div>
@@ -273,7 +273,7 @@ export function InstagramProfileFeed() {
                     </span>
                   </div>
                   <a
-                    href="https://instagram.com/mylinkqr"
+                    href="https://instagram.com/mylinkqr.in"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-pink-400 hover:underline flex items-center gap-0.5"
@@ -290,16 +290,16 @@ export function InstagramProfileFeed() {
       {/* Footer Action */}
       <div className="pt-3 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
         <p className="text-xs text-muted-foreground">
-          Follow <strong className="text-foreground">@mylinkqr</strong> for new daily video demos &
+          Follow <strong className="text-foreground">@mylinkqr.in</strong> for new daily video demos &
           customer highlights!
         </p>
         <a
-          href="https://instagram.com/mylinkqr"
+          href="https://instagram.com/mylinkqr.in"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 text-white font-bold text-xs hover:opacity-90 transition-opacity shadow-md"
         >
-          <Instagram className="size-4" /> Open instagram.com/mylinkqr
+          <Instagram className="size-4" /> Open instagram.com/mylinkqr.in
         </a>
       </div>
     </div>

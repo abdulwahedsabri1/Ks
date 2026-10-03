@@ -89,8 +89,11 @@ export const getPublicShop = createServerFn({ method: "GET" })
           return (
             dom &&
             typeof dom === "string" &&
-            dom.trim().toLowerCase().replace(/^https?:\/\//i, "").replace(/\/+$/, "") ===
-              slugKey.replace(/^https?:\/\//i, "").replace(/\/+$/, "")
+            dom
+              .trim()
+              .toLowerCase()
+              .replace(/^https?:\/\//i, "")
+              .replace(/\/+$/, "") === slugKey.replace(/^https?:\/\//i, "").replace(/\/+$/, "")
           );
         });
       }

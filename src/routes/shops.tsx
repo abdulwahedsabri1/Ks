@@ -77,7 +77,8 @@ function PublicShopsDirectoryPage() {
           </h1>
 
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8">
-            Explore active verified businesses using MY Link QR. Browse menus in real-time, order online, or scan QR codes directly.
+            Explore active verified businesses using MY Link QR. Browse menus in real-time, order
+            online, or scan QR codes directly.
           </p>
         </section>
 
@@ -116,7 +117,8 @@ function PublicShopsDirectoryPage() {
                       {topRankedShop.name}
                     </h2>
                     <p className="text-xs sm:text-sm text-muted-foreground truncate mt-1">
-                      {topRankedShop.niche || "Business"} {topRankedShop.tagline ? `• ${topRankedShop.tagline}` : ""}
+                      {topRankedShop.niche || "Business"}{" "}
+                      {topRankedShop.tagline ? `• ${topRankedShop.tagline}` : ""}
                     </p>
                   </div>
                 </div>
@@ -187,7 +189,8 @@ function PublicShopsDirectoryPage() {
               <Store className="size-12 text-muted-foreground/50 mx-auto" />
               <h3 className="text-lg font-bold text-foreground">No matching active shops found</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Only active public shops are displayed in this directory. Suspended or inactive shops are automatically hidden.
+                Only active public shops are displayed in this directory. Suspended or inactive
+                shops are automatically hidden.
               </p>
             </div>
           ) : (

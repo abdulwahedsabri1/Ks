@@ -57,7 +57,8 @@ export function shopSocialLinks(shop?: Pick<Shop, "plan" | "features"> | null) {
   const rawFb = shop?.features?.["facebook_url"] ?? "";
   const rawTw = shop?.features?.["twitter_url"] ?? "";
   const rawWeb = shop?.features?.["website_url"] ?? "";
-  const rawWaGroup = shop?.features?.["whatsapp_group_url"] ?? shop?.features?.["whatsapp_group"] ?? "";
+  const rawWaGroup =
+    shop?.features?.["whatsapp_group_url"] ?? shop?.features?.["whatsapp_group"] ?? "";
 
   const ig = typeof rawIg === "string" ? rawIg : "";
   const fb = typeof rawFb === "string" ? rawFb : "";
@@ -385,17 +386,33 @@ export function getCategoryInstructionsConfig(niche?: string | null): CategoryIn
     };
   }
 
-  if (n.includes("cafe") || n.includes("bakery") || n.includes("sweet shop") || n.includes("sweet")) {
+  if (
+    n.includes("cafe") ||
+    n.includes("bakery") ||
+    n.includes("sweet shop") ||
+    n.includes("sweet")
+  ) {
     return {
       placeholder: "e.g. Less sugar, oat milk, gift wrap with ribbon...",
-      chips: ["☕ Less Sugar", "🥛 Oat Milk", "🎂 Name on Cake", "🎁 Gift Wrap", "🕯️ Birthday Candles"],
+      chips: [
+        "☕ Less Sugar",
+        "🥛 Oat Milk",
+        "🎂 Name on Cake",
+        "🎁 Gift Wrap",
+        "🕯️ Birthday Candles",
+      ],
     };
   }
 
   if (n.includes("salon") || n.includes("spa")) {
     return {
       placeholder: "e.g. Preferred stylist, sensitive skin products, quiet session...",
-      chips: ["🕒 Preferred Time", "✂️ Preferred Stylist", "🌿 Organic Products", "🤫 Quiet Session"],
+      chips: [
+        "🕒 Preferred Time",
+        "✂️ Preferred Stylist",
+        "🌿 Organic Products",
+        "🤫 Quiet Session",
+      ],
     };
   }
 
@@ -409,7 +426,13 @@ export function getCategoryInstructionsConfig(niche?: string | null): CategoryIn
   if (n.includes("hotel") || n.includes("resort")) {
     return {
       placeholder: "e.g. High floor room, extra bed, late checkout request...",
-      chips: ["🛌 Extra Bed", "🤫 Quiet Room", "🌇 High Floor", "🕒 Late Checkout", "🚗 Parking Slot"],
+      chips: [
+        "🛌 Extra Bed",
+        "🤫 Quiet Room",
+        "🌇 High Floor",
+        "🕒 Late Checkout",
+        "🚗 Parking Slot",
+      ],
     };
   }
 
@@ -423,14 +446,24 @@ export function getCategoryInstructionsConfig(niche?: string | null): CategoryIn
   if (n.includes("grocery") || n.includes("medical") || n.includes("clinic")) {
     return {
       placeholder: "e.g. Call before delivery, check expiry dates, urgent delivery...",
-      chips: ["⚡ Urgent Delivery", "📞 Call Before Delivery", "🧾 Include Bill Receipt", "💊 Prescription Attached"],
+      chips: [
+        "⚡ Urgent Delivery",
+        "📞 Call Before Delivery",
+        "🧾 Include Bill Receipt",
+        "💊 Prescription Attached",
+      ],
     };
   }
 
   if (n.includes("real estate") || n.includes("electronics")) {
     return {
       placeholder: "e.g. Request callback, specific model query, warranty details...",
-      chips: ["📞 Request Callback", "🛡️ Warranty Details", "💬 WhatsApp Quote", "📅 Schedule Demo"],
+      chips: [
+        "📞 Request Callback",
+        "🛡️ Warranty Details",
+        "💬 WhatsApp Quote",
+        "📅 Schedule Demo",
+      ],
     };
   }
 
@@ -440,20 +473,22 @@ export function getCategoryInstructionsConfig(niche?: string | null): CategoryIn
   };
 }
 
-
 export type PlanItem = {
   id: string;
   name: string;
   price: string;
   priceNumber: number;
-  yearlyPrice?: string;
-  yearlyPriceNumber?: number;
-  extraMonths?: number;
+  originalPriceNumber?: number | undefined;
+  originalPrice?: string | undefined;
+  monthlyDiscountPercent?: number | undefined;
+  yearlyPrice?: string | undefined;
+  yearlyPriceNumber?: number | undefined;
+  extraMonths?: number | undefined;
   tagline: string;
   features: string[];
-  badge?: string;
-  highlight?: boolean;
-  isCustom?: boolean;
+  badge?: string | undefined;
+  highlight?: boolean | undefined;
+  isCustom?: boolean | undefined;
 };
 
 export function parsePriceNumber(priceStr?: string | number | null): number {
@@ -465,6 +500,10 @@ export function parsePriceNumber(priceStr?: string | number | null): number {
 
 export type PlanSavings = {
   monthlyPrice: number;
+  originalMonthlyPrice: number;
+  monthlyDiscountPercent: number;
+  monthlySavingsAmount: number;
+  hasMonthlyDiscount: boolean;
   monthly12x: number;
   yearlyPrice: number;
   savingsAmount: number;
@@ -474,6 +513,18 @@ export type PlanSavings = {
 
 export function calculatePlanSavings(plan: PlanItem): PlanSavings {
   const monthlyPrice = plan.priceNumber ?? parsePriceNumber(plan.price);
+  const originalMonthlyPrice =
+    typeof plan.originalPriceNumber === "number" && plan.originalPriceNumber > monthlyPrice
+      ? plan.originalPriceNumber
+      : parsePriceNumber(plan.originalPrice) || 0;
+
+  const hasMonthlyDiscount = originalMonthlyPrice > monthlyPrice;
+  const monthlySavingsAmount = hasMonthlyDiscount ? originalMonthlyPrice - monthlyPrice : 0;
+  const monthlyDiscountPercent =
+    originalMonthlyPrice > 0
+      ? Math.round((monthlySavingsAmount / originalMonthlyPrice) * 100)
+      : plan.monthlyDiscountPercent || 0;
+
   const monthly12x = monthlyPrice * 12;
   const yearlyPrice =
     typeof plan.yearlyPriceNumber === "number" && plan.yearlyPriceNumber > 0
@@ -485,6 +536,10 @@ export function calculatePlanSavings(plan: PlanItem): PlanSavings {
 
   return {
     monthlyPrice,
+    originalMonthlyPrice,
+    monthlyDiscountPercent,
+    monthlySavingsAmount,
+    hasMonthlyDiscount,
     monthly12x,
     yearlyPrice,
     savingsAmount,
@@ -515,6 +570,9 @@ export const PLANS: PlanItem[] = [
     name: "Basic",
     price: "₹249/mo",
     priceNumber: 249,
+    originalPriceNumber: 299,
+    originalPrice: "₹299/mo",
+    monthlyDiscountPercent: 17,
     yearlyPrice: "₹2,739/yr",
     yearlyPriceNumber: 2739,
     extraMonths: 2,
@@ -535,6 +593,9 @@ export const PLANS: PlanItem[] = [
     name: "Pro",
     price: "₹499/mo",
     priceNumber: 499,
+    originalPriceNumber: 599,
+    originalPrice: "₹599/mo",
+    monthlyDiscountPercent: 17,
     yearlyPrice: "₹4,790/yr",
     yearlyPriceNumber: 4790,
     extraMonths: 2,
@@ -559,6 +620,9 @@ export const PLANS: PlanItem[] = [
     name: "Premium",
     price: "₹799/mo",
     priceNumber: 799,
+    originalPriceNumber: 999,
+    originalPrice: "₹999/mo",
+    monthlyDiscountPercent: 20,
     yearlyPrice: "₹8,789/yr",
     yearlyPriceNumber: 8789,
     extraMonths: 2,
@@ -928,7 +992,11 @@ export function paymentStatusColor(status?: string | null) {
   return found?.color ?? "slate";
 }
 
-export function planAmount(plan?: string | null, cycle?: string | null, customPlans?: PlanItem[]): number {
+export function planAmount(
+  plan?: string | null,
+  cycle?: string | null,
+  customPlans?: PlanItem[],
+): number {
   const normPlan = (typeof plan === "string" ? plan : "pro").toLowerCase().trim();
   let foundItem: PlanItem | undefined;
 
@@ -985,7 +1053,10 @@ export function shopCustomDomain(shop?: Pick<Shop, "features"> | null): string |
 /** Public, share-safe URL for a shop menu. */
 export function publicShopUrl(slug?: string | null, customDomain?: string | null) {
   if (customDomain && typeof customDomain === "string" && customDomain.trim()) {
-    let domain = customDomain.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+    let domain = customDomain
+      .trim()
+      .replace(/^https?:\/\//i, "")
+      .replace(/\/+$/, "");
     if (typeof window === "undefined") return `https://${domain}`;
     return `${window.location.protocol}//${domain}`;
   }

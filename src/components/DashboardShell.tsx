@@ -192,9 +192,7 @@ export function DashboardShell({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              {actions}
-            </div>
+            <div className="flex items-center gap-2 shrink-0">{actions}</div>
           </div>
 
           {/* Quick Mobile Horizontal Navigation Bar */}

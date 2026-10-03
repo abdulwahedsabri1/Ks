@@ -63,7 +63,8 @@ export function CookieConsent() {
           </div>
 
           <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-            We use essential cookies for authentication and performance analytics to ensure your QR menus load at lightning speed. Learn more in our{" "}
+            We use essential cookies for authentication and performance analytics to ensure your QR
+            menus load at lightning speed. Learn more in our{" "}
             <Link to="/privacy" className="text-primary underline hover:opacity-80">
               Privacy Policy
             </Link>

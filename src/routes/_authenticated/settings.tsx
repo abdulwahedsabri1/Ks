@@ -528,7 +528,8 @@ function SettingsPage() {
                   <LinkIcon className="size-5 text-amber-500" /> Custom Shop Link
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Customize your public shop URL handle. Synchronizes instantly across website, shop dashboard, and admin panel.
+                  Customize your public shop URL handle. Synchronizes instantly across website, shop
+                  dashboard, and admin panel.
                 </p>
               </div>
               <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded-full font-semibold shrink-0">
@@ -542,7 +543,10 @@ function SettingsPage() {
                 <Label htmlFor="s-slug" className="text-xs font-semibold flex items-center gap-2">
                   <span>Custom Shop Link Handle</span>
                   <span className="text-muted-foreground font-mono text-[11px]">
-                    /shop/<span className="text-amber-500 font-bold">{slugify(form.slug || form.name)}</span>
+                    /shop/
+                    <span className="text-amber-500 font-bold">
+                      {slugify(form.slug || form.name)}
+                    </span>
                   </span>
                 </Label>
                 {!feat.custom_domain ? (
@@ -558,12 +562,16 @@ function SettingsPage() {
 
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
-                  <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-mono">/shop/</span>
+                  <span className="absolute left-3 top-2.5 text-xs text-muted-foreground font-mono">
+                    /shop/
+                  </span>
                   <Input
                     id="s-slug"
                     value={form.slug}
                     disabled={!feat.custom_domain}
-                    onChange={(e) => updateForm((prev) => ({ ...prev, slug: slugify(e.target.value) }))}
+                    onChange={(e) =>
+                      updateForm((prev) => ({ ...prev, slug: slugify(e.target.value) }))
+                    }
                     placeholder="my-shop-name"
                     className={`pl-16 h-10 font-mono text-sm font-semibold ${
                       !feat.custom_domain
@@ -576,11 +584,17 @@ function SettingsPage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => handleCopyShopUrl(publicShopUrl(form.slug || shop.slug, form.custom_domain))}
+                  onClick={() =>
+                    handleCopyShopUrl(publicShopUrl(form.slug || shop.slug, form.custom_domain))
+                  }
                   className="h-10 px-3 text-xs font-semibold shrink-0"
                   title="Copy full public shop URL"
                 >
-                  {copiedShopUrl ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
+                  {copiedShopUrl ? (
+                    <Check className="size-4 text-emerald-500" />
+                  ) : (
+                    <Copy className="size-4" />
+                  )}
                 </Button>
                 <Button
                   asChild
@@ -588,14 +602,21 @@ function SettingsPage() {
                   size="sm"
                   className="h-10 px-3 text-xs font-semibold shrink-0 border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
                 >
-                  <a href={publicShopUrl(form.slug || shop.slug, form.custom_domain)} target="_blank" rel="noreferrer">
+                  <a
+                    href={publicShopUrl(form.slug || shop.slug, form.custom_domain)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     <ExternalLink className="size-4" />
                   </a>
                 </Button>
               </div>
 
               <p className="text-[11px] text-muted-foreground">
-                Your menu will be accessible at: <code className="text-amber-500 font-mono font-bold">{publicShopUrl(form.slug || shop.slug, form.custom_domain)}</code>
+                Your menu will be accessible at:{" "}
+                <code className="text-amber-500 font-mono font-bold">
+                  {publicShopUrl(form.slug || shop.slug, form.custom_domain)}
+                </code>
               </p>
 
               {!feat.custom_domain && (
@@ -1471,7 +1492,12 @@ function Text({
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
-      <Input id={id} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+      <Input
+        id={id}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </div>
   );
 }

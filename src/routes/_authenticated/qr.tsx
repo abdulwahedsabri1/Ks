@@ -147,7 +147,10 @@ function drawInitials(
   ctx.restore();
 }
 
-function getFrameText(qrType: "menu" | "view_only" | "upi" | "map" | "review", catalogLabel: string) {
+function getFrameText(
+  qrType: "menu" | "view_only" | "upi" | "map" | "review",
+  catalogLabel: string,
+) {
   const catUpper = catalogLabel.toUpperCase();
   switch (qrType) {
     case "upi":
@@ -338,7 +341,7 @@ function getFrameText(qrType: "menu" | "view_only" | "upi" | "map" | "review", c
   }
 }
 
-export function QrPage() {
+function QrPage() {
   const { user } = useAuth();
   const { data: isAdmin } = useIsAdmin(user?.id);
   const { data: shop } = useMyShop(user?.id);

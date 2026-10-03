@@ -629,7 +629,8 @@ function PublicMenu() {
                       rel="noreferrer"
                       className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all hover:scale-105"
                     >
-                      <MessageCircle className="size-3.5 shrink-0 text-emerald-400" /> Join WhatsApp Group
+                      <MessageCircle className="size-3.5 shrink-0 text-emerald-400" /> Join WhatsApp
+                      Group
                     </a>
                   )}
                   {socials.instagram && (
@@ -1215,8 +1216,12 @@ function PublicMenu() {
                 )}
 
                 {orderType !== "enquiry" && (
-                  <div className={`space-y-3 mb-6 p-4 rounded-xl border ${theme.border} bg-black/5`}>
-                    <Label className={`${theme.textMuted} uppercase text-xs tracking-wider font-bold`}>
+                  <div
+                    className={`space-y-3 mb-6 p-4 rounded-xl border ${theme.border} bg-black/5`}
+                  >
+                    <Label
+                      className={`${theme.textMuted} uppercase text-xs tracking-wider font-bold`}
+                    >
                       Payment Method
                     </Label>
                     <RadioGroup
@@ -1231,22 +1236,32 @@ function PublicMenu() {
                             id="pm-cod"
                             className={`${theme.border} ${theme.accentText}`}
                           />
-                          <Label htmlFor="pm-cod" className="font-medium cursor-pointer flex items-center gap-1.5">
+                          <Label
+                            htmlFor="pm-cod"
+                            className="font-medium cursor-pointer flex items-center gap-1.5"
+                          >
                             💵 Cash on Delivery (COD)
                           </Label>
                         </div>
                       )}
                       {features.upi &&
-                        Boolean((shop.features as Record<string, unknown> | null)?.["upi_enabled"]) &&
+                        Boolean(
+                          (shop.features as Record<string, unknown> | null)?.["upi_enabled"],
+                        ) &&
                         (Boolean((shop.features as Record<string, unknown> | null)?.["upi_id"]) ||
-                          Boolean((shop.features as Record<string, unknown> | null)?.["upi_qr_url"])) && (
+                          Boolean(
+                            (shop.features as Record<string, unknown> | null)?.["upi_qr_url"],
+                          )) && (
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem
                               value="upi"
                               id="pm-upi"
                               className={`${theme.border} ${theme.accentText}`}
                             />
-                            <Label htmlFor="pm-upi" className="font-medium cursor-pointer flex items-center gap-1.5">
+                            <Label
+                              htmlFor="pm-upi"
+                              className="font-medium cursor-pointer flex items-center gap-1.5"
+                            >
                               💳 UPI Pay (GPay / QR)
                             </Label>
                           </div>

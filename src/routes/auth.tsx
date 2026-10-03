@@ -1065,44 +1065,50 @@ function AuthPage() {
             </Link>
 
             {/* Selected Plan Banner */}
-            {search.plan && (() => {
-              const selectedPlanObj = PLANS.find((p) => p.id === search.plan) ?? {
-                id: search.plan,
-                name: search.plan.charAt(0).toUpperCase() + search.plan.slice(1),
-                price: search.plan === "trial" ? "Free" : "Custom",
-                yearlyPrice: search.plan === "trial" ? "Free" : "Custom",
-              };
-              const displayPrice = search.plan === "trial"
-                ? "Free"
-                : search.cycle === "yearly"
-                ? (selectedPlanObj.yearlyPrice || selectedPlanObj.price)
-                : selectedPlanObj.price;
-              return (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-6 rounded-2xl border border-[#F5A623]/40 bg-[#F5A623]/10 p-4 flex items-center justify-between shadow-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#F5A623] text-black font-extrabold flex items-center justify-center shrink-0 shadow-md">
-                      <Sparkles className="size-5" />
+            {search.plan &&
+              (() => {
+                const selectedPlanObj = PLANS.find((p) => p.id === search.plan) ?? {
+                  id: search.plan,
+                  name: search.plan.charAt(0).toUpperCase() + search.plan.slice(1),
+                  price: search.plan === "trial" ? "Free" : "Custom",
+                  yearlyPrice: search.plan === "trial" ? "Free" : "Custom",
+                };
+                const displayPrice =
+                  search.plan === "trial"
+                    ? "Free"
+                    : search.cycle === "yearly"
+                      ? selectedPlanObj.yearlyPrice || selectedPlanObj.price
+                      : selectedPlanObj.price;
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 rounded-2xl border border-[#F5A623]/40 bg-[#F5A623]/10 p-4 flex items-center justify-between shadow-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#F5A623] text-black font-extrabold flex items-center justify-center shrink-0 shadow-md">
+                        <Sparkles className="size-5" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wider text-[#F5A623] font-bold">
+                          Selected Plan
+                        </p>
+                        <p className="text-sm font-bold text-white">
+                          {selectedPlanObj.name} Plan{" "}
+                          <span className="text-white/70 font-medium">({displayPrice})</span>
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-[11px] uppercase tracking-wider text-[#F5A623] font-bold">
-                        Selected Plan
-                      </p>
-                      <p className="text-sm font-bold text-white">
-                        {selectedPlanObj.name} Plan{" "}
-                        <span className="text-white/70 font-medium">({displayPrice})</span>
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#F5A623]/20 text-[#F5A623] border border-[#F5A623]/30 shrink-0">
-                    {search.plan === "trial" ? "7-Day Free" : search.cycle === "yearly" ? "Annual Billing" : "Monthly"}
-                  </span>
-                </motion.div>
-              );
-            })()}
+                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#F5A623]/20 text-[#F5A623] border border-[#F5A623]/30 shrink-0">
+                      {search.plan === "trial"
+                        ? "7-Day Free"
+                        : search.cycle === "yearly"
+                          ? "Annual Billing"
+                          : "Monthly"}
+                    </span>
+                  </motion.div>
+                );
+              })()}
 
             {/* Header */}
             <div className="mb-8">
