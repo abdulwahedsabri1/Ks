@@ -37,11 +37,11 @@ export function RealtimeActiveShopsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-[#0F1626] border-slate-800 text-white p-6 sm:p-8 rounded-3xl shadow-2xl overflow-hidden">
-        <DialogHeader className="space-y-2 pb-2 border-b border-slate-800">
+      <DialogContent className="max-w-2xl bg-card border-border text-foreground p-6 sm:p-8 rounded-3xl shadow-2xl overflow-hidden">
+        <DialogHeader className="space-y-2 pb-2 border-b border-border">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-bold font-display flex items-center gap-2.5">
-              <div className="size-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <div className="size-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500">
                 <Store className="size-4" />
               </div>
               All Platform Stores
@@ -56,27 +56,27 @@ export function RealtimeActiveShopsModal({
               </span>
               <button
                 onClick={() => refetch()}
-                className="p-1 text-slate-400 hover:text-white transition-colors"
+                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
                 title="Refresh List"
               >
-                <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+                <RefreshCw className={`size-3.5 ${loading ? "animate-spin text-amber-500" : ""}`} />
               </button>
             </div>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-muted-foreground">
             View all platform stores from the admin panel (both active and suspended). Click any store to inspect its live status or menu.
           </p>
         </DialogHeader>
 
         {/* Status Filter Tabs & Search Bar */}
         <div className="space-y-3 mt-4">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+          <div className="flex items-center gap-2 border-b border-border pb-2">
             <button
               onClick={() => setStatusFilter("all")}
               className={`text-xs px-3 py-1.5 rounded-xl font-bold transition-all ${
                 statusFilter === "all"
-                  ? "bg-amber-500 text-slate-950 shadow-md"
-                  : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
+                  ? "bg-amber-500 text-black shadow-md shadow-amber-500/20"
+                  : "bg-muted/40 text-muted-foreground hover:text-foreground border border-border"
               }`}
             >
               All Stores ({shops.length})
@@ -85,7 +85,7 @@ export function RealtimeActiveShopsModal({
               onClick={() => setStatusFilter("active")}
               className={`text-xs px-3 py-1.5 rounded-xl font-bold transition-all flex items-center gap-1.5 ${
                 statusFilter === "active"
-                  ? "bg-emerald-500 text-slate-950 shadow-md"
+                  ? "bg-emerald-500 text-black shadow-md"
                   : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
               }`}
             >
@@ -106,12 +106,12 @@ export function RealtimeActiveShopsModal({
           </div>
 
           <div className="relative">
-            <Search className="absolute left-3.5 top-3 size-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-3 size-4 text-muted-foreground" />
             <Input
               placeholder="Search store name, category, or keyword..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 bg-slate-900/80 border-slate-800 text-white text-xs rounded-xl focus:border-amber-500 placeholder:text-slate-500"
+              className="pl-10 bg-muted/40 border-border text-foreground text-xs rounded-xl focus:border-amber-500 placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -121,12 +121,12 @@ export function RealtimeActiveShopsModal({
           {loading ? (
             <div className="py-12 text-center space-y-3">
               <RefreshCw className="size-6 text-amber-500 animate-spin mx-auto opacity-80" />
-              <p className="text-xs text-slate-400">Syncing platform stores from server...</p>
+              <p className="text-xs text-muted-foreground">Syncing platform stores from server...</p>
             </div>
           ) : filteredShops.length === 0 ? (
-            <div className="py-10 text-center space-y-2 bg-slate-900/30 rounded-2xl border border-slate-800/50 p-6">
+            <div className="py-10 text-center space-y-2 bg-muted/20 rounded-2xl border border-border p-6">
               <AlertCircle className="size-8 text-amber-500/60 mx-auto" />
-              <p className="text-sm font-semibold text-slate-300">
+              <p className="text-sm font-semibold text-foreground">
                 {search ? "No stores matching search" : "No stores found in this filter"}
               </p>
             </div>
@@ -142,7 +142,7 @@ export function RealtimeActiveShopsModal({
                   className={`group flex items-center justify-between p-3.5 rounded-2xl border transition-all duration-200 ${
                     isSuspended
                       ? "border-rose-500/30 bg-rose-950/10 hover:bg-rose-950/20 hover:border-rose-500/50"
-                      : "border-slate-800/80 bg-slate-900/40 hover:bg-slate-800/60 hover:border-amber-500/40"
+                      : "border-border bg-muted/30 hover:bg-muted/60 hover:border-amber-500/40"
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
@@ -150,17 +150,17 @@ export function RealtimeActiveShopsModal({
                       <img
                         src={shop.logo_url}
                         alt={shop.name}
-                        className="size-10 rounded-xl object-cover border border-slate-700/60 shrink-0 group-hover:scale-105 transition-transform"
+                        className="size-10 rounded-xl object-cover border border-border shrink-0 group-hover:scale-105 transition-transform"
                       />
                     ) : (
-                      <div className="size-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-700/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-sm shrink-0">
+                      <div className="size-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 font-bold text-sm shrink-0">
                         {shop.name.charAt(0).toUpperCase()}
                       </div>
                     )}
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-white truncate group-hover:text-amber-300 transition-colors">
+                        <h4 className="text-sm font-bold text-foreground truncate group-hover:text-amber-500 transition-colors">
                           {shop.name}
                         </h4>
                         {shop.rank && shop.rank < 9999 && (
@@ -168,10 +168,10 @@ export function RealtimeActiveShopsModal({
                             shop.rank === 1
                               ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                               : shop.rank === 2
-                                ? "bg-slate-300/20 text-slate-200 border border-slate-300/30"
+                                ? "bg-muted/80 text-foreground border border-border"
                                 : shop.rank === 3
                                   ? "bg-amber-700/20 text-amber-400 border border-amber-700/30"
-                                  : "bg-white/10 text-white/70 border border-white/10"
+                                  : "bg-muted/50 text-muted-foreground border border-border"
                           }`}>
                             {shop.rank === 1 ? "🥇 Rank #1" : shop.rank === 2 ? "🥈 Rank #2" : shop.rank === 3 ? "🥉 Rank #3" : `Rank #${shop.rank}`}
                           </span>
@@ -186,14 +186,14 @@ export function RealtimeActiveShopsModal({
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-400 truncate mt-0.5">
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
                         {shop.niche || "Business"} {shop.tagline ? `• ${shop.tagline}` : ""}
                       </p>
                     </div>
                   </div>
 
                   <div className={`flex items-center gap-1.5 text-xs font-semibold shrink-0 pl-2 ${
-                    isSuspended ? "text-rose-400 opacity-90" : "text-amber-400 opacity-80 group-hover:opacity-100"
+                    isSuspended ? "text-rose-400 opacity-90" : "text-amber-500 opacity-80 group-hover:opacity-100"
                   }`}>
                     <span>{isSuspended ? "View Status" : "Open Shop"}</span>
                     <ExternalLink className="size-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -204,15 +204,15 @@ export function RealtimeActiveShopsModal({
           )}
         </div>
 
-        <div className="mt-4 pt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-          <span className="flex items-center gap-1 text-slate-400">
-            <Sparkles className="size-3 text-amber-400" /> Showing {filteredShops.length} stores ({activeCount} active, {suspendedCount} suspended)
+        <div className="mt-4 pt-4 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1 text-muted-foreground">
+            <Sparkles className="size-3 text-amber-500" /> Showing {filteredShops.length} stores ({activeCount} active, {suspendedCount} suspended)
           </span>
           <Button
             size="sm"
             variant="ghost"
             onClick={() => onOpenChange(false)}
-            className="text-xs text-slate-400 hover:text-white"
+            className="text-xs text-muted-foreground hover:text-foreground"
           >
             Close
           </Button>
