@@ -153,11 +153,11 @@ export function DashboardShell({
           )}
         </nav>
 
-        <div className="pt-4 border-t border-border">
+        <div className="pt-4 border-t border-border mt-auto">
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={signOut}
-            className="w-full justify-start text-xs font-semibold text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-xl"
+            className="w-full justify-start text-xs font-bold text-red-500 border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50 rounded-xl h-10 transition-all shadow-sm"
           >
             <LogOut className="size-4 mr-2" /> Sign Out
           </Button>
@@ -195,12 +195,14 @@ export function DashboardShell({
             <div className="flex items-center gap-2 shrink-0">
               {actions}
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={signOut}
-                className="hidden sm:flex lg:hidden items-center gap-1.5 text-xs text-muted-foreground hover:text-red-500 hover:bg-red-500/10 h-9 px-3 rounded-xl border"
+                className="flex items-center gap-1.5 text-xs font-bold text-red-500 border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50 h-9 px-3 rounded-xl transition-all shadow-sm"
+                title="Sign out of your account"
               >
-                <LogOut className="size-3.5" /> Sign out
+                <LogOut className="size-3.5" />
+                <span className="hidden sm:inline">Sign Out</span>
               </Button>
             </div>
           </div>
@@ -236,15 +238,15 @@ export function DashboardShell({
 
         {/* Mobile Slide-Over Menu Overlay */}
         {mobileMenuOpen && (
-          <div className="fixed inset-0 z-40 lg:hidden flex">
+          <div className="fixed inset-0 z-50 lg:hidden flex">
             {/* Backdrop */}
             <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
               onClick={() => setMobileMenuOpen(false)}
             />
 
             {/* Menu Container */}
-            <div className="relative flex w-full max-w-xs flex-1 flex-col bg-card p-6 shadow-2xl z-50 border-r border-border">
+            <div className="relative flex w-full max-w-xs flex-1 flex-col bg-card p-6 shadow-2xl z-50 border-r border-border h-full max-h-screen overflow-y-auto pb-12">
               <div className="flex items-center justify-between mb-6">
                 <Link
                   to="/dashboard"
@@ -327,16 +329,31 @@ export function DashboardShell({
                     <ChevronRight className="size-4" />
                   </Link>
                 )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    void signOut();
+                  }}
+                  className="w-full flex items-center justify-between rounded-xl px-4 py-3 text-xs font-bold text-red-500 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all mt-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <LogOut className="size-4" />
+                    <span>Sign Out</span>
+                  </div>
+                  <ChevronRight className="size-4 opacity-60" />
+                </button>
               </nav>
 
-              <div className="pt-4 border-t border-border mt-auto">
+              <div className="pt-4 border-t border-border mt-6">
                 <Button
                   variant="outline"
                   onClick={() => {
                     setMobileMenuOpen(false);
                     void signOut();
                   }}
-                  className="w-full justify-start text-xs font-bold text-red-500 border-red-500/20 hover:bg-red-500/10 h-10 rounded-xl"
+                  className="w-full justify-start text-xs font-bold text-red-500 border-red-500/30 hover:bg-red-500/10 h-10 rounded-xl"
                 >
                   <LogOut className="size-4 mr-2" /> Sign Out
                 </Button>
