@@ -194,16 +194,6 @@ export function DashboardShell({
 
             <div className="flex items-center gap-2 shrink-0">
               {actions}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={signOut}
-                className="flex items-center gap-1.5 text-xs font-bold text-red-500 border-red-500/30 hover:bg-red-500/10 hover:border-red-500/50 h-9 px-3 rounded-xl transition-all shadow-sm"
-                title="Sign out of your account"
-              >
-                <LogOut className="size-3.5" />
-                <span className="hidden sm:inline">Sign Out</span>
-              </Button>
             </div>
           </div>
 
@@ -329,24 +319,9 @@ export function DashboardShell({
                     <ChevronRight className="size-4" />
                   </Link>
                 )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    void signOut();
-                  }}
-                  className="w-full flex items-center justify-between rounded-xl px-4 py-3 text-xs font-bold text-red-500 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all mt-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <LogOut className="size-4" />
-                    <span>Sign Out</span>
-                  </div>
-                  <ChevronRight className="size-4 opacity-60" />
-                </button>
               </nav>
 
-              <div className="pt-4 border-t border-border mt-6">
+              <div className="pt-4 border-t border-border mt-auto">
                 <Button
                   variant="outline"
                   onClick={() => {
