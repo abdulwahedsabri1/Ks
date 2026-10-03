@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { BusinessVideoSeries } from "@/components/BusinessVideoSeries";
+import { getCategoryInstructionsConfig } from "@/lib/shop";
 
 const BUSINESS_TYPES = [
   {
@@ -884,18 +885,55 @@ export function BusinessPreviewSection() {
                                   </div>
 
                                   <div>
-                                    <label
-                                      className={`text-[9px] font-medium opacity-70 block mb-0.5 ${p.textColor}`}
-                                    >
-                                      Special Instructions (Optional)
-                                    </label>
-                                    <textarea
-                                      rows={2}
-                                      placeholder="e.g. Less spicy, table number 4"
-                                      value={specialInstructions}
-                                      onChange={(e) => setSpecialInstructions(e.target.value)}
-                                      className={`w-full bg-black/20 rounded-lg p-1.5 text-[10px] ${p.textColor} border ${p.borderColor} focus:outline-none focus:border-white/40 transition-colors placeholder:text-white/30 resize-none`}
-                                    />
+                                    {(() => {
+                                      const categoryConfig = getCategoryInstructionsConfig(activeTab);
+                                      return (
+                                        <>
+                                          <div className="flex items-center justify-between mb-0.5">
+                                            <label
+                                              className={`text-[9px] font-medium opacity-70 block ${p.textColor}`}
+                                            >
+                                              Special Instructions (Optional)
+                                            </label>
+                                            <span className="text-[8px] text-amber-400 font-medium capitalize">
+                                              ✨ {activeTab} Quick Add
+                                            </span>
+                                          </div>
+                                          <textarea
+                                            rows={2}
+                                            placeholder={categoryConfig.placeholder}
+                                            value={specialInstructions}
+                                            onChange={(e) => setSpecialInstructions(e.target.value)}
+                                            className={`w-full bg-black/20 rounded-lg p-1.5 text-[10px] ${p.textColor} border ${p.borderColor} focus:outline-none focus:border-white/40 transition-colors placeholder:text-white/30 resize-none`}
+                                          />
+                                          <div className="flex flex-wrap gap-1 pt-1">
+                                            {categoryConfig.chips.map((chip, idx) => {
+                                              const isSelected = specialInstructions.includes(chip);
+                                              return (
+                                                <button
+                                                  key={idx}
+                                                  type="button"
+                                                  onClick={() => {
+                                                    setSpecialInstructions((prev) => {
+                                                      if (!prev.trim()) return chip;
+                                                      if (prev.includes(chip)) return prev;
+                                                      return `${prev}, ${chip}`;
+                                                    });
+                                                  }}
+                                                  className={`text-[9px] px-2 py-0.5 rounded-full border transition-all duration-150 active:scale-95 ${
+                                                    isSelected
+                                                      ? "bg-amber-500/30 border-amber-400 text-amber-200 font-medium"
+                                                      : `border-white/10 hover:border-white/20 hover:bg-white/5 opacity-80 ${p.textColor}`
+                                                  }`}
+                                                >
+                                                  {chip}
+                                                </button>
+                                              );
+                                            })}
+                                          </div>
+                                        </>
+                                      );
+                                    })()}
                                   </div>
                                 </div>
 

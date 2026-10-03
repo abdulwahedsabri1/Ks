@@ -44,6 +44,7 @@ import {
   shopTakeawayEnabled,
   shopOnTableEnabled,
   shopEnquiryEnabled,
+  shopCodEnabled,
   shopOrderLabels,
   shopCatalogLabel,
   shopItemLabel,
@@ -51,6 +52,7 @@ import {
   shopFeatures,
   shopLanguages,
   shopMapUrl,
+  getCategoryInstructionsConfig,
   THEME_CONFIG,
   type CartLine,
   type Coupon,
@@ -263,6 +265,7 @@ function PublicMenu() {
   const [orderType, setOrderType] = useState<"delivery" | "takeaway" | "on_table" | "enquiry">(
     defaultOrderType,
   );
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "upi">("cod");
 
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryCity, setDeliveryCity] = useState("");
@@ -1083,16 +1086,55 @@ function PublicMenu() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="special-instructions" className={theme.textMuted}>
-                      Special Instructions (Optional)
-                    </Label>
-                    <Textarea
-                      id="special-instructions"
-                      placeholder="e.g. Less spicy, table number 4"
-                      value={specialInstructions}
-                      onChange={(e) => setSpecialInstructions(e.target.value)}
-                      className={`bg-transparent ${theme.border} ${theme.text} placeholder:opacity-40`}
-                    />
+                    {(() => {
+                      const categoryInstructions = getCategoryInstructionsConfig(shop.niche);
+                      return (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="special-instructions" className={theme.textMuted}>
+                              Special Instructions (Optional)
+                            </Label>
+                            {shop.niche && (
+                              <span className="text-[10px] text-amber-500/80 font-medium tracking-wide">
+                                ✨ {shop.niche} Quick Add
+                              </span>
+                            )}
+                          </div>
+                          <Textarea
+                            id="special-instructions"
+                            placeholder={categoryInstructions.placeholder}
+                            value={specialInstructions}
+                            onChange={(e) => setSpecialInstructions(e.target.value)}
+                            className={`bg-transparent ${theme.border} ${theme.text} placeholder:opacity-40`}
+                          />
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {categoryInstructions.chips.map((chip, idx) => {
+                              const isSelected = specialInstructions.includes(chip);
+                              return (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => {
+                                    setSpecialInstructions((prev) => {
+                                      if (!prev.trim()) return chip;
+                                      if (prev.includes(chip)) return prev;
+                                      return `${prev}, ${chip}`;
+                                    });
+                                  }}
+                                  className={`text-xs px-2.5 py-1 rounded-full border transition-all duration-150 active:scale-95 flex items-center gap-1 ${
+                                    isSelected
+                                      ? "bg-amber-500/20 border-amber-500/50 text-amber-300 font-medium shadow-sm"
+                                      : `border-white/10 hover:border-white/20 hover:bg-white/5 ${theme.textMuted}`
+                                  }`}
+                                >
+                                  {chip}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -1169,10 +1211,59 @@ function PublicMenu() {
                   </div>
                 )}
 
-                {features.upi &&
+                {orderType !== "enquiry" && (
+                  <div className={`space-y-3 mb-6 p-4 rounded-xl border ${theme.border} bg-black/5`}>
+                    <Label className={`${theme.textMuted} uppercase text-xs tracking-wider font-bold`}>
+                      Payment Method
+                    </Label>
+                    <RadioGroup
+                      value={paymentMethod}
+                      onValueChange={(val: any) => setPaymentMethod(val)}
+                      className="flex flex-wrap gap-4"
+                    >
+                      {shopCodEnabled(shop) && (
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem
+                            value="cod"
+                            id="pm-cod"
+                            className={`${theme.border} ${theme.accentText}`}
+                          />
+                          <Label htmlFor="pm-cod" className="font-medium cursor-pointer flex items-center gap-1.5">
+                            💵 Cash on Delivery (COD)
+                          </Label>
+                        </div>
+                      )}
+                      {features.upi &&
+                        Boolean((shop.features as Record<string, unknown> | null)?.["upi_enabled"]) &&
+                        (Boolean((shop.features as Record<string, unknown> | null)?.["upi_id"]) ||
+                          Boolean((shop.features as Record<string, unknown> | null)?.["upi_qr_url"])) && (
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem
+                              value="upi"
+                              id="pm-upi"
+                              className={`${theme.border} ${theme.accentText}`}
+                            />
+                            <Label htmlFor="pm-upi" className="font-medium cursor-pointer flex items-center gap-1.5">
+                              💳 UPI Pay (GPay / QR)
+                            </Label>
+                          </div>
+                        )}
+                    </RadioGroup>
+
+                    {paymentMethod === "cod" && shopCodEnabled(shop) && (
+                      <div className="text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 mt-2">
+                        💵 Cash on Delivery selected. You will pay cash upon receiving your order.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {paymentMethod === "upi" &&
+                  features.upi &&
                   Boolean((shop.features as Record<string, unknown> | null)?.["upi_enabled"]) &&
                   (Boolean((shop.features as Record<string, unknown> | null)?.["upi_id"]) ||
-                    Boolean((shop.features as Record<string, unknown> | null)?.["upi_qr_url"])) && (
+                    Boolean((shop.features as Record<string, unknown> | null)?.["upi_qr_url"])) &&
+                  orderType !== "enquiry" && (
                     <UpiPaymentBox
                       upiId={
                         ((shop.features as Record<string, unknown> | null)?.["upi_id"] as string) ||
@@ -1208,6 +1299,12 @@ function PublicMenu() {
                                 .join(", ")
                             : null,
                         gpsLink: orderType === "delivery" ? gpsLink : null,
+                        paymentMethod:
+                          orderType === "enquiry"
+                            ? null
+                            : paymentMethod === "cod"
+                              ? "Cash on Delivery (COD)"
+                              : "UPI Pay",
                       })}
                       target="_blank"
                       rel="noreferrer"

@@ -1,12 +1,16 @@
 import { Link } from "@tanstack/react-router";
-import { QrCode, Menu, X } from "lucide-react";
+import { QrCode, Menu, X, Store } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useRealtimeActiveShops } from "@/hooks/useRealtimeActiveShops";
+import { RealtimeActiveShopsModal } from "@/components/RealtimeActiveShopsModal";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [shopsModalOpen, setShopsModalOpen] = useState(false);
+  const { shops } = useRealtimeActiveShops();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -15,64 +19,71 @@ export function Navbar() {
   }, []);
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "py-4" : "py-6"
-      }`}
-    >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div
-          className={`flex items-center justify-between rounded-full border border-border transition-all duration-300 ${
-            scrolled ? "bg-card/80 shadow-soft backdrop-blur-md px-6 py-3" : "bg-card/40 px-6 py-4"
-          }`}
-        >
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center gap-2 group">
-              <img
-                src="/favicon.ico"
-                alt="MY Link QR Logo"
-                className="size-10 rounded-xl object-contain shadow-md transition-transform group-hover:scale-105"
-              />
-              <span className="font-display text-xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary">
-                MY Link QR
-              </span>
-            </Link>
-          </div>
+    <>
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled ? "py-4" : "py-6"
+        }`}
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div
+            className={`flex items-center justify-between rounded-full border border-border transition-all duration-300 ${
+              scrolled ? "bg-card/80 shadow-soft backdrop-blur-md px-6 py-3" : "bg-card/40 px-6 py-4"
+            }`}
+          >
+            <div className="flex items-center">
+              <Link to="/" className="flex items-center gap-2 group">
+                <img
+                  src="/favicon.ico"
+                  alt="MY Link QR Logo"
+                  className="size-10 rounded-xl object-contain shadow-md transition-transform group-hover:scale-105"
+                />
+                <span className="font-display text-xl font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary">
+                  MY Link QR
+                </span>
+              </Link>
+            </div>
 
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <Link
-              to="/features"
-              className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
-            >
-              Features
-            </Link>
-            <Link
-              to="/previews"
-              className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
-            >
-              Live Previews
-            </Link>
-            <Link
-              to="/showcase"
-              className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
-            >
-              Showcase
-            </Link>
-            <Link
-              to="/demo"
-              className="text-muted-foreground hover:text-primary transition-colors font-semibold flex items-center gap-1.5 py-1 px-2 rounded-lg bg-primary/5 border border-primary/20 shadow-sm"
-            >
-              <span className="size-2 rounded-full bg-primary inline-block animate-pulse" /> Watch
-              Demo
-            </Link>
-            <Link
-              to="/pricing"
-              className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
-            >
-              Pricing
-            </Link>
-          </nav>
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium">
+              <Link
+                to="/features"
+                className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
+              >
+                Features
+              </Link>
+              <Link
+                to="/previews"
+                className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
+              >
+                Live Previews
+              </Link>
+              <Link
+                to="/showcase"
+                className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
+              >
+                Showcase
+              </Link>
+              <Link
+                to="/shops"
+                className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg font-medium"
+              >
+                Shops Directory
+              </Link>
+              <Link
+                to="/demo"
+                className="text-muted-foreground hover:text-primary transition-colors font-semibold flex items-center gap-1.5 py-1 px-2 rounded-lg bg-primary/5 border border-primary/20 shadow-sm"
+              >
+                <span className="size-2 rounded-full bg-primary inline-block animate-pulse" /> Watch
+                Demo
+              </Link>
+              <Link
+                to="/pricing"
+                className="text-muted-foreground hover:text-primary transition-colors py-1 px-2 rounded-lg"
+              >
+                Pricing
+              </Link>
+            </nav>
 
           <div className="hidden md:flex items-center gap-4">
             <Link
@@ -136,6 +147,13 @@ export function Navbar() {
                 Showcase
               </Link>
               <Link
+                to="/shops"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg font-medium text-muted-foreground hover:text-primary transition-colors"
+              >
+                Shops Directory
+              </Link>
+              <Link
                 to="/demo"
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-lg font-semibold text-primary flex items-center gap-2"
@@ -172,6 +190,9 @@ export function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <RealtimeActiveShopsModal open={shopsModalOpen} onOpenChange={setShopsModalOpen} />
     </header>
+    </>
   );
 }

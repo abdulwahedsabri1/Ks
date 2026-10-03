@@ -16,6 +16,7 @@ import { Navbar } from "@/sections/landing/Navbar";
 import { Footer } from "@/sections/landing/Footer";
 import { Button } from "@/components/ui/button";
 import { BusinessVideoSeries } from "@/components/BusinessVideoSeries";
+import { RealtimeActiveShopsShowcase } from "@/components/RealtimeActiveShopsShowcase";
 
 export const Route = createFileRoute("/showcase")({
   head: () => ({
@@ -103,6 +104,9 @@ function ShowcaseRoute() {
             </Button>
           </div>
         </section>
+
+        {/* Real-time Backend Active Shops Section */}
+        <RealtimeActiveShopsShowcase />
 
         {/* Showcase Grid */}
         <section className="container mx-auto px-4 sm:px-6 lg:px-8 mt-16 md:mt-24">

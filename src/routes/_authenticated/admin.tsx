@@ -1295,6 +1295,37 @@ function AdminConsolePage() {
     }
   };
 
+  const handleQuickRankChange = async (shop: Shop, newRank: number) => {
+    setSavingShop(true);
+    try {
+      const existingFeatures = (shop.features as Record<string, any>) || {};
+      const updatedFeatures = {
+        ...existingFeatures,
+        rank: newRank,
+      };
+
+      const { error } = await supabase
+        .from("shops")
+        .update({ features: updatedFeatures })
+        .eq("id", shop.id);
+
+      if (error) throw error;
+
+      qc.invalidateQueries({ queryKey: ["admin-all-shops"] });
+      qc.invalidateQueries({ queryKey: ["my-shop"] });
+      triggerCrossTabSync(shop.id, shop.owner_id);
+
+      toast.success(
+        `Updated "${shop.name}" display rank to ${newRank === 1 ? "🥇 Rank #1 (Top)" : newRank === 9999 ? "🔻 Rank Last" : `#${newRank}`}!`,
+      );
+    } catch (err) {
+      console.error("Rank update error:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to update shop rank");
+    } finally {
+      setSavingShop(false);
+    }
+  };
+
   const handleToggleShopStatus = async (shop: Shop) => {
     const isCurrentlySuspended = shop.status === "suspended" || shop.status === "cancelled";
     const newStatus = isCurrentlySuspended ? "active" : "suspended";
@@ -1986,8 +2017,8 @@ function AdminConsolePage() {
                         </span>
                       </div>
 
-                      {/* Select Selectors Row */}
-                      <div className="grid grid-cols-2 gap-2 pt-1">
+                      {/* Select Selectors Row (Plan, Payment, Rank) */}
+                      <div className="grid grid-cols-3 gap-2 pt-1">
                         <div className="space-y-1">
                           <label className="text-[10px] font-bold text-slate-400 uppercase">
                             Plan
@@ -1996,7 +2027,7 @@ function AdminConsolePage() {
                             value={(shop.plan || "pro").toLowerCase().trim()}
                             onChange={(e) => handleQuickPlanChange(shop, e.target.value)}
                             disabled={savingShop}
-                            className="w-full px-2.5 py-1.5 rounded-xl text-xs font-bold capitalize bg-[#080C14] border border-slate-800 text-white focus:outline-none focus:border-[#00E676]"
+                            className="w-full px-2 py-1.5 rounded-xl text-xs font-bold capitalize bg-[#080C14] border border-slate-800 text-white focus:outline-none focus:border-[#00E676] truncate"
                           >
                             {plansForm.map((p) => (
                               <option key={p.id} value={p.id.toLowerCase()}>
@@ -2014,7 +2045,7 @@ function AdminConsolePage() {
                             value={shop.payment_status || "paid"}
                             onChange={(e) => handleQuickPaymentStatusChange(shop, e.target.value)}
                             disabled={savingShop}
-                            className={`w-full px-2.5 py-1.5 rounded-xl text-xs font-bold capitalize bg-[#080C14] border focus:outline-none ${
+                            className={`w-full px-2 py-1.5 rounded-xl text-xs font-bold capitalize bg-[#080C14] border focus:outline-none truncate ${
                               shop.payment_status === "paid"
                                 ? "text-[#00E676] border-emerald-500/30"
                                 : shop.payment_status === "pending"
@@ -2027,36 +2058,62 @@ function AdminConsolePage() {
                             <option value="pending">Pending</option>
                           </select>
                         </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-amber-400 uppercase">
+                            Rank
+                          </label>
+                          <select
+                            value={
+                              typeof (shop.features as Record<string, any> | null)?.["rank"] === "number"
+                                ? (shop.features as Record<string, any>)["rank"]
+                                : 9999
+                            }
+                            onChange={(e) => handleQuickRankChange(shop, parseInt(e.target.value, 10))}
+                            disabled={savingShop}
+                            className="w-full px-2 py-1.5 rounded-xl text-xs font-bold bg-[#080C14] border border-amber-500/40 text-amber-300 focus:outline-none truncate"
+                          >
+                            <option value={1}>🥇 #1 Top</option>
+                            <option value={2}>🥈 #2</option>
+                            <option value={3}>🥉 #3</option>
+                            <option value={4}>#4</option>
+                            <option value={5}>#5</option>
+                            <option value={6}>#6</option>
+                            <option value={7}>#7</option>
+                            <option value={8}>#8</option>
+                            <option value={9999}>🔻 Last</option>
+                          </select>
+                        </div>
                       </div>
 
                       {/* Action Buttons Row */}
-                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
-                        <div className="flex items-center gap-1.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <a
                             href={`/shop/${shop.slug}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="h-9 px-3 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 hover:text-[#00E676] text-xs font-bold flex items-center gap-1.5"
+                            className="h-8 px-2.5 rounded-xl border border-slate-700 bg-slate-900 text-slate-300 hover:text-[#00E676] text-xs font-bold flex items-center gap-1"
                           >
-                            <ExternalLink className="size-3.5" /> Visit
+                            <ExternalLink className="size-3" /> Visit
                           </a>
 
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => openManageModal(shop, "subscription")}
-                            className="h-9 px-3.5 text-xs font-bold rounded-xl border-slate-700 bg-slate-900 text-slate-200"
+                            className="h-8 px-2.5 text-xs font-bold rounded-xl border-slate-700 bg-slate-900 text-slate-200"
                           >
                             Manage
                           </Button>
                         </div>
 
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <button
                             type="button"
                             onClick={() => handleToggleShopStatus(shop)}
                             title={shop.status === "suspended" ? "Activate Shop" : "Suspend Shop"}
-                            className={`size-9 rounded-xl border flex items-center justify-center transition-colors ${
+                            className={`size-8 rounded-xl border flex items-center justify-center transition-colors ${
                               shop.status === "suspended"
                                 ? "border-emerald-500/40 bg-emerald-500/10 text-[#00E676]"
                                 : "border-amber-500/40 bg-amber-500/10 text-amber-400"
@@ -2073,7 +2130,7 @@ function AdminConsolePage() {
                             <button
                               type="button"
                               onClick={() => handleResetShopAnalytics(shop)}
-                              className="h-9 px-2.5 rounded-xl bg-amber-500 text-[#080C14] text-xs font-bold"
+                              className="h-8 px-2.5 rounded-xl bg-amber-500 text-[#080C14] text-xs font-bold"
                             >
                               Yes, Reset
                             </button>
@@ -2082,7 +2139,7 @@ function AdminConsolePage() {
                               type="button"
                               onClick={() => setConfirmResetShopId(shop.id)}
                               title="Reset Shop Analytics"
-                              className="size-9 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-400 flex items-center justify-center"
+                              className="size-8 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-400 flex items-center justify-center"
                             >
                               <RotateCcw className="size-3.5" />
                             </button>
@@ -2092,7 +2149,7 @@ function AdminConsolePage() {
                             type="button"
                             onClick={() => handleDeleteShop(shop)}
                             title="Delete Shop"
-                            className="size-9 rounded-xl border border-rose-500/40 bg-rose-500/10 text-rose-400 flex items-center justify-center"
+                            className="size-8 rounded-xl border border-rose-500/40 bg-rose-500/10 text-rose-400 flex items-center justify-center"
                           >
                             <Trash2 className="size-3.5" />
                           </button>
@@ -2114,6 +2171,7 @@ function AdminConsolePage() {
                       <th className="py-3.5 px-4">NICHE</th>
                       <th className="py-3.5 px-4">PLAN</th>
                       <th className="py-3.5 px-4">PAYMENT</th>
+                      <th className="py-3.5 px-4">RANK / PRIORITY</th>
                       <th className="py-3.5 px-4">BILLING</th>
                       <th className="py-3.5 px-4">EXPIRY</th>
                       <th className="py-3.5 px-4">STATUS</th>
@@ -2232,6 +2290,52 @@ function AdminConsolePage() {
                                   Pending
                                 </option>
                               </select>
+                            </td>
+
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-1.5">
+                                <select
+                                  value={
+                                    typeof (shop.features as Record<string, any> | null)?.["rank"] === "number"
+                                      ? (shop.features as Record<string, any>)["rank"]
+                                      : 9999
+                                  }
+                                  onChange={(e) =>
+                                    handleQuickRankChange(shop, parseInt(e.target.value, 10))
+                                  }
+                                  disabled={savingShop}
+                                  title="Admin Display Rank - Controls store position on public directory & navbar"
+                                  className="px-2 py-1 rounded-xl text-[11px] font-bold bg-slate-800 border border-amber-500/40 text-amber-300 cursor-pointer focus:outline-none focus:border-amber-400"
+                                >
+                                  <option value={1} className="bg-[#0D131F] text-amber-300 font-bold">
+                                    🥇 Rank #1 (Top)
+                                  </option>
+                                  <option value={2} className="bg-[#0D131F] text-slate-200">
+                                    🥈 Rank #2
+                                  </option>
+                                  <option value={3} className="bg-[#0D131F] text-amber-400">
+                                    🥉 Rank #3
+                                  </option>
+                                  <option value={4} className="bg-[#0D131F] text-white">
+                                    Rank #4
+                                  </option>
+                                  <option value={5} className="bg-[#0D131F] text-white">
+                                    Rank #5
+                                  </option>
+                                  <option value={6} className="bg-[#0D131F] text-white">
+                                    Rank #6
+                                  </option>
+                                  <option value={7} className="bg-[#0D131F] text-white">
+                                    Rank #7
+                                  </option>
+                                  <option value={8} className="bg-[#0D131F] text-white">
+                                    Rank #8
+                                  </option>
+                                  <option value={9999} className="bg-[#0D131F] text-slate-400">
+                                    🔻 Rank Last (Bottom)
+                                  </option>
+                                </select>
+                              </div>
                             </td>
 
                             <td className="py-3.5 px-4 font-medium text-slate-300 capitalize">

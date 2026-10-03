@@ -370,6 +370,77 @@ export const NICHES = [
   "Electronics Store",
 ];
 
+export type CategoryInstructionsConfig = {
+  placeholder: string;
+  chips: string[];
+};
+
+export function getCategoryInstructionsConfig(niche?: string | null): CategoryInstructionsConfig {
+  const n = (niche || "").toLowerCase().trim();
+
+  if (n.includes("restaurant") || n.includes("food truck")) {
+    return {
+      placeholder: "e.g. Less spicy, extra sauce, no onions, table #4...",
+      chips: ["🌶️ Less Spicy", "🔥 Extra Spicy", "🧀 Extra Cheese", "🥢 No Cutlery", "🪑 Table #"],
+    };
+  }
+
+  if (n.includes("cafe") || n.includes("bakery") || n.includes("sweet shop") || n.includes("sweet")) {
+    return {
+      placeholder: "e.g. Less sugar, oat milk, gift wrap with ribbon...",
+      chips: ["☕ Less Sugar", "🥛 Oat Milk", "🎂 Name on Cake", "🎁 Gift Wrap", "🕯️ Birthday Candles"],
+    };
+  }
+
+  if (n.includes("salon") || n.includes("spa")) {
+    return {
+      placeholder: "e.g. Preferred stylist, sensitive skin products, quiet session...",
+      chips: ["🕒 Preferred Time", "✂️ Preferred Stylist", "🌿 Organic Products", "🤫 Quiet Session"],
+    };
+  }
+
+  if (n.includes("gym")) {
+    return {
+      placeholder: "e.g. Preferred workout slot, personal trainer request...",
+      chips: ["🌅 Morning Slot", "🌆 Evening Slot", "🏋️ Personal Trainer", "💪 Weight Loss Focus"],
+    };
+  }
+
+  if (n.includes("hotel") || n.includes("resort")) {
+    return {
+      placeholder: "e.g. High floor room, extra bed, late checkout request...",
+      chips: ["🛌 Extra Bed", "🤫 Quiet Room", "🌇 High Floor", "🕒 Late Checkout", "🚗 Parking Slot"],
+    };
+  }
+
+  if (n.includes("boutique") || n.includes("textile") || n.includes("jewelry")) {
+    return {
+      placeholder: "e.g. Custom fitting size M, gift box packing, express dispatch...",
+      chips: ["📏 Custom Size", "🎁 Gift Box", "🎨 Color Notes", "⚡ Express Shipping"],
+    };
+  }
+
+  if (n.includes("grocery") || n.includes("medical") || n.includes("clinic")) {
+    return {
+      placeholder: "e.g. Call before delivery, check expiry dates, urgent delivery...",
+      chips: ["⚡ Urgent Delivery", "📞 Call Before Delivery", "🧾 Include Bill Receipt", "💊 Prescription Attached"],
+    };
+  }
+
+  if (n.includes("real estate") || n.includes("electronics")) {
+    return {
+      placeholder: "e.g. Request callback, specific model query, warranty details...",
+      chips: ["📞 Request Callback", "🛡️ Warranty Details", "💬 WhatsApp Quote", "📅 Schedule Demo"],
+    };
+  }
+
+  return {
+    placeholder: "e.g. Special instructions, delivery preferences, or order notes...",
+    chips: ["⚡ Urgent Delivery", "📞 Call Before Delivery", "🎁 Gift Wrap", "🧾 Include Receipt"],
+  };
+}
+
+
 export type PlanItem = {
   id: string;
   name: string;
@@ -973,6 +1044,10 @@ export type Coupon = {
   expires_at?: string;
 };
 
+export function shopCodEnabled(shop?: Pick<Shop, "plan" | "features"> | null) {
+  return shop?.features?.["cod_enabled"] !== false;
+}
+
 export function buildWhatsAppOrder(
   shop: Shop,
   lines: CartLine[],
@@ -983,6 +1058,7 @@ export function buildWhatsAppOrder(
     type?: "delivery" | "takeaway" | "on_table" | "enquiry";
     location?: string | null;
     gpsLink?: string | null;
+    paymentMethod?: string | null;
     coupon?: Coupon;
   },
 ) {
@@ -1023,12 +1099,21 @@ export function buildWhatsAppOrder(
   ];
 
   const upiId = (shop.features as Record<string, unknown> | null)?.["upi_id"] as string | undefined;
-  const upiEnabled = (shop.features as Record<string, unknown> | null)?.["upi_enabled"] as
-    boolean | undefined;
-  if (upiEnabled && upiId && !isEnquiry) {
+
+  if (details?.paymentMethod && !isEnquiry) {
     textParts.push("");
-    textParts.push("💳 Payment Method: UPI");
-    textParts.push(`Please pay ${money(total, shop.currency)} to the following UPI ID: ${upiId}`);
+    textParts.push(`💳 Payment Method: ${details.paymentMethod}`);
+    if (details.paymentMethod.toLowerCase().includes("upi") && upiId) {
+      textParts.push(`Please pay ${money(total, shop.currency)} to UPI ID: ${upiId}`);
+    }
+  } else {
+    const upiEnabled = (shop.features as Record<string, unknown> | null)?.["upi_enabled"] as
+      boolean | undefined;
+    if (upiEnabled && upiId && !isEnquiry) {
+      textParts.push("");
+      textParts.push("💳 Payment Method: UPI Pay");
+      textParts.push(`Please pay ${money(total, shop.currency)} to UPI ID: ${upiId}`);
+    }
   }
 
   if (details?.type) {

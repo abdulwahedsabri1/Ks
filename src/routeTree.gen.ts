@@ -24,6 +24,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as PreviewsRouteImport } from './routes/previews'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ShopsRouteImport } from './routes/shops'
 import { Route as ShowcaseRouteImport } from './routes/showcase'
 import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -112,6 +113,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ShopsRoute = ShopsRouteImport.update({
+  id: '/shops',
+  path: '/shops',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShowcaseRoute = ShowcaseRouteImport.update({
   id: '/showcase',
   path: '/showcase',
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/previews': typeof PreviewsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/shops': typeof ShopsRoute
   '/showcase': typeof ShowcaseRoute
   '/templates': typeof TemplatesRoute
   '/terms': typeof TermsRoute
@@ -222,6 +229,7 @@ export interface FileRoutesByTo {
   '/previews': typeof PreviewsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/shops': typeof ShopsRoute
   '/showcase': typeof ShowcaseRoute
   '/templates': typeof TemplatesRoute
   '/terms': typeof TermsRoute
@@ -253,6 +261,7 @@ export interface FileRoutesById {
   '/previews': typeof PreviewsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/shops': typeof ShopsRoute
   '/showcase': typeof ShowcaseRoute
   '/templates': typeof TemplatesRoute
   '/terms': typeof TermsRoute
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
     | '/previews'
     | '/pricing'
     | '/privacy'
+    | '/shops'
     | '/showcase'
     | '/templates'
     | '/terms'
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/previews'
     | '/pricing'
     | '/privacy'
+    | '/shops'
     | '/showcase'
     | '/templates'
     | '/terms'
@@ -343,6 +354,7 @@ export interface FileRouteTypes {
     | '/previews'
     | '/pricing'
     | '/privacy'
+    | '/shops'
     | '/showcase'
     | '/templates'
     | '/terms'
@@ -374,6 +386,7 @@ export interface RootRouteChildren {
   PreviewsRoute: typeof PreviewsRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  ShopsRoute: typeof ShopsRoute
   ShowcaseRoute: typeof ShowcaseRoute
   TemplatesRoute: typeof TemplatesRoute
   TermsRoute: typeof TermsRoute
@@ -485,6 +498,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shops': {
+      id: '/shops'
+      path: '/shops'
+      fullPath: '/shops'
+      preLoaderRoute: typeof ShopsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/showcase': {
@@ -632,6 +652,7 @@ const rootRouteChildren: RootRouteChildren = {
   PreviewsRoute: PreviewsRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  ShopsRoute: ShopsRoute,
   ShowcaseRoute: ShowcaseRoute,
   TemplatesRoute: TemplatesRoute,
   TermsRoute: TermsRoute,

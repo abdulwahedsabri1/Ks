@@ -1,8 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { QrCode, Instagram } from "lucide-react";
+import { QrCode, Instagram, Store } from "lucide-react";
+import { useState } from "react";
+import { useRealtimeActiveShops } from "@/hooks/useRealtimeActiveShops";
+import { RealtimeActiveShopsModal } from "@/components/RealtimeActiveShopsModal";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const [allStoresModalOpen, setAllStoresModalOpen] = useState(false);
+  const { shops } = useRealtimeActiveShops();
 
   return (
     <footer className="bg-background py-12 md:py-16 border-t border-border">
@@ -76,12 +81,33 @@ export function Footer() {
                   Pricing
                 </Link>
               </li>
+              <li>
+                <button
+                  onClick={() => setAllStoresModalOpen(true)}
+                  className="text-amber-400 hover:text-amber-300 font-bold transition-colors flex items-center gap-1 text-sm cursor-pointer"
+                  title="View all platform stores (active & suspended)"
+                >
+                  <Store className="size-3.5" />
+                  <span>All Stores</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono">
+                    {shops.length}
+                  </span>
+                </button>
+              </li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-medium text-foreground mb-4">Resources</h4>
             <ul className="space-y-3 text-sm">
+              <li>
+                <Link
+                  to="/shops"
+                  className="text-muted-foreground hover:text-primary transition-colors font-medium"
+                >
+                  Shops Directory
+                </Link>
+              </li>
               <li>
                 <Link
                   to="/help"
@@ -145,6 +171,12 @@ export function Footer() {
             © {currentYear} MY Link QR. All rights reserved.
           </p>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
+            <button
+              onClick={() => setAllStoresModalOpen(true)}
+              className="hover:text-amber-400 transition-colors text-amber-400 font-semibold"
+            >
+              All Stores ({shops.length})
+            </button>
             <Link to="/privacy" className="hover:text-primary transition-colors">
               Privacy Policy
             </Link>
@@ -153,6 +185,8 @@ export function Footer() {
             </Link>
           </div>
         </div>
+
+        <RealtimeActiveShopsModal open={allStoresModalOpen} onOpenChange={setAllStoresModalOpen} />
       </div>
     </footer>
   );

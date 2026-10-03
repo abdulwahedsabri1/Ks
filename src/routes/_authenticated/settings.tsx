@@ -76,6 +76,7 @@ function computeLiveShop(shop: Shop, form: any): Shop {
     languages: form["languages"],
     multi_language_enabled: form["multi_language_enabled"],
     coupons: form["coupons"],
+    cod_enabled: form["cod_enabled"],
     upi_enabled: form["upi_enabled"],
     upi_id: safeStr(form["upi_id"]),
     upi_qr_url: safeStr(form["upi_qr_url"]),
@@ -149,6 +150,7 @@ function SettingsPage() {
     languages: ["en"],
     multi_language_enabled: true,
     coupons: [] as Coupon[],
+    cod_enabled: true,
     upi_enabled: false,
     upi_id: "",
     upi_qr_url: "",
@@ -264,6 +266,7 @@ function SettingsPage() {
       coupons: Array.isArray((shop.features as Record<string, unknown> | null)?.["coupons"])
         ? ((shop.features as Record<string, unknown> | null)?.["coupons"] as Coupon[])
         : [],
+      cod_enabled: (shop.features as Record<string, unknown> | null)?.["cod_enabled"] !== false,
       upi_enabled: Boolean((shop.features as Record<string, unknown> | null)?.["upi_enabled"]),
       upi_id: safeStr((shop.features as Record<string, unknown> | null)?.["upi_id"]),
       upi_qr_url: safeStr((shop.features as Record<string, unknown> | null)?.["upi_qr_url"]),
@@ -325,6 +328,7 @@ function SettingsPage() {
         languages: form.languages,
         multi_language_enabled: form.multi_language_enabled,
         coupons: form.coupons,
+        cod_enabled: form.cod_enabled,
         upi_enabled: form.upi_enabled,
         upi_id: safeStr(form.upi_id),
         upi_qr_url: safeStr(form.upi_qr_url),
@@ -755,10 +759,40 @@ function SettingsPage() {
           />
 
           <div className="space-y-4 pt-4 border-t border-border">
-            <div className="flex items-center justify-between pb-2">
-              <h3 className="font-medium text-lg">Payment Settings</h3>
+            <div className="flex items-center justify-between pb-2 border-b border-border/40">
+              <h3 className="font-medium text-lg">Payment & Order Checkout Settings</h3>
+            </div>
+
+            {/* COD (Cash on Delivery) Toggle */}
+            <div className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-card/50">
+              <div>
+                <Label htmlFor="s-cod" className="font-semibold text-sm cursor-pointer">
+                  Cash on Delivery (COD)
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Allow customers to choose Cash on Delivery at checkout.
+                </p>
+              </div>
+              <Switch
+                id="s-cod"
+                checked={form.cod_enabled}
+                onCheckedChange={(v) => updateForm((prev) => ({ ...prev, cod_enabled: v }))}
+              />
+            </div>
+
+            {/* UPI Digital Payments Toggle */}
+            <div className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-card/50">
+              <div>
+                <Label htmlFor="s-upi-toggle" className="font-semibold text-sm cursor-pointer">
+                  UPI Digital Payments
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Enable Google Pay, PhonePe, Paytm & QR Code payments at checkout.
+                </p>
+              </div>
               {feat.upi && (
                 <Switch
+                  id="s-upi-toggle"
                   checked={form.upi_enabled}
                   onCheckedChange={(v) => updateForm((prev) => ({ ...prev, upi_enabled: v }))}
                 />
