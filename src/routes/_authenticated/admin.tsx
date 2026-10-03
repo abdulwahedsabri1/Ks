@@ -282,7 +282,7 @@ function AdminConsolePage() {
   // Gateway payment settings & Coupon Management state
   const { data: paymentSettingsData } = usePaymentSettings();
   const [razorpayEnabled, setRazorpayEnabled] = useState(true);
-  const [manualUpiId, setManualUpiId] = useState("9392318135-2@axl");
+  const [manualUpiId, setManualUpiId] = useState("pay.shop@upi");
   const [couponsList, setCouponsList] = useState<Coupon[]>(DEFAULT_COUPONS);
   const [newCpnCode, setNewCpnCode] = useState("");
   const [newCpnType, setNewCpnType] = useState<"percent" | "fixed">("percent");
@@ -1377,7 +1377,7 @@ function AdminConsolePage() {
     setRazorpayEnabled(newValue);
     const settingsPayload = {
       razorpay_enabled: newValue,
-      upi_id: manualUpiId.trim() || "9392318135-2@axl",
+      upi_id: manualUpiId.trim() || "pay.shop@upi",
     };
 
     if (typeof window !== "undefined") {
@@ -1428,7 +1428,7 @@ function AdminConsolePage() {
     setSavingGateway(true);
     const settingsPayload = {
       razorpay_enabled: razorpayEnabled,
-      upi_id: manualUpiId.trim() || "9392318135-2@axl",
+      upi_id: manualUpiId.trim() || "pay.shop@upi",
       coupons: couponsList,
     };
 
@@ -1452,7 +1452,7 @@ function AdminConsolePage() {
     setCouponsList(updatedCoupons);
     const settingsPayload = {
       razorpay_enabled: razorpayEnabled,
-      upi_id: manualUpiId.trim() || "9392318135-2@axl",
+      upi_id: manualUpiId.trim() || "pay.shop@upi",
       coupons: updatedCoupons,
     };
 

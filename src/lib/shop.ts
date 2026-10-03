@@ -613,6 +613,7 @@ export const PLANS: PlanItem[] = [
       "Unlimited menu items",
       "AI menu generator",
       "PNG / SVG / PDF QR downloads",
+      "Discount & Coupon codes",
     ],
   },
   {
@@ -736,7 +737,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     advanced_social_links: true,
     opening_hours: true,
     multi_language: true,
-    coupons: false,
+    coupons: true,
     upi: false,
   },
   premium: {

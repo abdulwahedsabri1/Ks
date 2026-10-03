@@ -108,7 +108,7 @@ function PrivacyPage() {
                 If you have any questions or wish to request data deletion, please contact us at{" "}
                 <span className="font-semibold text-foreground">privacy@mylinkqr.com</span> or via
                 WhatsApp support at{" "}
-                <span className="font-semibold text-foreground">+91 9392318135</span>.
+                <span className="font-semibold text-foreground">+91 98765 43210</span>.
               </p>
             </section>
           </div>

@@ -182,7 +182,7 @@ function ShowcaseRoute() {
                 className="rounded-full font-bold h-12 px-8"
               >
                 <Link to="/demo" hash="booking-form">
-                  Order Printed Stands (+91 9392318135)
+                  Order Printed Stands (+91 98765 43210)
                 </Link>
               </Button>
             </div>

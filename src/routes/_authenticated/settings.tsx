@@ -842,7 +842,7 @@ function SettingsPage() {
                       <Label htmlFor="s-upi">UPI ID (Optional)</Label>
                       <Input
                         id="s-upi"
-                        placeholder="e.g. sabriabdulwahed-2@okhdfcbank"
+                        placeholder="e.g. shopname@upi"
                         value={form.upi_id}
                         onChange={(e) =>
                           updateForm((prev) => ({ ...prev, upi_id: e.target.value }))
@@ -954,7 +954,7 @@ function SettingsPage() {
             {!feat.coupons ? (
               <div className="rounded-lg border border-[#F5A623]/30 bg-[#F5A623]/5 p-4">
                 <p className="text-sm text-muted-foreground mb-3">
-                  Unlock discount and coupon codes in the Premium plan.
+                  Unlock discount and coupon codes in Pro or Premium plans.
                 </p>
                 <Button
                   asChild

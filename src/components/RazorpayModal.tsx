@@ -70,7 +70,7 @@ export function RazorpayModal({
 
   const { data: paymentSettings } = usePaymentSettings();
   const isRazorpayEnabled = paymentSettings?.razorpay_enabled ?? true;
-  const upiId = paymentSettings?.upi_id ?? "9392318135-2@axl";
+  const upiId = paymentSettings?.upi_id ?? "pay.shop@upi";
   const availableCoupons = paymentSettings?.coupons || [];
 
   // Calculate final price based on applied coupon
@@ -295,7 +295,7 @@ export function RazorpayModal({
       toast.success("Payment request submitted! Redirecting to WhatsApp to send proof...");
 
       // WhatsApp redirect logic
-      const whatsappNumber = "9392318135";
+      const whatsappNumber = "919876543210";
       const couponText = appliedCoupon ? ` (Coupon: ${appliedCoupon.code})` : "";
       const message = `*Payment Confirmation*\n\nBusiness Name: ${bizName || "Business"}\nBusiness ID: ${bizId}\nPlan: ${plan.name}${couponText}\nAmount Paid: ₹${finalPrice}\nContact: ${bizPhone || user.phone || "-"}\n\nI have successfully made the payment of ₹${finalPrice} via UPI. Please activate my plan.`;
       const encodedMessage = encodeURIComponent(message);
@@ -662,7 +662,7 @@ export function RazorpayModal({
           ) : (
             <div className="space-y-4">
               <UpiPaymentBox
-                upiId={upiId || "9392318135-2@axl"}
+                upiId={upiId || "pay.shop@upi"}
                 amount={finalPrice}
                 shopName="MY Link QR"
                 showTitle={true}

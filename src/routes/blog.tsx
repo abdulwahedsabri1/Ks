@@ -26,7 +26,7 @@ const articles = [
     excerpt:
       "Discover how top-performing cafes and restaurants use high-resolution digital menus, upsell tags, and WhatsApp ordering to boost average check sizes.",
     category: "Growth & Sales",
-    author: "Sabri Wahed",
+    author: "MY Link QR Team",
     date: "Aug 20, 2026",
     readTime: "5 min read",
     image:
@@ -62,7 +62,7 @@ const articles = [
     excerpt:
       "Color choices, frame placement, lighting tips, and call-to-action text that increase QR scan rates by over 40%.",
     category: "Design & Branding",
-    author: "Sabri Wahed",
+    author: "MY Link QR Team",
     date: "Aug 02, 2026",
     readTime: "6 min read",
     image:

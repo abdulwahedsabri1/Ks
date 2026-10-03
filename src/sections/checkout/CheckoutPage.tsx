@@ -47,9 +47,13 @@ const checkoutSchema = z.object({
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
+import { usePaymentSettings } from "@/hooks/usePaymentSettings";
+
 /** @deprecated Checkout is now handled inline on /pricing via Razorpay modal */
 export function CheckoutPage() {
   const navigate = useNavigate();
+  const { data: paymentSettings } = usePaymentSettings();
+  const upiId = paymentSettings?.upi_id || "pay.shop@upi";
   // This component is deprecated — /checkout redirects to /pricing
   // Keep as fallback with safe defaults
   const search = { plan: "Basic", price: 249, period: "/mo" };
@@ -58,7 +62,7 @@ export function CheckoutPage() {
 
   useEffect(() => {
     const price = search.price || 99;
-    const upiUri = `upi://pay?pa=9392318135-2@axl&pn=${encodeURIComponent("Abdul Wahed Sabri")}&am=${price}&cu=INR`;
+    const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent("MY Link QR")}&am=${price}&cu=INR`;
     QRCode.toDataURL(upiUri, {
       width: 300,
       margin: 2,
@@ -74,7 +78,7 @@ export function CheckoutPage() {
           `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiUri)}`,
         );
       });
-  }, [search.price]);
+  }, [search.price, upiId]);
 
   const {
     register,
@@ -109,7 +113,7 @@ export function CheckoutPage() {
         console.warn("Supabase database insert warning:", dbErr);
       }
 
-      // 2. Trigger WhatsApp Notification to 9392318135
+      // 2. Trigger WhatsApp Notification to Support
       const message = `*NEW ORDER / BUSINESS REGISTRATION*
 
 *Plan Details:*
@@ -125,7 +129,7 @@ export function CheckoutPage() {
 - Address: ${data.businessAddress}`;
 
       const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/919392318135?text=${encodedMessage}`;
+      const whatsappUrl = `https://wa.me/919876543210?text=${encodedMessage}`;
 
       toast.success("Order details submitting to WhatsApp...");
 
@@ -216,11 +220,11 @@ export function CheckoutPage() {
                     <strong className="text-foreground">₹{search.price}</strong>
                   </p>
                   <div className="flex items-center justify-between font-mono bg-card py-2 px-3 rounded-xl border border-border text-foreground">
-                    <span className="text-xs font-semibold">9392318135-2@axl</span>
+                    <span className="text-xs font-semibold">{upiId}</span>
                     <button
                       type="button"
                       onClick={() => {
-                        navigator.clipboard.writeText("9392318135-2@axl");
+                        navigator.clipboard.writeText(upiId);
                         toast.success("UPI ID copied to clipboard");
                       }}
                       className="text-primary hover:text-primary/80 p-1 cursor-pointer"
@@ -232,7 +236,7 @@ export function CheckoutPage() {
                   <div className="flex flex-col gap-1 mt-2 text-xs text-left">
                     <div className="flex justify-between w-full">
                       <span className="text-muted-foreground">Payee:</span>
-                      <span className="font-bold text-foreground">Abdul Wahed Sabri</span>
+                      <span className="font-bold text-foreground">MY Link QR Platform</span>
                     </div>
                     <div className="flex justify-between w-full">
                       <span className="text-muted-foreground">Amount:</span>
@@ -242,25 +246,25 @@ export function CheckoutPage() {
 
                   <div className="pt-3 grid grid-cols-2 gap-2">
                     <a
-                      href={`tez://upi/pay?pa=9392318135-2@axl&pn=Abdul%20Wahed%20Sabri&am=${search.price}&cu=INR`}
+                      href={`tez://upi/pay?pa=${encodeURIComponent(upiId)}&pn=MY%20Link%20QR&am=${search.price}&cu=INR`}
                       className="flex items-center justify-center w-full py-2 bg-card border border-border text-foreground rounded-xl hover:bg-muted transition-colors font-semibold shadow-sm text-xs"
                     >
                       Google Pay
                     </a>
                     <a
-                      href={`phonepe://pay?pa=9392318135-2@axl&pn=Abdul%20Wahed%20Sabri&am=${search.price}&cu=INR`}
+                      href={`phonepe://pay?pa=${encodeURIComponent(upiId)}&pn=MY%20Link%20QR&am=${search.price}&cu=INR`}
                       className="flex items-center justify-center w-full py-2 bg-card border border-border text-foreground rounded-xl hover:bg-muted transition-colors font-semibold shadow-sm text-xs"
                     >
                       PhonePe
                     </a>
                     <a
-                      href={`paytmmp://pay?pa=9392318135-2@axl&pn=Abdul%20Wahed%20Sabri&am=${search.price}&cu=INR`}
+                      href={`paytmmp://pay?pa=${encodeURIComponent(upiId)}&pn=MY%20Link%20QR&am=${search.price}&cu=INR`}
                       className="flex items-center justify-center w-full py-2 bg-card border border-border text-foreground rounded-xl hover:bg-muted transition-colors font-semibold shadow-sm text-xs"
                     >
                       Paytm
                     </a>
                     <a
-                      href={`upi://pay?pa=9392318135-2@axl&pn=Abdul%20Wahed%20Sabri&am=${search.price}&cu=INR`}
+                      href={`upi://pay?pa=${encodeURIComponent(upiId)}&pn=MY%20Link%20QR&am=${search.price}&cu=INR`}
                       className="flex items-center justify-center w-full py-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors font-semibold shadow-sm text-xs"
                     >
                       Other UPI Apps

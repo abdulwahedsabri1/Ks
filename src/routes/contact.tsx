@@ -55,7 +55,7 @@ function ContactPage() {
 ${message}`;
 
     const encoded = encodeURIComponent(whatsappMessage);
-    const whatsappUrl = `https://wa.me/919392318135?text=${encoded}`;
+    const whatsappUrl = `https://wa.me/919876543210?text=${encoded}`;
 
     toast.success("Message submitted! Opening WhatsApp support...");
     setSubmitted(true);
@@ -112,7 +112,7 @@ ${message}`;
                         WhatsApp Support
                       </p>
                       <p className="font-mono text-base font-semibold text-foreground">
-                        +91 9392318135
+                        +91 98765 43210
                       </p>
                       <p className="text-xs text-muted-foreground">Instant response (24/7)</p>
                     </div>
@@ -181,7 +181,7 @@ ${message}`;
                     <h3 className="font-display text-2xl font-semibold">Thank You!</h3>
                     <p className="text-muted-foreground max-w-md mx-auto">
                       Your message has been sent to our team. If WhatsApp didn't open automatically,
-                      feel free to message us directly at +91 9392318135.
+                      feel free to message us directly at +91 98765 43210.
                     </p>
                     <Button
                       onClick={() => setSubmitted(false)}

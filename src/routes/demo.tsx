@@ -71,7 +71,7 @@ function DemoWatchRoute() {
       (bookingForm.notes.trim() ? `📝 Notes: ${bookingForm.notes.trim()}\n` : "");
 
     const encoded = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/919392318135?text=${encoded}`;
+    const whatsappUrl = `https://wa.me/919876543210?text=${encoded}`;
 
     toast.success("Opening WhatsApp to book your meeting...");
     window.open(whatsappUrl, "_blank");
@@ -262,7 +262,7 @@ function DemoWatchRoute() {
                           id="b-phone"
                           required
                           type="tel"
-                          placeholder="e.g. 9392318135"
+                          placeholder="e.g. 9876543210"
                           value={bookingForm.phone}
                           onChange={(e) =>
                             setBookingForm({ ...bookingForm, phone: e.target.value })
@@ -321,7 +321,7 @@ function DemoWatchRoute() {
                   </div>
 
                   <Button type="submit" className="w-full h-11 text-xs font-bold gap-2">
-                    <Send className="size-4" /> Forward to WhatsApp (+91 9392318135)
+                    <Send className="size-4" /> Forward to WhatsApp (+91 98765 43210)
                   </Button>
                 </form>
               </div>

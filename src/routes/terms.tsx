@@ -90,7 +90,7 @@ function TermsPage() {
                 We reserve the right to suspend or terminate accounts that violate law or abuse
                 system resources. For questions regarding terms, contact support at{" "}
                 <span className="font-semibold text-foreground">support@mylinkqr.com</span> or
-                WhatsApp <span className="font-semibold text-foreground">+91 9392318135</span>.
+                WhatsApp <span className="font-semibold text-foreground">+91 98765 43210</span>.
               </p>
             </section>
           </div>

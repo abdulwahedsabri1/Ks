@@ -88,7 +88,7 @@ const faqs = [
   {
     question: "How can I contact live customer support?",
     answer:
-      "You can reach our dedicated support team 24/7 via WhatsApp at +91 9392318135 or through our Contact page.",
+      "You can reach our dedicated support team 24/7 via WhatsApp at +91 98765 43210 or through our Contact page.",
   },
 ];
 

@@ -55,7 +55,7 @@ export const DEFAULT_COUPONS: Coupon[] = [
 
 const DEFAULT_SETTINGS: PaymentSettings = {
   razorpay_enabled: true,
-  upi_id: "9392318135-2@axl",
+  upi_id: "pay.shop@upi",
   coupons: DEFAULT_COUPONS,
 };
 
