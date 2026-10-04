@@ -496,12 +496,13 @@ function SettingsPage() {
               {saving ? (
                 <>
                   <Loader2 className="size-3.5 animate-spin text-black" />
-                  <span>Saving…</span>
+                  <span className="hidden sm:inline">Saving…</span>
                 </>
               ) : (
                 <>
                   <Check className="size-3.5" />
-                  <span>Save Changes</span>
+                  <span className="hidden sm:inline">Save Changes</span>
+                  <span className="sm:hidden">Save</span>
                 </>
               )}
             </Button>
@@ -528,29 +529,29 @@ function SettingsPage() {
       )}
 
       {!shop ? (
-        <div className="rounded-2xl border bg-card p-8 text-center max-w-md mx-auto my-12">
+        <div className="rounded-2xl border bg-card p-6 sm:p-8 text-center max-w-md mx-auto my-8 sm:my-12">
           <Store className="size-12 text-amber-500 mx-auto mb-3 opacity-80" />
           <h3 className="font-bold text-lg text-foreground">No Shop Configured Yet</h3>
           <p className="text-sm text-muted-foreground mt-1 mb-4">
             Please create your shop profile on the dashboard to access full settings.
           </p>
-          <Button asChild className="bg-amber-500 text-black font-bold">
+          <Button asChild className="bg-amber-500 text-black font-bold w-full sm:w-auto">
             <a href="/dashboard">Go to Dashboard</a>
           </Button>
         </div>
       ) : (
-        <div className="space-y-6 pb-20">
+        <div className="space-y-5 sm:space-y-6 pb-28 sm:pb-24">
           {/* Top Quick Status Bar */}
-          <div className="rounded-2xl border bg-card/80 p-4 sm:p-5 backdrop-blur-xl shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3.5 min-w-0">
+          <div className="rounded-2xl border bg-card/80 p-4 sm:p-5 backdrop-blur-xl shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 w-full sm:w-auto">
               {form.logo_url ? (
                 <img
                   src={form.logo_url}
                   alt={form.name}
-                  className="size-12 rounded-xl object-cover border border-amber-500/30 shrink-0 shadow-sm"
+                  className="size-11 sm:size-12 rounded-xl object-cover border border-amber-500/30 shrink-0 shadow-sm"
                 />
               ) : (
-                <div className="size-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500 font-bold text-xl shrink-0">
+                <div className="size-11 sm:size-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500 font-bold text-lg sm:text-xl shrink-0">
                   {form.name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -570,7 +571,8 @@ function SettingsPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-border/50">
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-2.5 sm:pt-0 border-border/50">
+              <span className="text-[11px] text-muted-foreground font-mono sm:hidden">Business Key</span>
               <div
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted/60 border border-border text-foreground text-xs font-mono font-semibold cursor-pointer hover:bg-muted transition-colors"
                 onClick={() => handleCopyBizId(shopBusinessId(shop))}
@@ -583,7 +585,26 @@ function SettingsPage() {
             </div>
           </div>
 
-          {/* Navigation Segment Tabs */}
+          {/* Mobile Select Dropdown for quick navigation */}
+          <div className="sm:hidden space-y-1.5">
+            <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
+              <span>SETTINGS SECTION ({TABS.findIndex((t) => t.id === activeTab) + 1} / {TABS.length})</span>
+              <span className="text-amber-500 font-semibold">{TABS.find((t) => t.id === activeTab)?.label}</span>
+            </div>
+            <select
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value as TabId)}
+              className="h-11 w-full rounded-xl border border-amber-500/40 bg-card px-3 text-sm font-bold text-foreground shadow-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+            >
+              {TABS.map((t, idx) => (
+                <option key={t.id} value={t.id}>
+                  {idx + 1}. {t.label} {t.badge ? `(${t.badge})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Touch-Friendly Navigation Segment Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar scroll-smooth border-b border-border/60">
             {TABS.map((t) => {
               const Icon = t.icon;
@@ -592,7 +613,7 @@ function SettingsPage() {
                 <button
                   key={t.id}
                   onClick={() => setActiveTab(t.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+                  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer shrink-0 min-h-[44px] sm:min-h-0 ${
                     isActive
                       ? "bg-amber-500 text-black shadow-sm"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -616,8 +637,8 @@ function SettingsPage() {
 
           {/* TAB 1: General & Branding */}
           {activeTab === "branding" && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-5">
+            <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-200">
+              <div className="rounded-2xl border bg-card p-4 sm:p-6 space-y-4 sm:space-y-5">
                 <div className="border-b pb-3">
                   <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                     <Store className="size-5 text-amber-500" /> Business Profile & Information
@@ -636,13 +657,13 @@ function SettingsPage() {
                     onChange={(v) => updateForm((prev) => ({ ...prev, name: v }))}
                   />
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="s-niche" className="text-xs font-semibold text-foreground">
                       Business Type / Niche
                     </Label>
                     <select
                       id="s-niche"
-                      className="h-10 w-full rounded-xl border bg-background px-3 text-sm font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                      className="h-11 sm:h-10 w-full rounded-xl border bg-background px-3 text-base sm:text-sm font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none"
                       value={form.niche}
                       onChange={(e) => updateForm((prev) => ({ ...prev, niche: e.target.value }))}
                     >
@@ -663,7 +684,7 @@ function SettingsPage() {
                   onChange={(v) => updateForm((prev) => ({ ...prev, tagline: v }))}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1 sm:pt-2">
                   <FormInput
                     id="s-catalog-label"
                     label="Catalog / Menu Section Title"
@@ -683,7 +704,7 @@ function SettingsPage() {
               </div>
 
               {/* Media & Branding Images */}
-              <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-5">
+              <div className="rounded-2xl border bg-card p-4 sm:p-6 space-y-4 sm:space-y-5">
                 <div className="border-b pb-3">
                   <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                     <Upload className="size-5 text-amber-500" /> Branding Media & Imagery
@@ -693,14 +714,14 @@ function SettingsPage() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                   {/* Logo Upload */}
-                  <div className="space-y-3 rounded-xl border bg-muted/20 p-4">
+                  <div className="space-y-3 rounded-xl border bg-muted/20 p-3.5 sm:p-4">
                     <Label className="font-semibold text-xs text-foreground uppercase tracking-wider">
                       Shop Logo
                     </Label>
-                    <div className="flex items-center gap-4">
-                      <div className="size-20 rounded-2xl border border-amber-500/20 overflow-hidden bg-background shrink-0 flex items-center justify-center shadow-xs relative">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                      <div className="size-16 sm:size-20 rounded-2xl border border-amber-500/20 overflow-hidden bg-background shrink-0 flex items-center justify-center shadow-xs relative">
                         {uploadingMedia === "logo_url" ? (
                           <div className="flex items-center justify-center size-full bg-muted/60">
                             <Loader2 className="size-6 animate-spin text-amber-500" />
@@ -711,12 +732,12 @@ function SettingsPage() {
                           <span className="text-xs text-muted-foreground font-semibold">No Logo</span>
                         )}
                       </div>
-                      <div className="space-y-2 flex-1 min-w-0">
+                      <div className="space-y-2 flex-1 w-full min-w-0">
                         <Input
                           type="file"
                           accept="image/*"
                           disabled={uploadingMedia === "logo_url"}
-                          className="text-xs h-9 cursor-pointer file:text-xs file:font-bold"
+                          className="text-xs h-10 sm:h-9 cursor-pointer file:text-xs file:font-bold w-full"
                           onChange={(e) => {
                             const f = e.target.files?.[0];
                             if (f) void upload("logo_url", f);
@@ -736,7 +757,7 @@ function SettingsPage() {
                   </div>
 
                   {/* Cover Banner Upload */}
-                  <div className="space-y-3 rounded-xl border bg-muted/20 p-4">
+                  <div className="space-y-3 rounded-xl border bg-muted/20 p-3.5 sm:p-4">
                     <Label className="font-semibold text-xs text-foreground uppercase tracking-wider">
                       Cover Banner Image
                     </Label>
@@ -757,7 +778,7 @@ function SettingsPage() {
                           type="file"
                           accept="image/*"
                           disabled={uploadingMedia === "cover_url"}
-                          className="text-xs h-9 cursor-pointer file:text-xs file:font-bold flex-1"
+                          className="text-xs h-10 sm:h-9 cursor-pointer file:text-xs file:font-bold flex-1"
                           onChange={(e) => {
                             const f = e.target.files?.[0];
                             if (f) void upload("cover_url", f);
@@ -782,9 +803,9 @@ function SettingsPage() {
 
           {/* TAB 2: Custom Handle & Domain */}
           {activeTab === "domain" && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-5">
-                <div className="border-b pb-3 flex items-center justify-between">
+            <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-200">
+              <div className="rounded-2xl border bg-card p-4 sm:p-6 space-y-4 sm:space-y-5">
+                <div className="border-b pb-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <div>
                     <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                       <LinkIcon className="size-5 text-amber-500" /> Custom Shop URL Handle
@@ -817,9 +838,9 @@ function SettingsPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <div className="relative flex-1">
-                      <span className="absolute left-3.5 top-2.5 text-xs text-muted-foreground font-mono">
+                      <span className="absolute left-3.5 top-3 sm:top-2.5 text-xs text-muted-foreground font-mono pointer-events-none">
                         /shop/
                       </span>
                       <Input
@@ -830,46 +851,51 @@ function SettingsPage() {
                           updateForm((prev) => ({ ...prev, slug: slugify(e.target.value) }))
                         }
                         placeholder="my-shop-name"
-                        className={`pl-16 h-10 font-mono text-sm font-bold ${
+                        className={`pl-16 h-11 sm:h-10 font-mono text-base sm:text-sm font-bold ${
                           !feat.custom_domain
                             ? "bg-muted/60 opacity-70 cursor-not-allowed text-muted-foreground border-amber-500/20"
                             : "text-amber-600 dark:text-amber-400 border-amber-500/40"
                         }`}
                       />
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        handleCopyShopUrl(publicShopUrl(form.slug || shop.slug, form.custom_domain))
-                      }
-                      className="h-10 px-3.5 text-xs font-semibold shrink-0"
-                      title="Copy full public shop URL"
-                    >
-                      {copiedShopUrl ? (
-                        <Check className="size-4 text-emerald-500" />
-                      ) : (
-                        <Copy className="size-4" />
-                      )}
-                    </Button>
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="h-10 px-3.5 text-xs font-semibold shrink-0 border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
-                    >
-                      <a
-                        href={publicShopUrl(form.slug || shop.slug, form.custom_domain)}
-                        target="_blank"
-                        rel="noreferrer"
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          handleCopyShopUrl(publicShopUrl(form.slug || shop.slug, form.custom_domain))
+                        }
+                        className="h-11 sm:h-10 flex-1 sm:flex-initial px-3.5 text-xs font-semibold shrink-0"
+                        title="Copy full public shop URL"
                       >
-                        <ExternalLink className="size-4" />
-                      </a>
-                    </Button>
+                        {copiedShopUrl ? (
+                          <Check className="size-4 text-emerald-500 mr-1" />
+                        ) : (
+                          <Copy className="size-4 mr-1" />
+                        )}
+                        <span className="sm:hidden">Copy URL</span>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="h-11 sm:h-10 px-3.5 text-xs font-semibold shrink-0 border-amber-500/40 text-amber-500 hover:bg-amber-500/10"
+                      >
+                        <a
+                          href={publicShopUrl(form.slug || shop.slug, form.custom_domain)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-1"
+                        >
+                          <ExternalLink className="size-4" />
+                          <span className="sm:hidden">Open</span>
+                        </a>
+                      </Button>
+                    </div>
                   </div>
 
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground break-all">
                     Public customer link:{" "}
                     <code className="text-amber-500 font-mono font-bold">
                       {publicShopUrl(form.slug || shop.slug, form.custom_domain)}
@@ -877,7 +903,7 @@ function SettingsPage() {
                   </p>
 
                   {!feat.custom_domain && (
-                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5 flex items-center justify-between gap-3 mt-3">
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-3">
                       <div className="space-y-0.5">
                         <p className="text-xs font-bold text-amber-500 flex items-center gap-1.5">
                           <Lock className="size-3.5" /> Premium Custom Link Feature
@@ -890,7 +916,7 @@ function SettingsPage() {
                         asChild
                         size="sm"
                         variant="outline"
-                        className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs"
+                        className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs w-full sm:w-auto"
                       >
                         <a href="/pricing">Upgrade to Premium</a>
                       </Button>
@@ -900,7 +926,7 @@ function SettingsPage() {
               </div>
 
               {/* Google Reviews Integration */}
-              <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-4">
+              <div className="rounded-2xl border bg-card p-4 sm:p-6 space-y-4">
                 <div className="border-b pb-3">
                   <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                     <Globe className="size-5 text-amber-500" /> Google Reviews Link
@@ -911,7 +937,7 @@ function SettingsPage() {
                 </div>
 
                 {!feat.google_reviews ? (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex items-center justify-between gap-4">
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-bold text-amber-500 flex items-center gap-1.5">
                         <Lock className="size-3.5" /> Google Reviews Integration
@@ -924,7 +950,7 @@ function SettingsPage() {
                       asChild
                       size="sm"
                       variant="outline"
-                      className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs"
+                      className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs w-full sm:w-auto"
                     >
                       <a href="/pricing">Upgrade</a>
                     </Button>
@@ -944,8 +970,8 @@ function SettingsPage() {
 
           {/* TAB 3: Contact & Location */}
           {activeTab === "contact" && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-5">
+            <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-200">
+              <div className="rounded-2xl border bg-card p-4 sm:p-6 space-y-4 sm:space-y-5">
                 <div className="border-b pb-3">
                   <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                     <Phone className="size-5 text-amber-500" /> Direct Contact & Location
@@ -1001,7 +1027,7 @@ function SettingsPage() {
               </div>
 
               {/* Social Links */}
-              <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-5">
+              <div className="rounded-2xl border bg-card p-4 sm:p-6 space-y-4 sm:space-y-5">
                 <div className="border-b pb-3">
                   <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                     <Share2 className="size-5 text-amber-500" /> Social Media & Community Channels
@@ -1020,7 +1046,7 @@ function SettingsPage() {
                 />
 
                 {!feat.advanced_social_links ? (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex items-center justify-between gap-4">
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-bold text-amber-500 flex items-center gap-1.5">
                         <Lock className="size-3.5" /> Advanced Social Channels
@@ -1033,7 +1059,7 @@ function SettingsPage() {
                       asChild
                       size="sm"
                       variant="outline"
-                      className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs"
+                      className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs w-full sm:w-auto"
                     >
                       <a href="/pricing">Upgrade</a>
                     </Button>
@@ -1079,8 +1105,8 @@ function SettingsPage() {
 
           {/* TAB 4: Menu & Channels */}
           {activeTab === "ordering" && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-5">
+            <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-200">
+              <div className="rounded-2xl border bg-card p-4 sm:p-6 space-y-4 sm:space-y-5">
                 <div className="border-b pb-3">
                   <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                     <ShoppingBag className="size-5 text-amber-500" /> Catalog Currency & Toggles
@@ -1101,15 +1127,15 @@ function SettingsPage() {
                 </div>
 
                 {/* Master Cart Toggle */}
-                <div className="flex items-center justify-between rounded-xl border bg-gradient-to-r from-amber-500/10 via-card to-card p-4 border-amber-500/30 shadow-xs">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="cart-toggle" className="text-sm font-bold text-foreground flex items-center gap-2">
-                      Shopping Cart & Ordering Button
+                <div className="flex items-center justify-between rounded-xl border bg-gradient-to-r from-amber-500/10 via-card to-card p-3.5 sm:p-4 border-amber-500/30 shadow-xs">
+                  <div className="space-y-0.5 pr-2">
+                    <Label htmlFor="cart-toggle" className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-2 flex-wrap">
+                      <span>Shopping Cart & Ordering Button</span>
                       <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full font-bold">
                         Real-Time Sync
                       </span>
                     </Label>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] sm:text-xs text-muted-foreground">
                       Enable or disable the Cart button and WhatsApp ordering on your public menu.
                     </p>
                   </div>
@@ -1122,7 +1148,7 @@ function SettingsPage() {
                 </div>
 
                 {/* Individual Channel Toggles */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-1">
                   <ChannelCard
                     id="delivery-toggle"
                     title="Delivery"
@@ -1152,13 +1178,13 @@ function SettingsPage() {
                 </div>
 
                 {/* General Enquiry Toggle */}
-                <div className="space-y-3 rounded-xl border p-4 bg-muted/20">
+                <div className="space-y-3 rounded-xl border p-3.5 sm:p-4 bg-muted/20">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="enquiry-toggle" className="text-sm font-bold">
+                    <div className="pr-2">
+                      <Label htmlFor="enquiry-toggle" className="text-xs sm:text-sm font-bold">
                         General Enquiry / Quote Requests
                       </Label>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
                         Allow visitors to send general inquiries or custom quote requests.
                       </p>
                     </div>
@@ -1188,8 +1214,8 @@ function SettingsPage() {
 
           {/* TAB 5: Payments & UPI */}
           {activeTab === "payments" && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-5">
+            <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-200">
+              <div className="rounded-2xl border bg-card p-4 sm:p-6 space-y-4 sm:space-y-5">
                 <div className="border-b pb-3">
                   <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                     <CreditCard className="size-5 text-amber-500" /> Checkout Payment Options
@@ -1200,12 +1226,12 @@ function SettingsPage() {
                 </div>
 
                 {/* COD Switch */}
-                <div className="flex items-center justify-between p-4 rounded-xl border bg-card/60">
-                  <div>
-                    <Label htmlFor="s-cod" className="font-bold text-sm cursor-pointer">
+                <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card/60">
+                  <div className="pr-2">
+                    <Label htmlFor="s-cod" className="font-bold text-xs sm:text-sm cursor-pointer">
                       Cash on Delivery (COD)
                     </Label>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
                       Allow customers to pay cash when their order is fulfilled.
                     </p>
                   </div>
@@ -1217,12 +1243,12 @@ function SettingsPage() {
                 </div>
 
                 {/* UPI Switch */}
-                <div className="flex items-center justify-between p-4 rounded-xl border bg-card/60">
-                  <div>
-                    <Label htmlFor="s-upi-toggle" className="font-bold text-sm cursor-pointer">
+                <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card/60">
+                  <div className="pr-2">
+                    <Label htmlFor="s-upi-toggle" className="font-bold text-xs sm:text-sm cursor-pointer">
                       Direct UPI Payments (GPay, PhonePe, Paytm, QR)
                     </Label>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
                       Accept instant UPI payments directly into your bank account.
                     </p>
                   </div>
@@ -1236,7 +1262,7 @@ function SettingsPage() {
                 </div>
 
                 {!feat.upi ? (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex items-center justify-between gap-4">
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-bold text-amber-500 flex items-center gap-1.5">
                         <Lock className="size-3.5" /> UPI Payments Integration
@@ -1249,14 +1275,14 @@ function SettingsPage() {
                       asChild
                       size="sm"
                       variant="outline"
-                      className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs"
+                      className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs w-full sm:w-auto"
                     >
                       <a href="/pricing">Upgrade</a>
                     </Button>
                   </div>
                 ) : (
                   form.upi_enabled && (
-                    <div className="space-y-5 pt-2 animate-in fade-in duration-200">
+                    <div className="space-y-4 sm:space-y-5 pt-2 animate-in fade-in duration-200">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormInput
                           id="s-upi"
@@ -1266,7 +1292,7 @@ function SettingsPage() {
                           onChange={(v) => updateForm((prev) => ({ ...prev, upi_id: v }))}
                         />
 
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                           <Label htmlFor="s-upi-amount" className="text-xs font-semibold">
                             Test Amount (For Live Preview Below)
                           </Label>
@@ -1277,17 +1303,17 @@ function SettingsPage() {
                             placeholder="240"
                             value={testUpiAmount}
                             onChange={(e) => setTestUpiAmount(parseFloat(e.target.value) || 0)}
-                            className="h-10 text-sm font-semibold"
+                            className="h-11 sm:h-10 text-base sm:text-sm font-semibold rounded-xl"
                           />
                         </div>
                       </div>
 
                       {/* Custom UPI QR Upload */}
-                      <div className="space-y-3 rounded-xl border bg-muted/20 p-4">
+                      <div className="space-y-3 rounded-xl border bg-muted/20 p-3.5 sm:p-4">
                         <Label className="font-semibold text-xs text-foreground uppercase tracking-wider">
                           Custom Store UPI QR Code Image (Optional)
                         </Label>
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                           <div className="size-20 rounded-xl border border-amber-500/20 overflow-hidden bg-background shrink-0 flex items-center justify-center relative">
                             {uploadingMedia === "upi_qr_url" ? (
                               <Loader2 className="size-6 animate-spin text-amber-500" />
@@ -1297,12 +1323,12 @@ function SettingsPage() {
                               <span className="text-[10px] text-muted-foreground font-semibold text-center">Auto Generated</span>
                             )}
                           </div>
-                          <div className="space-y-2 flex-1">
+                          <div className="space-y-2 flex-1 w-full">
                             <Input
                               type="file"
                               accept="image/*"
                               disabled={uploadingMedia === "upi_qr_url"}
-                              className="text-xs h-9 cursor-pointer"
+                              className="text-xs h-10 sm:h-9 cursor-pointer w-full"
                               onChange={(e) => {
                                 const f = e.target.files?.[0];
                                 if (f) void upload("upi_qr_url", f);
@@ -1338,8 +1364,8 @@ function SettingsPage() {
 
           {/* TAB 6: Theme & Language */}
           {activeTab === "theme" && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-5">
+            <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-200">
+              <div className="rounded-2xl border bg-card p-4 sm:p-6 space-y-4 sm:space-y-5">
                 <div className="border-b pb-3">
                   <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                     <Palette className="size-5 text-amber-500" /> Menu Theme & Aesthetics
@@ -1350,7 +1376,7 @@ function SettingsPage() {
                 </div>
 
                 {!feat.themes ? (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex items-center justify-between gap-4">
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-bold text-amber-500 flex items-center gap-1.5">
                         <Lock className="size-3.5" /> Custom Themes
@@ -1363,13 +1389,13 @@ function SettingsPage() {
                       asChild
                       size="sm"
                       variant="outline"
-                      className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs"
+                      className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs w-full sm:w-auto"
                     >
                       <a href="/pricing">Upgrade</a>
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                     <ThemeCard
                       id="luxury_dark"
                       title="Luxury Dark"
@@ -1434,9 +1460,9 @@ function SettingsPage() {
               </div>
 
               {/* Multi-Language Support */}
-              <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-5">
+              <div className="rounded-2xl border bg-card p-4 sm:p-6 space-y-4 sm:space-y-5">
                 <div className="border-b pb-3 flex items-center justify-between">
-                  <div>
+                  <div className="pr-2">
                     <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                       <Languages className="size-5 text-amber-500" /> Multi-Language Menu Support
                     </h3>
@@ -1455,7 +1481,7 @@ function SettingsPage() {
                 </div>
 
                 {!feat.multi_language ? (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex items-center justify-between gap-4">
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-bold text-amber-500 flex items-center gap-1.5">
                         <Lock className="size-3.5" /> Multi-Language Support
@@ -1468,7 +1494,7 @@ function SettingsPage() {
                       asChild
                       size="sm"
                       variant="outline"
-                      className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs"
+                      className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs w-full sm:w-auto"
                     >
                       <a href="/pricing">Upgrade</a>
                     </Button>
@@ -1477,11 +1503,11 @@ function SettingsPage() {
                   form.multi_language_enabled && (
                     <div className="space-y-3 animate-in fade-in duration-200">
                       <Label className="text-xs font-semibold text-foreground">Select Active Menu Languages</Label>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
                         {AVAILABLE_LANGUAGES.map((lang) => (
                           <label
                             key={lang.code}
-                            className="flex items-center gap-2.5 rounded-xl border p-3 hover:bg-muted/50 cursor-pointer transition-colors"
+                            className="flex items-center gap-2.5 rounded-xl border p-2.5 sm:p-3 hover:bg-muted/50 cursor-pointer transition-colors"
                           >
                             <input
                               type="checkbox"
@@ -1508,9 +1534,9 @@ function SettingsPage() {
 
           {/* TAB 7: Coupons & Offers */}
           {activeTab === "coupons" && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="rounded-2xl border bg-card p-5 sm:p-6 space-y-5">
-                <div className="border-b pb-3 flex items-center justify-between">
+            <div className="space-y-5 sm:space-y-6 animate-in fade-in duration-200">
+              <div className="rounded-2xl border bg-card p-4 sm:p-6 space-y-4 sm:space-y-5">
+                <div className="border-b pb-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <div>
                     <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                       <Tag className="size-5 text-amber-500" /> Discount & Coupon Management
@@ -1525,7 +1551,7 @@ function SettingsPage() {
                 </div>
 
                 {!feat.coupons ? (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex items-center justify-between gap-4">
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-bold text-amber-500 flex items-center gap-1.5">
                         <Lock className="size-3.5" /> Coupon & Discount System
@@ -1538,20 +1564,20 @@ function SettingsPage() {
                       asChild
                       size="sm"
                       variant="outline"
-                      className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs"
+                      className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs w-full sm:w-auto"
                     >
                       <a href="/pricing">Upgrade</a>
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="space-y-5 sm:space-y-6">
                     {/* Add Coupon Form */}
-                    <div className="rounded-xl border bg-muted/20 p-4 space-y-4">
+                    <div className="rounded-xl border bg-muted/20 p-3.5 sm:p-4 space-y-3.5">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
                         <Plus className="size-4" /> Create New Coupon Code
                       </h4>
 
-                      <div className="grid gap-3 sm:grid-cols-5 items-end">
+                      <div className="grid gap-3 grid-cols-1 sm:grid-cols-5 items-end">
                         <div className="sm:col-span-2">
                           <Label className="text-xs font-semibold">Coupon Code *</Label>
                           <Input
@@ -1560,14 +1586,14 @@ function SettingsPage() {
                             onChange={(e) =>
                               setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })
                             }
-                            className="h-9 font-mono font-bold text-sm uppercase"
+                            className="h-11 sm:h-9 font-mono font-bold text-base sm:text-sm uppercase rounded-xl"
                           />
                         </div>
 
                         <div>
                           <Label className="text-xs font-semibold">Discount Type</Label>
                           <select
-                            className="flex h-9 w-full rounded-xl border border-input bg-background px-3 text-xs font-semibold"
+                            className="flex h-11 sm:h-9 w-full rounded-xl border border-input bg-background px-3 text-base sm:text-xs font-semibold"
                             value={newCoupon.type}
                             onChange={(e) =>
                               setNewCoupon({ ...newCoupon, type: e.target.value as "percent" | "fixed" })
@@ -1585,7 +1611,7 @@ function SettingsPage() {
                             placeholder="20"
                             value={newCoupon.value}
                             onChange={(e) => setNewCoupon({ ...newCoupon, value: e.target.value })}
-                            className="h-9 font-semibold text-sm"
+                            className="h-11 sm:h-9 font-semibold text-base sm:text-sm rounded-xl"
                           />
                         </div>
 
@@ -1595,7 +1621,7 @@ function SettingsPage() {
                             type="date"
                             value={newCoupon.expires_at}
                             onChange={(e) => setNewCoupon({ ...newCoupon, expires_at: e.target.value })}
-                            className="h-9 text-xs"
+                            className="h-11 sm:h-9 text-base sm:text-xs rounded-xl"
                           />
                         </div>
                       </div>
@@ -1603,7 +1629,7 @@ function SettingsPage() {
                       <Button
                         onClick={addCoupon}
                         type="button"
-                        className="bg-amber-500 hover:bg-amber-600 text-black font-bold h-9 px-4 text-xs shadow-xs"
+                        className="bg-amber-500 hover:bg-amber-600 text-black font-bold h-11 sm:h-9 px-4 text-xs shadow-xs w-full sm:w-auto rounded-xl"
                       >
                         <Plus className="size-3.5 mr-1" /> Add Coupon Code
                       </Button>
@@ -1624,21 +1650,21 @@ function SettingsPage() {
                           {form.coupons.map((c) => (
                             <div
                               key={c.code}
-                              className="flex items-center justify-between p-3.5 text-sm hover:bg-muted/30 transition-colors"
+                              className="flex items-center justify-between p-3.5 text-sm hover:bg-muted/30 transition-colors gap-2"
                             >
-                              <div className="flex items-center gap-3">
-                                <span className="font-mono font-bold text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 text-xs">
+                              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                                <span className="font-mono font-bold text-amber-500 bg-amber-500/10 px-2 sm:px-2.5 py-1 rounded-lg border border-amber-500/20 text-xs shrink-0">
                                   {c.code}
                                 </span>
-                                <div>
-                                  <span className="font-semibold text-xs text-foreground">
+                                <div className="min-w-0">
+                                  <span className="font-semibold text-xs text-foreground block truncate">
                                     {c.type === "percent"
                                       ? `${c.value}% OFF`
                                       : `Flat ${form.currency}${c.value} OFF`}
                                   </span>
                                   {c.expires_at && (
-                                    <span className="text-[11px] text-muted-foreground block mt-0.5 flex items-center gap-1">
-                                      <Calendar className="size-3" /> Expires: {new Date(c.expires_at).toLocaleDateString()}
+                                    <span className="text-[11px] text-muted-foreground block mt-0.5 flex items-center gap-1 truncate">
+                                      <Calendar className="size-3 shrink-0" /> {new Date(c.expires_at).toLocaleDateString()}
                                     </span>
                                   )}
                                 </div>
@@ -1648,9 +1674,10 @@ function SettingsPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => removeCoupon(c.code)}
-                                className="h-8 px-2.5 text-red-500 hover:text-red-600 hover:bg-red-500/10 text-xs font-semibold"
+                                className="h-8 px-2.5 text-red-500 hover:text-red-600 hover:bg-red-500/10 text-xs font-semibold shrink-0"
                               >
-                                <Trash2 className="size-3.5 mr-1" /> Remove
+                                <Trash2 className="size-3.5 sm:mr-1" />
+                                <span className="hidden sm:inline">Remove</span>
                               </Button>
                             </div>
                           ))}
@@ -1663,24 +1690,28 @@ function SettingsPage() {
             </div>
           )}
 
-          {/* Sticky Bottom Action Bar */}
-          <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/90 backdrop-blur-xl border-t p-3.5 sm:px-8 shadow-2xl flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="hidden sm:inline">Changes synchronize in real-time to your public website.</span>
-              <span className="sm:hidden font-mono font-bold text-amber-500">/shop/{form.slug || shop.slug}</span>
+          {/* Touch & Mobile Responsive Sticky Save Bar */}
+          <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-xl border-t p-3 sm:p-4 sm:px-8 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground w-full sm:w-auto justify-between sm:justify-start">
+              <div className="flex items-center gap-2">
+                <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[11px] sm:text-xs">Real-time sync to public shop</span>
+              </div>
+              <span className="font-mono font-bold text-amber-500 text-[11px] sm:hidden">
+                /shop/{form.slug || shop.slug}
+              </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button
                 onClick={save}
                 disabled={saving || Boolean(uploadingMedia)}
-                className="bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs h-10 px-6 shadow-md cursor-pointer"
+                className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-black font-bold text-sm h-11 sm:h-10 px-6 shadow-md cursor-pointer rounded-xl"
               >
                 {saving ? (
                   <>
                     <Loader2 className="size-4 animate-spin text-black shrink-0" />
-                    <span>Saving…</span>
+                    <span>Saving Changes…</span>
                   </>
                 ) : (
                   <>
@@ -1720,7 +1751,7 @@ function FormInput({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="h-10 text-sm font-medium"
+        className="h-11 sm:h-10 text-base sm:text-sm font-medium rounded-xl"
       />
     </div>
   );
@@ -1742,14 +1773,14 @@ function ChannelCard({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <div className="flex flex-col justify-between p-4 rounded-xl border bg-card/60 space-y-3">
-      <div className="space-y-1">
-        <Label htmlFor={id} className="font-bold text-xs cursor-pointer text-foreground block">
+    <div className="flex items-center sm:flex-col justify-between sm:justify-between p-3.5 sm:p-4 rounded-xl border bg-card/60 gap-3">
+      <div className="space-y-0.5 sm:space-y-1 pr-2 sm:pr-0">
+        <Label htmlFor={id} className="font-bold text-xs sm:text-xs cursor-pointer text-foreground block">
           {title}
         </Label>
         <p className="text-[11px] text-muted-foreground leading-snug">{desc}</p>
       </div>
-      <div className="flex justify-end pt-1">
+      <div className="flex justify-end pt-0 sm:pt-1 shrink-0">
         <Switch id={id} checked={checked} disabled={disabled} onCheckedChange={onChange} />
       </div>
     </div>
@@ -1775,27 +1806,27 @@ function ThemeCard({
 }) {
   return (
     <div
-      className={`cursor-pointer rounded-2xl border-2 p-3.5 transition-all shadow-xs ${
+      className={`cursor-pointer rounded-2xl border-2 p-3 sm:p-3.5 transition-all shadow-xs ${
         selected ? "border-amber-500 bg-amber-500/5 ring-1 ring-amber-500/30" : "border-border hover:border-amber-500/50"
       }`}
       onClick={onClick}
     >
       <div
-        className="aspect-[3/4] w-full rounded-xl mb-3 p-3 flex flex-col items-center overflow-hidden border border-border/40 shadow-inner"
+        className="aspect-[3/4] w-full rounded-xl mb-2.5 sm:mb-3 p-2.5 sm:p-3 flex flex-col items-center overflow-hidden border border-border/40 shadow-inner"
         style={{ backgroundColor: bgColor }}
       >
-        <div className="w-full h-6 rounded-md mb-2 flex items-center px-2 bg-white/10">
-          <div className="size-3 rounded-sm mr-2 shrink-0" style={{ backgroundColor: accentColor }} />
-          <div className="h-1.5 w-16 bg-white/30 rounded-full" />
+        <div className="w-full h-5 sm:h-6 rounded-md mb-2 flex items-center px-2 bg-white/10">
+          <div className="size-2.5 sm:size-3 rounded-sm mr-2 shrink-0" style={{ backgroundColor: accentColor }} />
+          <div className="h-1.5 w-12 sm:w-16 bg-white/30 rounded-full" />
         </div>
-        <div className="w-full h-6 rounded-md flex items-center px-2 bg-white/10">
-          <div className="size-3 rounded-sm mr-2 shrink-0" style={{ backgroundColor: accentColor }} />
-          <div className="h-1.5 w-12 bg-white/30 rounded-full" />
+        <div className="w-full h-5 sm:h-6 rounded-md flex items-center px-2 bg-white/10">
+          <div className="size-2.5 sm:size-3 rounded-sm mr-2 shrink-0" style={{ backgroundColor: accentColor }} />
+          <div className="h-1.5 w-10 sm:w-12 bg-white/30 rounded-full" />
         </div>
-        <div className="mt-auto w-full h-4 rounded-md" style={{ backgroundColor: accentColor }} />
+        <div className="mt-auto w-full h-3.5 sm:h-4 rounded-md" style={{ backgroundColor: accentColor }} />
       </div>
-      <p className="font-bold text-xs text-foreground">{title}</p>
-      <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{desc}</p>
+      <p className="font-bold text-xs text-foreground truncate">{title}</p>
+      <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 leading-snug line-clamp-2">{desc}</p>
     </div>
   );
 }
