@@ -529,17 +529,17 @@ function QrPage() {
         }
 
         ctx.fillStyle = "#FFC45A";
-        ctx.font = "bold 38px sans-serif";
+        ctx.font = "bold 40px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(`📱 ${txt.standSub}`, width / 2, 1310);
+        ctx.fillText(`📱 ${txt.standSub}`, width / 2, 1320);
 
-        ctx.fillStyle = "rgba(255,255,255,0.7)";
-        ctx.font = "32px sans-serif";
-        ctx.fillText(`No app download required`, width / 2, 1370);
+        ctx.fillStyle = "rgba(255,255,255,0.85)";
+        ctx.font = "bold 32px sans-serif";
+        ctx.fillText("Instant Contactless Menu & Order", width / 2, 1380);
 
-        ctx.fillStyle = "rgba(255,255,255,0.4)";
-        ctx.font = "28px sans-serif";
-        ctx.fillText(`Powered by MY Link QR`, width / 2, 1500);
+        ctx.fillStyle = "#FFC45A";
+        ctx.font = "bold 42px sans-serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, 1485);
       }
       // 3. POSTER CARD FRAME
       else if (frameStyle === "poster") {
@@ -626,7 +626,11 @@ function QrPage() {
 
         ctx.fillStyle = "#100C09";
         ctx.font = "bold 32px sans-serif";
-        ctx.fillText(txt.posterFooter, width / 2, cy + cardH - 80);
+        ctx.fillText(txt.posterFooter, width / 2, cy + cardH - 100);
+
+        ctx.fillStyle = "#FFC45A";
+        ctx.font = "bold 38px sans-serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, cy + cardH - 45);
       }
       // 4. LUXURY OBSIDIAN & GOLD FRAME
       else if (frameStyle === "luxury_gold") {
@@ -729,9 +733,9 @@ function QrPage() {
         ctx.font = "28px sans-serif";
         ctx.fillText(txt.luxurySub, width / 2, 1400);
 
-        ctx.fillStyle = "rgba(212, 175, 55, 0.4)";
-        ctx.font = "24px serif";
-        ctx.fillText("Powered by MY Link QR", width / 2, 1500);
+        ctx.fillStyle = "#D4AF37";
+        ctx.font = "bold 38px serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, 1485);
       }
       // 5. CYBER NEON DARK FRAME
       else if (frameStyle === "cyber_neon") {
@@ -834,9 +838,9 @@ function QrPage() {
         ctx.font = "30px sans-serif";
         ctx.fillText(txt.cyberSub, width / 2, 1370);
 
-        ctx.fillStyle = "rgba(255,255,255,0.35)";
-        ctx.font = "26px sans-serif";
-        ctx.fillText("Powered by MY Link QR", width / 2, 1490);
+        ctx.fillStyle = "#06B6D4";
+        ctx.font = "bold 38px sans-serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, 1485);
       }
       // 6. NORDIC WARM LINEN FRAME
       else if (frameStyle === "nordic_warm") {
@@ -934,9 +938,9 @@ function QrPage() {
         ctx.font = "28px sans-serif";
         ctx.fillText("Point your camera to browse live items", width / 2, 1370);
 
-        ctx.fillStyle = "rgba(45, 40, 37, 0.4)";
-        ctx.font = "24px serif";
-        ctx.fillText("Powered by MY Link QR", width / 2, 1490);
+        ctx.fillStyle = "#7C402B";
+        ctx.font = "bold 38px serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, 1485);
       }
       // 7. ROYAL GLASSMORPHIC FRAME
       else if (frameStyle === "royal_glass") {
@@ -1035,12 +1039,12 @@ function QrPage() {
         ctx.font = "bold 36px sans-serif";
         ctx.fillText(txt.royalSub, width / 2, gy + glassH - 140);
 
-        ctx.fillStyle = "rgba(255,255,255,0.6)";
-        ctx.font = "28px sans-serif";
+        ctx.fillStyle = "#A855F7";
+        ctx.font = "bold 38px sans-serif";
         ctx.fillText(
-          "No registration required • Powered by MY Link QR",
+          "Powered by MY Link QR",
           width / 2,
-          gy + glassH - 75,
+          gy + glassH - 65,
         );
       }
       // 8. RETRO DINER & BISTRO
@@ -1134,9 +1138,9 @@ function QrPage() {
         ctx.font = "28px sans-serif";
         ctx.fillText("Contactless menu & WhatsApp messaging", width / 2, 1370);
 
-        ctx.fillStyle = "rgba(255, 253, 208, 0.4)";
-        ctx.font = "24px serif";
-        ctx.fillText("Powered by MY Link QR", width / 2, 1490);
+        ctx.fillStyle = "#FFFDD0";
+        ctx.font = "bold 38px serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, 1485);
       }
       // 9. EMERALD BOTANICAL & SPA
       else if (frameStyle === "emerald_botanical") {
@@ -1232,9 +1236,9 @@ function QrPage() {
         ctx.font = "28px sans-serif";
         ctx.fillText("Eco-friendly • Pure • Handcrafted", width / 2, 1370);
 
-        ctx.fillStyle = "rgba(167, 243, 208, 0.4)";
-        ctx.font = "24px serif";
-        ctx.fillText("Powered by MY Link QR", width / 2, 1490);
+        ctx.fillStyle = "#A7F3D0";
+        ctx.font = "bold 38px serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, 1485);
       }
       // 10. SUNSET LOUNGE & BAR
       else if (frameStyle === "sunset_vibes") {
@@ -1318,9 +1322,9 @@ function QrPage() {
         ctx.font = "bold 36px sans-serif";
         ctx.fillText(txt.sunsetSub, width / 2, cy + cardH - 140);
 
-        ctx.fillStyle = "rgba(255,255,255,0.7)";
-        ctx.font = "28px sans-serif";
-        ctx.fillText("Instant Order & Direct WhatsApp Messaging", width / 2, cy + cardH - 75);
+        ctx.fillStyle = "#FF9500";
+        ctx.font = "bold 38px sans-serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, cy + cardH - 65);
       }
       // 11. MATTE MONOCHROMATIC
       else if (frameStyle === "minimal_mono") {
@@ -1399,9 +1403,9 @@ function QrPage() {
         ctx.font = "bold 36px monospace";
         ctx.fillText(txt.monoSub, width / 2, 1310);
 
-        ctx.fillStyle = "rgba(255,255,255,0.5)";
-        ctx.font = "26px sans-serif";
-        ctx.fillText("Powered by MY Link QR", width / 2, 1490);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "bold 38px monospace";
+        ctx.fillText("Powered by MY Link QR", width / 2, 1485);
       }
       // 12. HOLOGRAPHIC PRISM (FUTURISTIC)
       else if (frameStyle === "hologram_futuristic") {
@@ -1504,9 +1508,9 @@ function QrPage() {
         ctx.font = "30px sans-serif";
         ctx.fillText("Instant order & direct WhatsApp chat", width / 2, 1370);
 
-        ctx.fillStyle = "rgba(255,255,255,0.35)";
-        ctx.font = "26px sans-serif";
-        ctx.fillText("Powered by MY Link QR", width / 2, 1490);
+        ctx.fillStyle = "#EC4899";
+        ctx.font = "bold 38px sans-serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, 1485);
       }
       // 13. ROSE GOLD SALON & BEAUTY
       else if (frameStyle === "rose_gold_salon") {
@@ -1603,9 +1607,9 @@ function QrPage() {
         ctx.font = "28px sans-serif";
         ctx.fillText("View Rate Card, Packages & Book on WhatsApp", width / 2, 1370);
 
-        ctx.fillStyle = "rgba(244, 114, 182, 0.4)";
-        ctx.font = "24px serif";
-        ctx.fillText("Powered by MY Link QR", width / 2, 1490);
+        ctx.fillStyle = "#F472B6";
+        ctx.font = "bold 38px serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, 1485);
       }
       // 14. GRAND HOTEL CONCIERGE
       else if (frameStyle === "hotel_concierge") {
@@ -1697,9 +1701,9 @@ function QrPage() {
         ctx.font = "28px sans-serif";
         ctx.fillText("Room Service, Amenities & Reception Desk", width / 2, 1370);
 
-        ctx.fillStyle = "rgba(244, 208, 63, 0.4)";
-        ctx.font = "24px serif";
-        ctx.fillText("Powered by MY Link QR", width / 2, 1490);
+        ctx.fillStyle = "#F4D03F";
+        ctx.font = "bold 38px serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, 1485);
       }
       // 15. DIAMOND & JEWELRY SHOWCASE
       else if (frameStyle === "jewelry_luxury") {
@@ -1796,9 +1800,9 @@ function QrPage() {
         ctx.font = "28px sans-serif";
         ctx.fillText("Inquire prices & designs directly on WhatsApp", width / 2, 1370);
 
-        ctx.fillStyle = "rgba(203, 213, 225, 0.4)";
-        ctx.font = "24px serif";
-        ctx.fillText("Powered by MY Link QR", width / 2, 1490);
+        ctx.fillStyle = "#CBD5E1";
+        ctx.font = "bold 38px serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, 1485);
       }
       // 16. CLINIC & MEDICAL CARE
       else if (frameStyle === "clinic_medical") {
@@ -1884,9 +1888,9 @@ function QrPage() {
         ctx.font = "28px sans-serif";
         ctx.fillText("Book Appointments & Inquire via WhatsApp", width / 2, 1370);
 
-        ctx.fillStyle = "rgba(255,255,255,0.5)";
-        ctx.font = "24px sans-serif";
-        ctx.fillText("Powered by MY Link QR", width / 2, 1490);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "bold 38px sans-serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, 1485);
       }
       // 17. POWER GYM & FITNESS
       else if (frameStyle === "gym_fitness") {
@@ -1982,9 +1986,9 @@ function QrPage() {
         ctx.font = "28px sans-serif";
         ctx.fillText("Personal Training, Membership Plans & WhatsApp Booking", width / 2, 1370);
 
-        ctx.fillStyle = "rgba(34, 197, 94, 0.4)";
-        ctx.font = "24px serif";
-        ctx.fillText("Powered by MY Link QR", width / 2, 1490);
+        ctx.fillStyle = "#22C55E";
+        ctx.font = "bold 38px sans-serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, 1485);
       }
       // 18. FOOD TRUCK & STREET FOOD
       else if (frameStyle === "food_truck") {
@@ -2067,9 +2071,9 @@ function QrPage() {
         ctx.font = "28px sans-serif";
         ctx.fillText("Fast takeaways & direct WhatsApp confirmation", width / 2, 1370);
 
-        ctx.fillStyle = "rgba(234, 179, 8, 0.4)";
-        ctx.font = "24px serif";
-        ctx.fillText("Powered by MY Link QR", width / 2, 1490);
+        ctx.fillStyle = "#EAB308";
+        ctx.font = "bold 38px sans-serif";
+        ctx.fillText("Powered by MY Link QR", width / 2, 1485);
       }
 
       setPng(canvas.toDataURL("image/png"));
