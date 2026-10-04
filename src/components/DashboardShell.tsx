@@ -192,36 +192,7 @@ export function DashboardShell({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">{actions}</div>
           </div>
-
-          {/* Quick Mobile Horizontal Navigation Bar */}
-          <nav className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none lg:hidden">
-            {!isPending &&
-              [
-                ...NAV,
-                ...(isAdmin ? [{ to: "/admin", label: "Admin", icon: Shield } as const] : []),
-              ].map((item) => {
-                const isActive = pathname === item.to;
-                const Icon = item.icon;
-                const displayLabel = item.label === "Menu & Items" ? `${catalogLabel}` : item.label;
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className={cn(
-                      "flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-all shrink-0",
-                      isActive
-                        ? "border-amber-500 bg-amber-500 text-black font-bold shadow-sm"
-                        : "border-border bg-card/80 text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    <Icon className="size-3.5" />
-                    {displayLabel}
-                  </Link>
-                );
-              })}
-          </nav>
         </header>
 
         {/* Mobile Slide-Over Menu Overlay */}
