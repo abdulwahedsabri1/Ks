@@ -51,6 +51,11 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://mylinkqr.com/shops</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://mylinkqr.com/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
