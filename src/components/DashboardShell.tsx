@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Sparkles,
   Lock,
+  Palette,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +32,7 @@ const NAV = [
   { to: "/menu", label: "Menu & Items", icon: UtensilsCrossed },
   { to: "/qr", label: "QR Code", icon: QrCode },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/themes", label: "Menu Themes", icon: Palette },
   { to: "/settings", label: "Shop Settings", icon: Settings },
 ] as const;
 
@@ -191,7 +193,7 @@ export function DashboardShell({
                 )}
               </div>
             </div>
-
+            {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
           </div>
         </header>
 
@@ -338,13 +340,20 @@ export function DashboardShell({
             ].map((item) => {
               const isActive = pathname === item.to;
               const Icon = item.to === "/menu" ? DynamicMenuIcon : item.icon;
-              const displayLabel = item.label === "Menu & Items" ? catalogLabel : item.label;
+              const displayLabel =
+                item.label === "Menu & Items"
+                  ? catalogLabel
+                  : item.label === "Shop Settings"
+                    ? "Settings"
+                    : item.label === "Menu Themes"
+                      ? "Themes"
+                      : item.label;
               return (
                 <Link
                   key={item.to}
                   to={item.to}
                   className={cn(
-                    "flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-semibold transition-all rounded-xl",
+                    "flex flex-col items-center gap-0.5 px-1 py-1 text-[10px] font-semibold transition-all rounded-xl min-w-0 flex-1 text-center",
                     isActive
                       ? "text-amber-500 font-bold scale-105"
                       : "text-muted-foreground hover:text-foreground opacity-80",
@@ -358,7 +367,7 @@ export function DashboardShell({
                   >
                     <Icon className="size-4" />
                   </div>
-                  <span className="truncate max-w-[60px]">{displayLabel}</span>
+                  <span className="truncate w-full max-w-[56px] text-[9px] sm:text-[10px]">{displayLabel}</span>
                 </Link>
               );
             })}
