@@ -32,7 +32,6 @@ const NAV = [
   { to: "/menu", label: "Menu & Items", icon: UtensilsCrossed },
   { to: "/qr", label: "QR Code", icon: QrCode },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/themes", label: "Menu Themes", icon: Palette },
   { to: "/settings", label: "Shop Settings", icon: Settings },
 ] as const;
 
@@ -345,9 +344,7 @@ export function DashboardShell({
                   ? catalogLabel
                   : item.label === "Shop Settings"
                     ? "Settings"
-                    : item.label === "Menu Themes"
-                      ? "Themes"
-                      : item.label;
+                    : item.label;
               return (
                 <Link
                   key={item.to}
