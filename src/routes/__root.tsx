@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { CookieConsent } from "@/components/CookieConsent";
 
 function NotFoundComponent() {
   return (
@@ -200,8 +201,6 @@ function RootShell({ children }: { children: ReactNode }) {
     </html>
   );
 }
-
-import { CookieConsent } from "@/components/CookieConsent";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();

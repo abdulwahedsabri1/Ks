@@ -22,6 +22,7 @@ import {
   useMenuItems,
   useMyShop,
   uploadShopMedia,
+  triggerCrossTabSync,
 } from "@/hooks/useShopData";
 import { generateMenu, scanMenuPhoto } from "@/lib/ai.functions";
 import { DashboardShell } from "@/components/DashboardShell";
@@ -194,8 +195,15 @@ function MenuPage() {
   }
 
   function refresh() {
+    if (shop) {
+      qc.invalidateQueries({ queryKey: ["categories", shop.id] });
+      qc.invalidateQueries({ queryKey: ["menu-items", shop.id] });
+      triggerCrossTabSync(shop.id, shop.owner_id);
+    }
     qc.invalidateQueries({ queryKey: ["categories"] });
     qc.invalidateQueries({ queryKey: ["menu-items"] });
+    qc.invalidateQueries({ queryKey: ["my-shop"] });
+    qc.invalidateQueries({ queryKey: ["publicShop"] });
   }
 
   async function addCategory() {

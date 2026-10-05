@@ -62,7 +62,7 @@ export function CheckoutPage() {
 
   useEffect(() => {
     const price = search.price || 99;
-    const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent("MY Link QR")}&am=${price}&cu=INR`;
+    const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent("MY Link QR")}&am=${price.toFixed(2)}&cu=INR&tn=${encodeURIComponent("MY Link QR Subscription")}`;
     QRCode.toDataURL(upiUri, {
       width: 300,
       margin: 2,

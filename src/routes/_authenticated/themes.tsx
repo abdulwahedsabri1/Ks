@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { DashboardShell } from "@/components/DashboardShell";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useMyShop } from "@/hooks/useShopData";
+import { useMyShop, triggerCrossTabSync } from "@/hooks/useShopData";
+import { useQueryClient } from "@tanstack/react-query";
 import { THEME_CONFIG, shopTheme, type ThemeId } from "@/lib/shop";
 
 export const Route = createFileRoute("/_authenticated/themes")({
@@ -95,6 +96,7 @@ const THEMES_LIST: {
 ];
 
 function ThemesRoute() {
+  const qc = useQueryClient();
   const { data: shop, refetch: refresh } = useMyShop();
   const [busyId, setBusyId] = useState<ThemeId | null>(null);
 
@@ -116,6 +118,11 @@ function ThemesRoute() {
 
       if (error) throw error;
       toast.success(`${THEMES_LIST.find((t) => t.id === themeId)?.name} theme applied!`);
+
+      // Invalidate queries & sync real-time
+      qc.invalidateQueries({ queryKey: ["my-shop"] });
+      qc.invalidateQueries({ queryKey: ["publicShop"] });
+      triggerCrossTabSync(shop.id, shop.owner_id);
       refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not update theme");

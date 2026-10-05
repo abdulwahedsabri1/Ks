@@ -59,12 +59,14 @@ export function shopSocialLinks(shop?: Pick<Shop, "plan" | "features"> | null) {
   const rawWeb = shop?.features?.["website_url"] ?? "";
   const rawWaGroup =
     shop?.features?.["whatsapp_group_url"] ?? shop?.features?.["whatsapp_group"] ?? "";
+  const rawYt = shop?.features?.["youtube_url"] ?? shop?.features?.["youtube"] ?? "";
 
   const ig = typeof rawIg === "string" ? rawIg : "";
   const fb = typeof rawFb === "string" ? rawFb : "";
   const tw = typeof rawTw === "string" ? rawTw : "";
   const web = typeof rawWeb === "string" ? rawWeb : "";
   const waGroup = typeof rawWaGroup === "string" ? rawWaGroup : "";
+  const yt = typeof rawYt === "string" ? rawYt : "";
 
   return {
     instagram: ig.trim(),
@@ -72,6 +74,7 @@ export function shopSocialLinks(shop?: Pick<Shop, "plan" | "features"> | null) {
     twitter: tw.trim(),
     website: web.trim(),
     whatsapp_group: waGroup.trim(),
+    youtube: yt.trim(),
   };
 }
 
@@ -114,6 +117,32 @@ export function shopOnTableEnabled(shop?: Pick<Shop, "plan" | "features"> | null
 export function shopEnquiryEnabled(shop?: Pick<Shop, "plan" | "features"> | null) {
   if (!shopFeatures(shop).enquiry) return false;
   return shop?.features?.["enquiry"] !== false;
+}
+
+export function shopCodEnabled(shop?: Pick<Shop, "features"> | null): boolean {
+  const f = shop?.features as Record<string, any> | undefined;
+  if (!f) return true;
+  return f["cod_enabled"] !== false;
+}
+
+export function shopUpiEnabled(shop?: Pick<Shop, "plan" | "features"> | null): boolean {
+  const f = shop?.features as Record<string, any> | undefined;
+  if (!f) return false;
+  const isEnabled = f["upi_enabled"] === true;
+  const hasDetails = Boolean(f["upi_id"]) || Boolean(f["upi_qr_url"]);
+  return isEnabled && hasDetails;
+}
+
+export function shopLocationBlinkEnabled(shop?: Pick<Shop, "features"> | null): boolean {
+  const f = shop?.features as Record<string, any> | undefined;
+  if (!f) return true;
+  return f["location_blink_enabled"] !== false;
+}
+
+export function shopLocationBadgeLabel(shop?: Pick<Shop, "features"> | null): string {
+  const f = shop?.features as Record<string, any> | undefined;
+  const custom = f?.["label_location_popup"];
+  return typeof custom === "string" && custom.trim() ? custom.trim() : "📍 Click Here for Location";
 }
 
 export function shopCatalogLabel(shop?: Pick<Shop, "niche" | "features"> | null): string {
@@ -638,6 +667,7 @@ export const PLANS: PlanItem[] = [
       "Priority support",
       "Coupon codes",
       "UPI Payments",
+      "YouTube Channel integration",
     ],
   },
 ];
@@ -667,6 +697,7 @@ export type PlanFeatures = {
   multi_language: boolean;
   coupons: boolean;
   upi: boolean;
+  youtube: boolean;
 };
 
 export const PLAN_FEATURES: Record<string, PlanFeatures> = {
@@ -692,6 +723,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     multi_language: false,
     coupons: false,
     upi: false,
+    youtube: false,
   },
   basic: {
     items: 50,
@@ -715,6 +747,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     multi_language: true,
     coupons: false,
     upi: false,
+    youtube: false,
   },
   pro: {
     items: Infinity,
@@ -738,6 +771,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     multi_language: true,
     coupons: false,
     upi: false,
+    youtube: false,
   },
   premium: {
     items: Infinity,
@@ -761,6 +795,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     multi_language: true,
     coupons: true,
     upi: true,
+    youtube: true,
   },
 };
 
@@ -783,7 +818,8 @@ export type FeatureKey =
   | "opening_hours"
   | "multi_language"
   | "coupons"
-  | "upi";
+  | "upi"
+  | "youtube";
 
 export const FEATURE_LABELS: Record<FeatureKey, string> = {
   logo_cover: "Business logo & cover photo",
@@ -805,6 +841,7 @@ export const FEATURE_LABELS: Record<FeatureKey, string> = {
   multi_language: "Multiple languages support",
   coupons: "Discount & Coupon codes",
   upi: "UPI payments",
+  youtube: "YouTube Channel integration",
 };
 
 export const FEATURE_KEYS = Object.keys(FEATURE_LABELS) as FeatureKey[];
@@ -839,8 +876,19 @@ export function shopFeatures(shop?: Pick<Shop, "plan" | "features"> | null): Pla
       merged[key] =
         overrides[`admin_disabled_${key}`] !== true && overrides[`admin_disabled`] !== true;
     } else {
-      // Plan does not natively grant feature: lock unless explicitly enabled by admin override
-      merged[key] = overrides[`admin_override_${key}`] === true;
+      // Plan does not natively grant feature: unlock if explicitly enabled in settings or by admin override
+      merged[key] =
+        overrides[`admin_override_${key}`] === true ||
+        overrides[`${key}_enabled`] === true ||
+        overrides[key] === true ||
+        (key === "ordering" && (overrides["cart_enabled"] === true || overrides["ordering_enabled"] === true)) ||
+        (key === "take_away" && (overrides["takeaway"] === true || overrides["take_away"] === true)) ||
+        (key === "upi" && (overrides["upi_enabled"] === true || Boolean(overrides["upi_id"]) || Boolean(overrides["upi_qr_url"]))) ||
+        (key === "themes" && Boolean(overrides["theme"])) ||
+        (key === "coupons" && Array.isArray(overrides["coupons"]) && overrides["coupons"].length > 0) ||
+        (key === "delivery" && overrides["delivery"] === true) ||
+        (key === "on_table" && overrides["on_table"] === true) ||
+        (key === "enquiry" && overrides["enquiry"] === true);
     }
   }
 
@@ -1114,10 +1162,6 @@ export type Coupon = {
   min_order?: number;
   expires_at?: string;
 };
-
-export function shopCodEnabled(shop?: Pick<Shop, "plan" | "features"> | null) {
-  return shop?.features?.["cod_enabled"] !== false;
-}
 
 export function buildWhatsAppOrder(
   shop: Shop,

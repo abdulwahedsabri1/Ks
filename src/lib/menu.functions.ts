@@ -48,6 +48,13 @@ export function invalidatePublicShopCache(slug?: string) {
   }
 }
 
+export const purgePublicShopCache = createServerFn({ method: "POST" })
+  .validator((data: { slug?: string }) => data)
+  .handler(async ({ data }) => {
+    invalidatePublicShopCache(data?.slug);
+    return { success: true };
+  });
+
 export const getPublicShop = createServerFn({ method: "GET" })
   .validator((data: { slug: string }) => data)
   .handler(async ({ data }) => {

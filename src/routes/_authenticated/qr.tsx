@@ -363,7 +363,7 @@ function QrPage() {
   const viewOnlyUrl = shop ? `${publicShopUrl(shop.slug)}?src=qr&mode=view` : "";
   const upiUrl =
     shop && upiId
-      ? `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(shop.name)}&cu=INR`
+      ? `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(shop.name)}&cu=INR&tn=${encodeURIComponent("Payment to " + shop.name)}`
       : "";
   const mapUrl = shop ? shopMapUrl(shop) || "" : "";
   const reviewUrl = shop ? shopGoogleReviewLink(shop) || "" : "";
@@ -2740,5 +2740,3 @@ function QrPage() {
     </>
   );
 }
-
-export default QrPage;

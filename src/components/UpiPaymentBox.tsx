@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { Check, Copy, QrCode as QrIcon, Sparkles, Smartphone, ArrowUpRight } from "lucide-react";
+import { Check, Copy, QrCode as QrIcon, Sparkles, Smartphone, ArrowUpRight, AlertCircle, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
@@ -30,14 +30,16 @@ export function UpiPaymentBox({
   // Clean UPI ID string
   const cleanUpiId = upiId.trim();
 
-  // Dynamic UPI payment URI string
-  let standardUpiUri = "";
-  if (cleanUpiId) {
-    standardUpiUri = `upi://pay?pa=${encodeURIComponent(cleanUpiId)}&pn=${encodeURIComponent(shopName)}&cu=INR`;
-    if (amount && amount > 0) {
-      standardUpiUri += `&am=${amount.toFixed(2)}`;
-    }
+  const note = `Payment to ${shopName}`;
+  const formattedAmount = amount && amount > 0 ? amount.toFixed(2) : "";
+
+  // Standard NPCI compliant UPI URI query string
+  let queryParams = `pa=${encodeURIComponent(cleanUpiId)}&pn=${encodeURIComponent(shopName)}&cu=INR&tn=${encodeURIComponent(note)}`;
+  if (formattedAmount) {
+    queryParams += `&am=${formattedAmount}`;
   }
+
+  const standardUpiUri = cleanUpiId ? `upi://pay?${queryParams}` : "";
 
   // Generate dynamic QR code if cleanUpiId is present and no custom upiQrUrl provided
   useEffect(() => {
@@ -66,9 +68,9 @@ export function UpiPaymentBox({
       navigator.clipboard.writeText(cleanUpiId);
       setCopied(true);
       if (appName) {
-        toast.success(`UPI ID copied! Paste in ${appName} or scan QR code.`);
+        toast.success(`UPI ID (${cleanUpiId}) copied! Opening ${appName}...`);
       } else {
-        toast.success("UPI ID copied to clipboard!");
+        toast.success(`UPI ID (${cleanUpiId}) copied to clipboard!`);
       }
       setTimeout(() => setCopied(false), 2500);
     } catch {
@@ -82,35 +84,50 @@ export function UpiPaymentBox({
     // Always copy UPI ID to clipboard first so user has it ready
     copyUpiId(appName);
 
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent,
-    );
+    const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    const isAndroid = /Android/i.test(userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
 
-    if (isMobile) {
-      const queryParams = `pa=${encodeURIComponent(cleanUpiId)}&pn=${encodeURIComponent(shopName)}&cu=INR${
-        amount && amount > 0 ? `&am=${amount.toFixed(2)}` : ""
-      }`;
-
-      let deepLink = "";
+    if (isAndroid) {
+      let targetUri = "";
       if (scheme === "phonepe") {
-        deepLink = `phonepe://pay?${queryParams}`;
+        targetUri = `intent://pay?${queryParams}#Intent;scheme=upi;package=com.phonepe.app;end;`;
       } else if (scheme === "gpay") {
-        deepLink = `gpay://upi/pay?${queryParams}`;
+        targetUri = `intent://pay?${queryParams}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end;`;
       } else if (scheme === "paytm") {
-        deepLink = `paytmmp://pay?${queryParams}`;
+        targetUri = `intent://pay?${queryParams}#Intent;scheme=upi;package=net.one97.paytm;end;`;
       } else {
-        deepLink = `upi://pay?${queryParams}`;
+        targetUri = `upi://pay?${queryParams}`;
       }
 
-      // Attempt deep link launch
-      window.location.href = deepLink;
+      window.location.href = targetUri;
 
-      // Fallback to standard upi:// if specific app protocol does not launch
       if (scheme !== "upi") {
         setTimeout(() => {
           window.location.href = `upi://pay?${queryParams}`;
-        }, 750);
+        }, 1000);
       }
+    } else if (isIOS) {
+      let targetUri = "";
+      if (scheme === "phonepe") {
+        targetUri = `phonepe://upi/pay?${queryParams}`;
+      } else if (scheme === "gpay") {
+        targetUri = `gpay://upi/pay?${queryParams}`;
+      } else if (scheme === "paytm") {
+        targetUri = `paytmmp://pay?${queryParams}`;
+      } else {
+        targetUri = `upi://pay?${queryParams}`;
+      }
+
+      window.location.href = targetUri;
+
+      if (scheme !== "upi") {
+        setTimeout(() => {
+          window.location.href = `upi://pay?${queryParams}`;
+        }, 1000);
+      }
+    } else {
+      toast.info(`UPI ID (${cleanUpiId}) copied! Scan the QR code with ${appName} or enter UPI ID manually.`);
     }
   };
 
@@ -207,6 +224,28 @@ export function UpiPaymentBox({
               <span>UPI App</span>
               <ArrowUpRight className="size-3 opacity-60 group-hover:opacity-100 transition-opacity" />
             </button>
+          </div>
+
+          {/* Fallback Help box for Bank Limit Errors */}
+          <div className="mt-3 bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-200/90 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-amber-400">
+              <AlertCircle className="size-4 shrink-0 text-amber-400" />
+              <span>Bank Limit Error on GPay / PhonePe?</span>
+            </div>
+            <p className="text-[11px] leading-relaxed text-muted-foreground">
+              If GPay or PhonePe shows <em>"exceeded bank limit"</em> or <em>"QR gallery limit"</em>, tap <strong>Copy UPI ID</strong> below, open your payment app, choose <strong>"Pay to UPI ID"</strong>, paste <code className="text-amber-300 font-mono">{cleanUpiId}</code>, and enter the amount.
+            </p>
+            <div className="pt-1 flex items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => copyUpiId()}
+                className="h-7 text-xs font-bold border-amber-500/50 text-amber-300 hover:bg-amber-500/20 cursor-pointer"
+              >
+                <Copy className="size-3 mr-1" /> Copy UPI ID ({cleanUpiId})
+              </Button>
+            </div>
           </div>
         </div>
       )}

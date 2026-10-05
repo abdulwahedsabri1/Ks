@@ -16,9 +16,13 @@ import {
   Facebook,
   Twitter,
   Globe,
+  Youtube,
   AlertTriangle,
   Eye,
+  Compass,
 } from "lucide-react";
+import { LocationMapModal } from "@/components/LocationMapModal";
+import { fetchExactLocationFromCoords } from "@/lib/locationHelper";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { UpiPaymentBox } from "@/components/UpiPaymentBox";
@@ -46,6 +50,7 @@ import {
   shopOnTableEnabled,
   shopEnquiryEnabled,
   shopCodEnabled,
+  shopUpiEnabled,
   shopOrderLabels,
   shopCatalogLabel,
   shopItemLabel,
@@ -53,6 +58,8 @@ import {
   shopFeatures,
   shopLanguages,
   shopMapUrl,
+  shopLocationBlinkEnabled,
+  shopLocationBadgeLabel,
   getCategoryInstructionsConfig,
   THEME_CONFIG,
   type CartLine,
@@ -268,11 +275,43 @@ function PublicMenu() {
   );
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "upi">("cod");
 
+  // Keep orderType and paymentMethod synced with real-time shop settings updates
+  useEffect(() => {
+    const isDel = shopDeliveryEnabled(shop);
+    const isTak = shopTakeawayEnabled(shop);
+    const isTab = shopOnTableEnabled(shop);
+    const isEnq = shopEnquiryEnabled(shop);
+
+    const validOrderTypes: ("delivery" | "takeaway" | "on_table" | "enquiry")[] = [];
+    if (isDel) validOrderTypes.push("delivery");
+    if (isTak) validOrderTypes.push("takeaway");
+    if (isTab) validOrderTypes.push("on_table");
+    if (isEnq) validOrderTypes.push("enquiry");
+
+    if (validOrderTypes.length > 0 && !validOrderTypes.includes(orderType)) {
+      setOrderType(validOrderTypes[0]!);
+    }
+
+    const isCod = shopCodEnabled(shop);
+    const isUpi = shopUpiEnabled(shop);
+
+    if (paymentMethod === "cod" && !isCod && isUpi) {
+      setPaymentMethod("upi");
+    } else if (paymentMethod === "upi" && !isUpi && isCod) {
+      setPaymentMethod("cod");
+    }
+  }, [shop]);
+
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryCity, setDeliveryCity] = useState("");
   const [deliveryPincode, setDeliveryPincode] = useState("");
   const [gpsLink, setGpsLink] = useState("");
   const [isLocating, setIsLocating] = useState(false);
+  const [mapModalOpen, setMapModalOpen] = useState(false);
+  const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number }>({
+    lat: 17.385044,
+    lng: 78.486671,
+  });
 
   const fetchLocation = () => {
     setIsLocating(true);
@@ -298,36 +337,11 @@ function PublicMenu() {
           }
         }
       } catch (err) {
-        console.warn("IP Geolocation 1 error:", err);
-      }
-
-      try {
-        const res = await fetch(
-          "https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=en",
-        );
-        if (res.ok) {
-          const data = await res.json();
-          if (data) {
-            const city = data.city || data.locality || data.principalSubdivision || "";
-            const pincode = data.postcode || "";
-            const parts = [data.locality, data.city, data.principalSubdivision].filter(Boolean);
-            const streetAddress = parts.length > 0 ? parts.join(", ") : "";
-
-            if (city) setDeliveryCity(city);
-            if (pincode) setDeliveryPincode(pincode);
-            if (streetAddress) setDeliveryAddress(streetAddress);
-
-            toast.success(message);
-            setIsLocating(false);
-            return true;
-          }
-        }
-      } catch (err) {
-        console.warn("IP Geolocation 2 error:", err);
+        console.warn("IP Geolocation error:", err);
       }
 
       setIsLocating(false);
-      toast.error("Could not auto-detect location. Please enter your address manually.");
+      toast.error("Could not auto-detect location. Please select your exact location on the map.");
       return false;
     };
 
@@ -335,71 +349,13 @@ function PublicMenu() {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-          const mapUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
-          setGpsLink(mapUrl);
+          setCurrentCoords({ lat: latitude, lng: longitude });
 
-          let foundAddress = false;
-
-          // 1. Try BigDataCloud reverse geocoding
-          try {
-            const res = await fetch(
-              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
-            );
-            if (res.ok) {
-              const data = await res.json();
-              if (data) {
-                const city = data.city || data.locality || data.principalSubdivision || "";
-                const pincode = data.postcode || "";
-                const parts = [data.locality, data.city, data.principalSubdivision].filter(Boolean);
-                const streetAddress = parts.length > 0 ? parts.join(", ") : "";
-
-                if (city) setDeliveryCity(city);
-                if (pincode) setDeliveryPincode(pincode);
-                if (streetAddress) {
-                  setDeliveryAddress(streetAddress);
-                  foundAddress = true;
-                }
-              }
-            }
-          } catch (err) {
-            console.warn("BigDataCloud reverse geocode error:", err);
-          }
-
-          // 2. Fallback to Nominatim if needed
-          if (!foundAddress) {
-            try {
-              const res = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-              );
-              if (res.ok) {
-                const data = await res.json();
-                if (data && data.address) {
-                  const addr = data.address;
-                  if (addr.city || addr.town || addr.village || addr.county) {
-                    setDeliveryCity(addr.city || addr.town || addr.village || addr.county || "");
-                  }
-                  if (addr.postcode) setDeliveryPincode(addr.postcode);
-                  const streetParts = [
-                    addr.house_number,
-                    addr.road || addr.street,
-                    addr.suburb || addr.neighbourhood || addr.residential,
-                  ].filter(Boolean);
-                  const streetAddress =
-                    streetParts.length > 0 ? streetParts.join(", ") : data.display_name;
-                  if (streetAddress) {
-                    setDeliveryAddress(streetAddress);
-                    foundAddress = true;
-                  }
-                }
-              }
-            } catch (err) {
-              console.warn("Nominatim reverse geocode error:", err);
-            }
-          }
-
-          if (!foundAddress) {
-            setDeliveryAddress(`GPS Coordinates (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`);
-          }
+          const result = await fetchExactLocationFromCoords(latitude, longitude);
+          setGpsLink(result.gpsLink);
+          if (result.address) setDeliveryAddress(result.address);
+          if (result.city) setDeliveryCity(result.city);
+          if (result.pincode) setDeliveryPincode(result.pincode);
 
           setIsLocating(false);
           toast.success("🎯 Exact location captured via GPS!");
@@ -408,7 +364,7 @@ function PublicMenu() {
           console.warn("GPS Geolocation error/denied:", error);
           void tryIpLocation("Location detected via Network / IP!");
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
       );
     } else {
       void tryIpLocation("Location detected via Network / IP!");
@@ -555,12 +511,13 @@ function PublicMenu() {
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`rounded-xl border ${theme.border} ${theme.card} p-5 backdrop-blur-lg transition-colors duration-500`}
+          className={`rounded-2xl border ${theme.border} ${theme.card} p-5 sm:p-6 backdrop-blur-xl shadow-xl transition-all duration-500 space-y-5`}
         >
-          <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-4">
+          {/* Tier 1: Main Business Identity */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4 min-w-0">
               <div
-                className={`size-16 shrink-0 overflow-hidden rounded-xl border ${theme.border} ${theme.bg}`}
+                className={`size-16 sm:size-20 shrink-0 overflow-hidden rounded-2xl border ${theme.border} ${theme.bg} shadow-md flex items-center justify-center`}
               >
                 {shop.logo_url ? (
                   <img
@@ -570,122 +527,189 @@ function PublicMenu() {
                   />
                 ) : (
                   <span className={`grid size-full place-items-center ${theme.textMuted}`}>
-                    <Store className="size-6" />
+                    <Store className="size-8 text-amber-500 opacity-80" />
                   </span>
                 )}
               </div>
-              <div className="min-w-0">
-                <h1
-                  className={`truncate font-display text-2xl font-bold leading-tight ${theme.text}`}
-                >
-                  {shop.name}
-                </h1>
-                <p className={`mt-1 truncate text-sm ${theme.textMuted}`}>
-                  {shop.tagline ?? shop.niche}
-                </p>
+              <div className="min-w-0 space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1
+                    className={`truncate font-display text-2xl sm:text-3xl font-bold tracking-tight ${theme.text}`}
+                  >
+                    {shop.name}
+                  </h1>
+                  {shop.niche && (
+                    <span className="text-[11px] bg-amber-500/15 text-amber-500 font-bold px-2.5 py-0.5 rounded-full border border-amber-500/30 shrink-0">
+                      {shop.niche}
+                    </span>
+                  )}
+                </div>
+                {shop.tagline && (
+                  <p className={`text-xs sm:text-sm leading-relaxed ${theme.textMuted}`}>
+                    {shop.tagline}
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
-          <div className={`mt-5 flex flex-wrap gap-x-6 gap-y-3 text-[13px] ${theme.textMuted}`}>
+          {/* Tier 2: Location, Phone & Timing Bar */}
+          <div className={`pt-3 border-t ${theme.border} flex flex-wrap items-center gap-x-6 gap-y-2.5 text-xs sm:text-[13px] ${theme.textMuted}`}>
             {shop.address && (
-              <span className="inline-flex items-center gap-2">
-                <MapPin className={`size-4 shrink-0 ${theme.accentText}`} />
-                {shopMapUrl(shop) ? (
+              <div className="inline-flex items-center gap-2 flex-wrap min-w-0">
+                <span className="inline-flex items-center gap-1.5 font-medium truncate">
+                  <MapPin className={`size-4 shrink-0 ${theme.accentText}`} />
                   <a
-                    href={shopMapUrl(shop)}
+                    href={
+                      shopMapUrl(shop) ||
+                      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shop.address + " " + shop.name)}`
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`transition-colors hover:underline ${theme.textMutedHover}`}
+                    className={`transition-colors hover:underline ${theme.textMutedHover} truncate`}
                   >
                     {shop.address}
                   </a>
-                ) : (
-                  shop.address
+                </span>
+                {shopLocationBlinkEnabled(shop) && (
+                  <a
+                    href={
+                      shopMapUrl(shop) ||
+                      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shop.address + " " + shop.name)}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold text-black bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 hover:from-amber-300 hover:to-amber-200 shadow-md shadow-amber-400/25 border border-amber-300/80 animate-pulse transition-all hover:scale-105 active:scale-95 cursor-pointer shrink-0"
+                    title="Click for exact Google Maps store location"
+                  >
+                    <span className="size-2 rounded-full bg-red-600 animate-ping shrink-0" />
+                    <span>{shopLocationBadgeLabel(shop)}</span>
+                    <Compass className="size-3 text-black/80 shrink-0 ml-0.5" />
+                  </a>
                 )}
-              </span>
+              </div>
             )}
+
             {shop.phone && (
               <a
                 href={`tel:${shop.phone}`}
-                className={`inline-flex items-center gap-2 transition-colors ${theme.textMutedHover}`}
+                className={`inline-flex items-center gap-1.5 font-medium transition-colors hover:underline ${theme.textMutedHover}`}
               >
-                <Phone className="size-4" /> {shop.phone}
+                <Phone className={`size-3.5 shrink-0 ${theme.accentText}`} />
+                <span>{shop.phone}</span>
               </a>
             )}
+
             {shopTiming(shop) && (
-              <span className="inline-flex items-center gap-2">
-                <Clock className={`size-4 shrink-0 ${theme.accentText}`} /> {shopTiming(shop)}
+              <span className="inline-flex items-center gap-1.5 font-medium">
+                <Clock className={`size-3.5 shrink-0 ${theme.accentText}`} />
+                <span>{shopTiming(shop)}</span>
               </span>
             )}
-            {(() => {
-              const socials = shopSocialLinks(shop);
-              return (
-                <>
-                  {socials.whatsapp_group && (
-                    <a
-                      href={socials.whatsapp_group}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all hover:scale-105"
-                    >
-                      <MessageCircle className="size-3.5 shrink-0 text-emerald-400" /> Join WhatsApp
-                      Group
-                    </a>
-                  )}
-                  {socials.instagram && (
-                    <a
-                      href={socials.instagram}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={`inline-flex items-center gap-2 transition-colors ${theme.textMutedHover}`}
-                    >
-                      <Instagram className="size-4 shrink-0" /> Instagram
-                    </a>
-                  )}
-                  {socials.facebook && (
-                    <a
-                      href={socials.facebook}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={`inline-flex items-center gap-2 transition-colors ${theme.textMutedHover}`}
-                    >
-                      <Facebook className="size-4 shrink-0" /> Facebook
-                    </a>
-                  )}
-                  {socials.twitter && (
-                    <a
-                      href={socials.twitter}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={`inline-flex items-center gap-2 transition-colors ${theme.textMutedHover}`}
-                    >
-                      <Twitter className="size-4 shrink-0" /> Twitter / X
-                    </a>
-                  )}
-                  {socials.website && (
-                    <a
-                      href={socials.website}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={`inline-flex items-center gap-2 transition-colors ${theme.textMutedHover}`}
-                    >
-                      <Globe className="size-4 shrink-0" /> Website
-                    </a>
-                  )}
-                </>
-              );
-            })()}
-            {shopGoogleReviewLink(shop) && (
-              <button
-                type="button"
-                onClick={() => setReviewModalOpen(true)}
-                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border ${theme.border} transition-all hover:scale-105 hover:bg-amber-400/10 ${theme.textMutedHover}`}
-              >
-                <Star className="size-3.5 fill-amber-400 text-amber-400 shrink-0" /> Google Review
-              </button>
-            )}
           </div>
+
+          {/* Tier 3: Social & Community Channels Bar */}
+          {(() => {
+            const socials = shopSocialLinks(shop);
+            const reviewLink = shopGoogleReviewLink(shop);
+            const hasSocials =
+              socials.whatsapp_group ||
+              socials.youtube ||
+              socials.instagram ||
+              socials.facebook ||
+              socials.twitter ||
+              socials.website ||
+              reviewLink;
+
+            if (!hasSocials) return null;
+
+            return (
+              <div className={`pt-3 border-t ${theme.border} flex flex-wrap items-center gap-2 sm:gap-2.5`}>
+                {socials.whatsapp_group && (
+                  <a
+                    href={socials.whatsapp_group}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/35 px-3 py-1 text-xs font-bold text-emerald-500 hover:bg-emerald-500/25 transition-all hover:scale-105 active:scale-95 shadow-xs"
+                  >
+                    <MessageCircle className="size-3.5 shrink-0 text-emerald-500" />
+                    <span>Join WhatsApp Group</span>
+                  </a>
+                )}
+
+                {reviewLink && (
+                  <button
+                    type="button"
+                    onClick={() => setReviewModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/35 px-3 py-1 text-xs font-bold text-amber-500 hover:bg-amber-500/25 transition-all hover:scale-105 active:scale-95 shadow-xs cursor-pointer"
+                  >
+                    <Star className="size-3.5 fill-amber-400 text-amber-400 shrink-0" />
+                    <span>Google Review</span>
+                  </button>
+                )}
+
+                {socials.youtube && (
+                  <a
+                    href={socials.youtube}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-red-500/15 border border-red-500/35 px-3 py-1 text-xs font-bold text-red-500 hover:bg-red-500/25 transition-all hover:scale-105 active:scale-95 shadow-xs"
+                  >
+                    <Youtube className="size-3.5 shrink-0 text-red-500" />
+                    <span>YouTube</span>
+                  </a>
+                )}
+
+                {socials.instagram && (
+                  <a
+                    href={socials.instagram}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border ${theme.border} bg-muted/20 hover:bg-muted/40 transition-all hover:scale-105 active:scale-95 ${theme.text}`}
+                  >
+                    <Instagram className="size-3.5 shrink-0 text-pink-500" />
+                    <span>Instagram</span>
+                  </a>
+                )}
+
+                {socials.facebook && (
+                  <a
+                    href={socials.facebook}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border ${theme.border} bg-muted/20 hover:bg-muted/40 transition-all hover:scale-105 active:scale-95 ${theme.text}`}
+                  >
+                    <Facebook className="size-3.5 shrink-0 text-blue-500" />
+                    <span>Facebook</span>
+                  </a>
+                )}
+
+                {socials.twitter && (
+                  <a
+                    href={socials.twitter}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border ${theme.border} bg-muted/20 hover:bg-muted/40 transition-all hover:scale-105 active:scale-95 ${theme.text}`}
+                  >
+                    <Twitter className="size-3.5 shrink-0 text-sky-400" />
+                    <span>Twitter / X</span>
+                  </a>
+                )}
+
+                {socials.website && (
+                  <a
+                    href={socials.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border ${theme.border} bg-muted/20 hover:bg-muted/40 transition-all hover:scale-105 active:scale-95 ${theme.text}`}
+                  >
+                    <Globe className="size-3.5 shrink-0 text-indigo-400" />
+                    <span>Website</span>
+                  </a>
+                )}
+              </div>
+            );
+          })()}
         </motion.section>
 
         {/* Sticky Categories */}
@@ -994,44 +1018,68 @@ function PublicMenu() {
                     className={`space-y-4 rounded-xl border ${theme.border} ${theme.bg} p-4 mb-6`}
                   >
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
                         <Label
                           htmlFor="delivery-address"
-                          className={`${theme.accentText} font-semibold`}
+                          className={`${theme.accentText} font-semibold flex items-center gap-1.5`}
                         >
+                          <MapPin className="size-4" />
                           Delivery Address
                         </Label>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          className={`h-7 text-xs font-bold ${theme.cartBg} ${theme.cartText} opacity-90 hover:opacity-100`}
-                          onClick={fetchLocation}
-                          disabled={isLocating}
-                        >
-                          <MapPin className="mr-1 size-3" />
-                          {isLocating ? "Locating..." : "Use GPS"}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs font-bold border-amber-500/40 text-amber-400 hover:bg-amber-500/10 cursor-pointer"
+                            onClick={() => setMapModalOpen(true)}
+                          >
+                            <Compass className="mr-1 size-3.5 text-amber-400" />
+                            Pick on Map
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className={`h-7 text-xs font-bold ${theme.cartBg} ${theme.cartText} opacity-90 hover:opacity-100 cursor-pointer`}
+                            onClick={fetchLocation}
+                            disabled={isLocating}
+                          >
+                            <MapPin className="mr-1 size-3" />
+                            {isLocating ? "Locating..." : "Use GPS"}
+                          </Button>
+                        </div>
                       </div>
                       <Textarea
                         id="delivery-address"
-                        placeholder="House no., Street, Landmark"
+                        placeholder="House / Flat no., Building name, Street, Landmark"
                         value={deliveryAddress}
                         onChange={(e) => setDeliveryAddress(e.target.value)}
                         className={`bg-transparent ${theme.border} ${theme.text} placeholder:opacity-40`}
                       />
                       {gpsLink && (
-                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-2 mt-1">
-                          <MapPin className="size-3.5 shrink-0 text-emerald-400" />
-                          <span className="truncate">Exact GPS Pin Attached</span>
-                          <a
-                            href={gpsLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="ml-auto underline hover:text-emerald-300 shrink-0 font-bold"
-                          >
-                            View Map ↗
-                          </a>
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-2 mt-1">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <MapPin className="size-3.5 shrink-0 text-emerald-400" />
+                            <span className="truncate">Exact GPS Pin Attached</span>
+                          </div>
+                          <div className="flex items-center gap-3 ml-auto">
+                            <button
+                              type="button"
+                              onClick={() => setMapModalOpen(true)}
+                              className="text-amber-400 hover:underline font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+                            >
+                              <Compass className="size-3" /> Adjust Pin
+                            </button>
+                            <a
+                              href={gpsLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="underline hover:text-emerald-300 shrink-0 font-bold"
+                            >
+                              View Map ↗
+                            </a>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1215,7 +1263,7 @@ function PublicMenu() {
                   </div>
                 )}
 
-                {orderType !== "enquiry" && (
+                {orderType !== "enquiry" && (shopCodEnabled(shop) || shopUpiEnabled(shop)) && (
                   <div
                     className={`space-y-3 mb-6 p-4 rounded-xl border ${theme.border} bg-black/5`}
                   >
@@ -1238,34 +1286,27 @@ function PublicMenu() {
                           />
                           <Label
                             htmlFor="pm-cod"
-                            className="font-medium cursor-pointer flex items-center gap-1.5"
+                            className="font-medium cursor-pointer flex items-center gap-1.5 text-sm"
                           >
                             💵 Cash on Delivery (COD)
                           </Label>
                         </div>
                       )}
-                      {features.upi &&
-                        Boolean(
-                          (shop.features as Record<string, unknown> | null)?.["upi_enabled"],
-                        ) &&
-                        (Boolean((shop.features as Record<string, unknown> | null)?.["upi_id"]) ||
-                          Boolean(
-                            (shop.features as Record<string, unknown> | null)?.["upi_qr_url"],
-                          )) && (
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem
-                              value="upi"
-                              id="pm-upi"
-                              className={`${theme.border} ${theme.accentText}`}
-                            />
-                            <Label
-                              htmlFor="pm-upi"
-                              className="font-medium cursor-pointer flex items-center gap-1.5"
-                            >
-                              💳 UPI Pay (GPay / QR)
-                            </Label>
-                          </div>
-                        )}
+                      {shopUpiEnabled(shop) && (
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem
+                            value="upi"
+                            id="pm-upi"
+                            className={`${theme.border} ${theme.accentText}`}
+                          />
+                          <Label
+                            htmlFor="pm-upi"
+                            className="font-medium cursor-pointer flex items-center gap-1.5 text-sm"
+                          >
+                            💳 UPI Pay (GPay / PhonePe / QR)
+                          </Label>
+                        </div>
+                      )}
                     </RadioGroup>
 
                     {paymentMethod === "cod" && shopCodEnabled(shop) && (
@@ -1276,27 +1317,22 @@ function PublicMenu() {
                   </div>
                 )}
 
-                {paymentMethod === "upi" &&
-                  features.upi &&
-                  Boolean((shop.features as Record<string, unknown> | null)?.["upi_enabled"]) &&
-                  (Boolean((shop.features as Record<string, unknown> | null)?.["upi_id"]) ||
-                    Boolean((shop.features as Record<string, unknown> | null)?.["upi_qr_url"])) &&
-                  orderType !== "enquiry" && (
-                    <UpiPaymentBox
-                      upiId={
-                        ((shop.features as Record<string, unknown> | null)?.["upi_id"] as string) ||
-                        ""
-                      }
-                      upiQrUrl={
-                        (shop.features as Record<string, unknown> | null)?.["upi_qr_url"] as
-                          string | null
-                      }
-                      shopName={shop.name}
-                      amount={total}
-                      currency={shop.currency}
-                      className="mb-6"
-                    />
-                  )}
+                {paymentMethod === "upi" && shopUpiEnabled(shop) && orderType !== "enquiry" && (
+                  <UpiPaymentBox
+                    upiId={
+                      ((shop.features as Record<string, unknown> | null)?.["upi_id"] as string) ||
+                      ""
+                    }
+                    upiQrUrl={
+                      (shop.features as Record<string, unknown> | null)?.["upi_qr_url"] as
+                        string | null
+                    }
+                    shopName={shop.name}
+                    amount={total}
+                    currency={shop.currency}
+                    className="mb-6"
+                  />
+                )}
 
                 <div className="pt-2">
                   <Button
@@ -1358,6 +1394,21 @@ function PublicMenu() {
           logo_url: shop.logo_url,
           niche: shop.niche,
           googleReviewLink: shopGoogleReviewLink(shop) ?? null,
+        }}
+      />
+
+      {/* Interactive Location Map Picker Modal */}
+      <LocationMapModal
+        open={mapModalOpen}
+        onOpenChange={setMapModalOpen}
+        initialLat={currentCoords.lat}
+        initialLng={currentCoords.lng}
+        onSelectLocation={(res) => {
+          setDeliveryAddress(res.address);
+          setDeliveryCity(res.city);
+          setDeliveryPincode(res.pincode);
+          setGpsLink(res.gpsLink);
+          setCurrentCoords({ lat: res.latitude, lng: res.longitude });
         }}
       />
     </div>

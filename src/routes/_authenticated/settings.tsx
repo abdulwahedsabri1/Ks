@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { UpiPaymentBox } from "@/components/UpiPaymentBox";
 import { supabase } from "@/integrations/supabase/client";
 import { updateShopSettings } from "@/lib/shop.functions";
+import { purgePublicShopCache, invalidatePublicShopCache } from "@/lib/menu.functions";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsAdmin, useMyShop, uploadShopMedia, triggerCrossTabSync } from "@/hooks/useShopData";
 import { DashboardShell } from "@/components/DashboardShell";
@@ -53,6 +54,8 @@ import {
   shopSocialLinks,
   shopTiming,
   shopMapUrl,
+  shopLocationBlinkEnabled,
+  shopLocationBadgeLabel,
   shopCustomDomain,
   publicShopUrl,
   slugify,
@@ -61,7 +64,6 @@ import {
   type Coupon,
   type Shop,
 } from "@/lib/shop";
-import { invalidatePublicShopCache } from "@/lib/menu.functions";
 
 function safeStr(val: unknown): string {
   if (typeof val === "string") return val.trim();
@@ -83,6 +85,8 @@ function computeLiveShop(shop: Shop, form: any): Shop {
     website_url: safeStr(form["website_url"]),
     whatsapp_group_url: safeStr(form["whatsapp_group_url"]),
     whatsapp_group: safeStr(form["whatsapp_group_url"]),
+    youtube_url: safeStr(form["youtube_url"]),
+    youtube: safeStr(form["youtube_url"]),
     google_review_link: safeStr(form["google_review_link"]),
     cart_enabled: form["cart_enabled"],
     ordering_enabled: form["cart_enabled"],
@@ -102,6 +106,8 @@ function computeLiveShop(shop: Shop, form: any): Shop {
     upi_enabled: form["upi_enabled"],
     upi_id: safeStr(form["upi_id"]),
     upi_qr_url: safeStr(form["upi_qr_url"]),
+    location_blink_enabled: form["location_blink_enabled"],
+    label_location_popup: safeStr(form["label_location_popup"]),
   };
 
   return {
@@ -172,6 +178,7 @@ function SettingsPage() {
     twitter_url: "",
     website_url: "",
     whatsapp_group_url: "",
+    youtube_url: "",
     google_review_link: "",
     cart_enabled: true,
     delivery: true,
@@ -191,9 +198,13 @@ function SettingsPage() {
     upi_qr_url: "",
     logo_url: "",
     cover_url: "",
+    location_blink_enabled: true,
+    label_location_popup: "📍 Click Here for Location",
   });
 
   const [saving, setSaving] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<"synced" | "saving" | "error">("synced");
+  const [savedForm, setSavedForm] = useState<typeof form | null>(null);
   const [uploadingMedia, setUploadingMedia] = useState<string | null>(null);
   const [testUpiAmount, setTestUpiAmount] = useState<number>(240);
   const [copiedId, setCopiedId] = useState(false);
@@ -243,9 +254,9 @@ function SettingsPage() {
 
       if (error) throw error;
       toast.success("Discount coupons updated instantly!");
-      await qc.invalidateQueries();
-      invalidatePublicShopCache(shop.slug);
-      triggerCrossTabSync(shop.id);
+      await qc.invalidateQueries({ queryKey: ["my-shop"] });
+      purgePublicShopCache({ data: { slug: shop.slug } });
+      triggerCrossTabSync(shop.id, shop.owner_id);
     } catch (err) {
       toast.error("Failed to sync coupons: " + (err instanceof Error ? err.message : String(err)));
     }
@@ -289,7 +300,7 @@ function SettingsPage() {
     if (!shop) return;
     const soc = shopSocialLinks(shop);
 
-    setForm({
+    const initial = {
       name: shop.name || "",
       slug: shop.slug || "",
       custom_domain: shopCustomDomain(shop) || "",
@@ -307,6 +318,7 @@ function SettingsPage() {
       twitter_url: soc.twitter || "",
       website_url: soc.website || "",
       whatsapp_group_url: soc.whatsapp_group || "",
+      youtube_url: soc.youtube || "",
       google_review_link: shopGoogleReviewLink(shop) || "",
       cart_enabled: shopCartEnabled(shop),
       delivery: shopDeliveryEnabled(shop),
@@ -326,77 +338,199 @@ function SettingsPage() {
       upi_qr_url: upiQrUrl,
       logo_url: shop.logo_url || "",
       cover_url: shop.cover_url || "",
-    });
+      location_blink_enabled: shopLocationBlinkEnabled(shop),
+      label_location_popup: shopLocationBadgeLabel(shop),
+    };
+
+    setForm(initial);
+    setSavedForm(initial);
+    setSyncStatus("synced");
   }, [shop]);
+
+  const isDirty = useMemo(() => {
+    if (!shop || !savedForm) return false;
+    return JSON.stringify(form) !== JSON.stringify(savedForm);
+  }, [form, savedForm, shop]);
 
   async function save() {
     if (!shop) return;
+
+    if (form.name.trim().length < 2) {
+      toast.error("Shop name must be at least 2 characters.");
+      return;
+    }
+    if (!form.slug.trim()) {
+      toast.error("Custom handle / URL slug is required.");
+      return;
+    }
+
     try {
       setSaving(true);
-      const liveShopData = computeLiveShop(shop, form);
+      setSyncStatus("saving");
 
-      qc.setQueryData(["myShop", user?.id], liveShopData);
-      qc.setQueryData(["publicShop", shop.slug], liveShopData);
-      if (form.slug && form.slug !== shop.slug) {
-        qc.setQueryData(["publicShop", form.slug], liveShopData);
-      }
+      const updatesPayload = {
+        name: form.name.trim(),
+        slug: form.slug.trim().toLowerCase() || undefined,
+        custom_domain: form.custom_domain.trim() || null,
+        tagline: form.tagline.trim() || null,
+        niche: form.niche,
+        whatsapp: form.whatsapp.trim() || null,
+        phone: form.phone.trim() || null,
+        address: form.address.trim() || null,
+        map_url: form.map_url.trim() || null,
+        currency: form.currency || "₹",
+        timing: form.timing.trim() || null,
+        social_link: form.instagram_url.trim() || null,
+        instagram_url: form.instagram_url.trim() || null,
+        facebook_url: form.facebook_url.trim() || null,
+        twitter_url: form.twitter_url.trim() || null,
+        website_url: form.website_url.trim() || null,
+        whatsapp_group_url: form.whatsapp_group_url.trim() || null,
+        youtube_url: form.youtube_url.trim() || null,
+        google_review_link: form.google_review_link.trim() || null,
+        cart_enabled: form.cart_enabled,
+        delivery: form.delivery,
+        takeaway: form.takeaway,
+        on_table: form.on_table,
+        enquiry: form.enquiry,
+        label_enquiry: form.label_enquiry,
+        catalog_label: form.catalog_label,
+        item_label: form.item_label,
+        theme: form.theme,
+        languages: form.languages,
+        multi_language_enabled: form.multi_language_enabled,
+        coupons: form.coupons,
+        cod_enabled: form.cod_enabled,
+        upi_enabled: form.upi_enabled,
+        upi_id: form.upi_id,
+        upi_qr_url: form.upi_qr_url,
+        logo_url: form.logo_url,
+        cover_url: form.cover_url,
+        location_blink_enabled: form.location_blink_enabled,
+        label_location_popup: form.label_location_popup,
+      };
 
-      await updateShopSettings({
-        data: {
-          shop_id: shop.id,
-          updates: {
-            name: form.name,
-            slug: form.slug || undefined,
-            custom_domain: form.custom_domain,
-            tagline: form.tagline,
-            niche: form.niche,
-            whatsapp: form.whatsapp,
-            phone: form.phone,
-            address: form.address,
-            map_url: form.map_url,
-            currency: form.currency,
-            timing: form.timing,
-            social_link: form.instagram_url,
-            instagram_url: form.instagram_url,
-            facebook_url: form.facebook_url,
-            twitter_url: form.twitter_url,
-            website_url: form.website_url,
-            whatsapp_group_url: form.whatsapp_group_url,
-            google_review_link: form.google_review_link,
-            cart_enabled: form.cart_enabled,
-            delivery: form.delivery,
-            takeaway: form.takeaway,
-            on_table: form.on_table,
-            enquiry: form.enquiry,
-            label_enquiry: form.label_enquiry,
-            catalog_label: form.catalog_label,
-            item_label: form.item_label,
-            theme: form.theme,
-            languages: form.languages,
-            multi_language_enabled: form.multi_language_enabled,
-            coupons: form.coupons,
-            cod_enabled: form.cod_enabled,
-            upi_enabled: form.upi_enabled,
-            upi_id: form.upi_id,
-            upi_qr_url: form.upi_qr_url,
-            logo_url: form.logo_url,
-            cover_url: form.cover_url,
+      let updatedShop: Shop | null = null;
+
+      // Tier 1: Attempt update via Server Function
+      try {
+        const response = await updateShopSettings({
+          data: {
+            shop_id: shop.id,
+            updates: updatesPayload,
           },
-        },
-      });
-
-      await qc.invalidateQueries({ queryKey: ["myShop", user?.id] });
-      await qc.invalidateQueries({ queryKey: ["publicShop"] });
-
-      invalidatePublicShopCache(shop.slug);
-      if (form.slug && form.slug !== shop.slug) {
-        invalidatePublicShopCache(form.slug);
+        });
+        if (response.success && response.shop) {
+          updatedShop = response.shop as Shop;
+        }
+      } catch (sfErr) {
+        console.warn("Server function update error, falling back to direct client update:", sfErr);
       }
-      triggerCrossTabSync(shop.id);
 
+      // Tier 2: Fallback to direct Supabase client SDK if server function failed
+      if (!updatedShop) {
+        const currentFeatures = (shop.features as Record<string, any>) || {};
+        const updatedFeatures = {
+          ...currentFeatures,
+          custom_domain: form.custom_domain.trim() || null,
+          timing: form.timing.trim() || null,
+          map_url: form.map_url.trim() || null,
+          social_link: form.instagram_url.trim() || null,
+          instagram_url: form.instagram_url.trim() || null,
+          facebook_url: form.facebook_url.trim() || null,
+          twitter_url: form.twitter_url.trim() || null,
+          website_url: form.website_url.trim() || null,
+          whatsapp_group_url: form.whatsapp_group_url.trim() || null,
+          whatsapp_group: form.whatsapp_group_url.trim() || null,
+          google_review_link: form.google_review_link.trim() || null,
+          cart_enabled: form.cart_enabled,
+          ordering_enabled: form.cart_enabled,
+          delivery: form.delivery,
+          takeaway: form.takeaway,
+          take_away: form.takeaway,
+          on_table: form.on_table,
+          enquiry: form.enquiry,
+          label_enquiry: form.label_enquiry,
+          catalog_label: form.catalog_label,
+          item_label: form.item_label,
+          theme: form.theme,
+          languages: form.languages,
+          multi_language_enabled: form.multi_language_enabled,
+          coupons: form.coupons,
+          cod_enabled: form.cod_enabled,
+          upi_enabled: form.upi_enabled,
+          upi_id: form.upi_id,
+          upi_qr_url: form.upi_qr_url,
+          location_blink_enabled: form.location_blink_enabled,
+          label_location_popup: form.label_location_popup,
+        };
+
+        const directPayload = {
+          name: form.name.trim(),
+          slug: form.slug.trim().toLowerCase() || shop.slug,
+          tagline: form.tagline.trim() || null,
+          niche: form.niche,
+          whatsapp: form.whatsapp.trim() || null,
+          phone: form.phone.trim() || null,
+          address: form.address.trim() || null,
+          currency: form.currency || "₹",
+          logo_url: form.logo_url || null,
+          cover_url: form.cover_url || null,
+          updated_at: new Date().toISOString(),
+          features: updatedFeatures,
+          ...(shop.owner_id ? {} : { owner_id: user?.id }),
+        };
+
+        const { data: dbData, error: dbErr } = await supabase
+          .from("shops")
+          .update(directPayload as any)
+          .eq("id", shop.id)
+          .select();
+
+        if (dbErr) {
+          throw new Error(`Database save failed: ${dbErr.message}`);
+        }
+
+        if (dbData && dbData.length > 0) {
+          updatedShop = dbData[0] as Shop;
+        } else {
+          updatedShop = computeLiveShop(shop, form);
+        }
+      }
+
+      if (!updatedShop) {
+        throw new Error("Unable to confirm shop update.");
+      }
+
+      // Update saved state reference & optimistic query caches
+      setSavedForm(form);
+      qc.setQueryData(["my-shop", user?.id], updatedShop);
+      qc.setQueryData(["my-shop"], updatedShop);
+      qc.setQueryData(["myShop", user?.id], updatedShop);
+      qc.setQueryData(["publicShop", updatedShop.slug], updatedShop);
+
+      // Refetch and sync across tabs & devices
+      await qc.invalidateQueries({ queryKey: ["my-shop"] });
+      await qc.invalidateQueries({ queryKey: ["myShop"] });
+      await qc.invalidateQueries({ queryKey: ["publicShop"] });
+      await qc.invalidateQueries({ queryKey: ["admin-all-shops"] });
+
+      // Purge server cache for public shop
+      try {
+        await purgePublicShopCache({ data: { slug: shop.slug } });
+        if (updatedShop.slug !== shop.slug) {
+          await purgePublicShopCache({ data: { slug: updatedShop.slug } });
+        }
+      } catch (e) {
+        console.warn("Purge cache warning:", e);
+      }
+
+      triggerCrossTabSync(shop.id, shop.owner_id || user?.id);
+      setSyncStatus("synced");
       toast.success("✨ Shop Settings saved & synchronized in real-time!");
     } catch (err) {
       console.error("Failed to save shop settings:", err);
+      setSyncStatus("error");
       toast.error("Failed to save settings: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setSaving(false);
@@ -426,7 +560,10 @@ function SettingsPage() {
         if (error) throw error;
         toast.success(kind === "logo_url" ? "Shop logo uploaded!" : "Cover banner uploaded!");
       }
-      await qc.invalidateQueries();
+      await qc.invalidateQueries({ queryKey: ["my-shop"] });
+      await qc.invalidateQueries({ queryKey: ["myShop"] });
+      purgePublicShopCache({ data: { slug: shop.slug } });
+      triggerCrossTabSync(shop.id, shop.owner_id);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -442,7 +579,10 @@ function SettingsPage() {
       const { error } = await supabase.from("shops").update(patch).eq("id", shop.id);
       if (error) throw error;
       toast.success(kind === "logo_url" ? "Logo removed" : "Cover banner removed");
-      await qc.invalidateQueries();
+      await qc.invalidateQueries({ queryKey: ["my-shop"] });
+      await qc.invalidateQueries({ queryKey: ["myShop"] });
+      purgePublicShopCache({ data: { slug: shop.slug } });
+      triggerCrossTabSync(shop.id, shop.owner_id);
     } catch {
       toast.error("Failed to remove image");
     }
@@ -471,6 +611,24 @@ function SettingsPage() {
       actions={
         shop && (
           <div className="flex items-center gap-2">
+            {syncStatus === "saving" && (
+              <span className="hidden md:flex text-[11px] font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/30 items-center gap-1.5 animate-pulse">
+                <Loader2 className="size-3 animate-spin text-amber-400" />
+                Saving...
+              </span>
+            )}
+            {syncStatus === "synced" && (
+              <span className="hidden md:flex text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/30 items-center gap-1.5">
+                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+                Real-Time Synced
+              </span>
+            )}
+            {syncStatus === "error" && (
+              <span className="hidden md:flex text-[11px] font-bold text-red-400 bg-red-500/10 px-2.5 py-1 rounded-full border border-red-500/30 items-center gap-1.5">
+                <span className="size-2 rounded-full bg-red-500" />
+                Save Error
+              </span>
+            )}
             <Button
               asChild
               variant="outline"
@@ -489,9 +647,13 @@ function SettingsPage() {
             </Button>
             <Button
               onClick={save}
-              disabled={saving || Boolean(uploadingMedia)}
+              disabled={saving || !isDirty || Boolean(uploadingMedia)}
               size="sm"
-              className="h-9 bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs px-4 shadow-sm"
+              className={`h-9 font-bold text-xs px-4 shadow-sm transition-all ${
+                isDirty && !saving
+                  ? "bg-amber-500 hover:bg-amber-600 text-black cursor-pointer"
+                  : "bg-amber-500/40 text-black/50 cursor-not-allowed"
+              }`}
             >
               {saving ? (
                 <>
@@ -501,8 +663,8 @@ function SettingsPage() {
               ) : (
                 <>
                   <Check className="size-3.5" />
-                  <span className="hidden sm:inline">Save Changes</span>
-                  <span className="sm:hidden">Save</span>
+                  <span className="hidden sm:inline">{isDirty ? "Save Changes" : "Saved"}</span>
+                  <span className="sm:hidden">{isDirty ? "Save" : "Saved"}</span>
                 </>
               )}
             </Button>
@@ -1024,6 +1186,45 @@ function SettingsPage() {
                     onChange={(v) => updateForm((prev) => ({ ...prev, timing: v }))}
                   />
                 </div>
+
+                {/* Blinking Location Popup / Click Here Badge Control */}
+                <div className="space-y-3.5 rounded-xl border bg-muted/20 p-4 border-amber-500/30">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <Label htmlFor="location-blink-toggle" className="font-bold text-xs sm:text-sm text-foreground flex items-center gap-1.5 cursor-pointer">
+                        <MapPin className="size-4 text-amber-500" /> Blinking "Click Here for Location" Badge
+                      </Label>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Show an eye-catching blinking badge next to your store address on the public shop link.
+                      </p>
+                    </div>
+                    <Switch
+                      id="location-blink-toggle"
+                      checked={form.location_blink_enabled}
+                      onCheckedChange={(v) => updateForm((prev) => ({ ...prev, location_blink_enabled: v }))}
+                    />
+                  </div>
+
+                  {form.location_blink_enabled && (
+                    <div className="space-y-3 pt-2 border-t border-border/50 animate-in fade-in duration-200">
+                      <FormInput
+                        id="location-badge-label"
+                        label="Blinking Badge Button Text"
+                        value={form.label_location_popup}
+                        placeholder="📍 Click Here for Location"
+                        onChange={(v) => updateForm((prev) => ({ ...prev, label_location_popup: v }))}
+                      />
+
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 rounded-xl bg-card border border-border text-xs">
+                        <span className="text-muted-foreground font-semibold">Public Shop Link Live Preview:</span>
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-black bg-amber-400 border border-amber-300 shadow-md shadow-amber-400/20 animate-pulse">
+                          <span className="size-2 rounded-full bg-red-600 animate-ping shrink-0" />
+                          <span>{form.label_location_popup || "📍 Click Here for Location"}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Social Links */}
@@ -1044,6 +1245,36 @@ function SettingsPage() {
                   placeholder="https://instagram.com/yourshop"
                   onChange={(v) => updateForm((prev) => ({ ...prev, instagram_url: v }))}
                 />
+
+                {/* YouTube Link Integration (Premium Feature) */}
+                {!feat.youtube ? (
+                  <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold text-red-500 flex items-center gap-1.5">
+                        <Lock className="size-3.5" /> YouTube Channel Integration (Premium Feature)
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Display YouTube channel or video link badge on your public shop storefront.
+                      </p>
+                    </div>
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      className="h-8 border-red-500/40 text-red-500 hover:bg-red-500/10 shrink-0 font-bold text-xs w-full sm:w-auto"
+                    >
+                      <a href="/pricing">Upgrade to Premium</a>
+                    </Button>
+                  </div>
+                ) : (
+                  <FormInput
+                    id="s-youtube"
+                    label="YouTube Channel / Video URL"
+                    value={form.youtube_url}
+                    placeholder="https://youtube.com/@yourchannel or https://youtube.com/watch?v=..."
+                    onChange={(v) => updateForm((prev) => ({ ...prev, youtube_url: v }))}
+                  />
+                )}
 
                 {!feat.advanced_social_links ? (
                   <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -1252,37 +1483,15 @@ function SettingsPage() {
                       Accept instant UPI payments directly into your bank account.
                     </p>
                   </div>
-                  {feat.upi && (
-                    <Switch
-                      id="s-upi-toggle"
-                      checked={form.upi_enabled}
-                      onCheckedChange={(v) => updateForm((prev) => ({ ...prev, upi_enabled: v }))}
-                    />
-                  )}
+                  <Switch
+                    id="s-upi-toggle"
+                    checked={form.upi_enabled}
+                    onCheckedChange={(v) => updateForm((prev) => ({ ...prev, upi_enabled: v }))}
+                  />
                 </div>
 
-                {!feat.upi ? (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-bold text-amber-500 flex items-center gap-1.5">
-                        <Lock className="size-3.5" /> UPI Payments Integration
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Upgrade to Premium plan to unlock direct UPI payment collection.
-                      </p>
-                    </div>
-                    <Button
-                      asChild
-                      size="sm"
-                      variant="outline"
-                      className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs w-full sm:w-auto"
-                    >
-                      <a href="/pricing">Upgrade</a>
-                    </Button>
-                  </div>
-                ) : (
-                  form.upi_enabled && (
-                    <div className="space-y-4 sm:space-y-5 pt-2 animate-in fade-in duration-200">
+                {form.upi_enabled && (
+                  <div className="space-y-4 sm:space-y-5 pt-2 animate-in fade-in duration-200">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormInput
                           id="s-upi"
@@ -1356,8 +1565,7 @@ function SettingsPage() {
                         </div>
                       )}
                     </div>
-                  )
-                )}
+                  )}
               </div>
             </div>
           )}

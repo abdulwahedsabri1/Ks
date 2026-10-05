@@ -79,6 +79,7 @@ const COMPARE_ROWS: CompRow[] = [
     premium: "All 18 Themes",
   },
   { feature: "Google Reviews integration", trial: false, basic: false, pro: false, premium: true },
+  { feature: "YouTube Channel & Video integration", trial: false, basic: false, pro: false, premium: true },
   { feature: "Custom domain", trial: false, basic: false, pro: false, premium: true },
   { feature: "Priority support", trial: false, basic: false, pro: false, premium: true },
 ];

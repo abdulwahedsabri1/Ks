@@ -16,10 +16,13 @@ import {
   Check,
   Copy,
   Sparkles,
+  Compass,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { BusinessVideoSeries } from "@/components/BusinessVideoSeries";
 import { getCategoryInstructionsConfig } from "@/lib/shop";
+import { LocationMapModal } from "@/components/LocationMapModal";
+import { fetchExactLocationFromCoords } from "@/lib/locationHelper";
 
 const BUSINESS_TYPES = [
   {
@@ -164,6 +167,12 @@ export function BusinessPreviewSection() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [isLocating, setIsLocating] = useState(false);
+  const [mapModalOpen, setMapModalOpen] = useState(false);
+  const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number }>({
+    lat: 17.385044,
+    lng: 78.486671,
+  });
+  const [gpsLink, setGpsLink] = useState("");
   const [orderSubmitted, setOrderSubmitted] = useState(false);
 
   // Coupon state
@@ -240,67 +249,16 @@ export function BusinessPreviewSection() {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-          let foundAddress = false;
+          setCurrentCoords({ lat: latitude, lng: longitude });
 
-          try {
-            const res = await fetch(
-              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
-            );
-            if (res.ok) {
-              const data = await res.json();
-              if (data) {
-                const city = data.city || data.locality || data.principalSubdivision || "";
-                const pincode = data.postcode || "";
-                const parts = [data.locality, data.city, data.principalSubdivision].filter(Boolean);
-                const streetAddress = parts.length > 0 ? parts.join(", ") : "";
-
-                if (city) setDeliveryCity(city);
-                if (pincode) setDeliveryPincode(pincode);
-                if (streetAddress) {
-                  setDeliveryAddress(streetAddress);
-                  foundAddress = true;
-                }
-              }
-            }
-          } catch (err) {
-            console.warn("BigDataCloud reverse geocode error:", err);
-          }
-
-          if (!foundAddress) {
-            try {
-              const res = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-              );
-              if (res.ok) {
-                const data = await res.json();
-                if (data && data.address) {
-                  const addr = data.address;
-                  setDeliveryCity(addr.city || addr.town || addr.village || addr.county || "");
-                  setDeliveryPincode(addr.postcode || "");
-                  const streetParts = [
-                    addr.house_number,
-                    addr.road || addr.street,
-                    addr.suburb || addr.neighbourhood,
-                  ].filter(Boolean);
-                  const streetAddress =
-                    streetParts.length > 0 ? streetParts.join(", ") : data.display_name || "";
-                  if (streetAddress) {
-                    setDeliveryAddress(streetAddress);
-                    foundAddress = true;
-                  }
-                }
-              }
-            } catch (err) {
-              console.warn("Nominatim reverse geocode error:", err);
-            }
-          }
-
-          if (!foundAddress) {
-            setDeliveryAddress(`GPS Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
-          }
+          const result = await fetchExactLocationFromCoords(latitude, longitude);
+          setGpsLink(result.gpsLink);
+          if (result.address) setDeliveryAddress(result.address);
+          if (result.city) setDeliveryCity(result.city);
+          if (result.pincode) setDeliveryPincode(result.pincode);
 
           setIsLocating(false);
-          toast.success("Location retrieved via GPS!");
+          toast.success("🎯 Exact location captured via GPS!");
         },
         (error) => {
           setIsLocating(false);
@@ -313,7 +271,7 @@ export function BusinessPreviewSection() {
             toast.error("Could not fetch GPS. Loaded demo address.");
           }
         },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
       );
     } else {
       setDeliveryAddress("Flat 402, Green Park Avenue");
@@ -797,20 +755,30 @@ export function BusinessPreviewSection() {
                                     exit={{ opacity: 0, y: -10 }}
                                     className={`p-2.5 rounded-xl border ${p.borderColor} bg-white/5 space-y-2`}
                                   >
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between gap-1 flex-wrap">
                                       <span className={`text-[10px] font-bold ${p.accentText}`}>
                                         Delivery Address
                                       </span>
-                                      <motion.button
-                                        whileTap={{ scale: 0.92 }}
-                                        type="button"
-                                        onClick={fetchLocation}
-                                        disabled={isLocating}
-                                        className={`px-2 py-0.5 rounded text-[9px] font-bold ${p.accentBg} ${p.cartText} flex items-center gap-1 hover:opacity-90 transition-all cursor-pointer shadow-sm`}
-                                      >
-                                        <MapPin className="size-2.5" />
-                                        {isLocating ? "Locating..." : "Use GPS"}
-                                      </motion.button>
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => setMapModalOpen(true)}
+                                          className="px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 hover:bg-amber-500/30 transition-all cursor-pointer"
+                                        >
+                                          <Compass className="size-2.5 text-amber-400" />
+                                          Pick on Map
+                                        </button>
+                                        <motion.button
+                                          whileTap={{ scale: 0.92 }}
+                                          type="button"
+                                          onClick={fetchLocation}
+                                          disabled={isLocating}
+                                          className={`px-2 py-0.5 rounded text-[9px] font-bold ${p.accentBg} ${p.cartText} flex items-center gap-1 hover:opacity-90 transition-all cursor-pointer shadow-sm`}
+                                        >
+                                          <MapPin className="size-2.5" />
+                                          {isLocating ? "Locating..." : "Use GPS"}
+                                        </motion.button>
+                                      </div>
                                     </div>
                                     <textarea
                                       rows={2}
@@ -1168,6 +1136,21 @@ export function BusinessPreviewSection() {
           <BusinessVideoSeries initialVideoId="all-business-showcase" showTitle={true} />
         </div>
       </div>
+
+      {/* Interactive Location Map Picker Modal */}
+      <LocationMapModal
+        open={mapModalOpen}
+        onOpenChange={setMapModalOpen}
+        initialLat={currentCoords.lat}
+        initialLng={currentCoords.lng}
+        onSelectLocation={(res) => {
+          setDeliveryAddress(res.address);
+          setDeliveryCity(res.city);
+          setDeliveryPincode(res.pincode);
+          setGpsLink(res.gpsLink);
+          setCurrentCoords({ lat: res.latitude, lng: res.longitude });
+        }}
+      />
     </section>
   );
 }
