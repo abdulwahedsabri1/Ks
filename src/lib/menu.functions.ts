@@ -7,12 +7,12 @@ function getSharedPublicClient() {
   if (_clientInstance) return _clientInstance;
 
   const key =
-    (typeof process !== "undefined" && process.env ? process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || process.env["SUPABASE_PUBLISHABLE_KEY"] : undefined) ||
-    (typeof import.meta !== "undefined" && import.meta.env ? import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] : undefined) ||
+    process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+    process.env["SUPABASE_PUBLISHABLE_KEY"] ||
     "sb_publishable_zsLutER8J1k7E2qpwyE8vw_uVC24oU-";
   const url =
-    (typeof process !== "undefined" && process.env ? process.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"] : undefined) ||
-    (typeof import.meta !== "undefined" && import.meta.env ? import.meta.env["VITE_SUPABASE_URL"] : undefined) ||
+    process.env["VITE_SUPABASE_URL"] ||
+    process.env["SUPABASE_URL"] ||
     "https://qmxrfzvvgwhzhqzhmwrf.supabase.co";
 
   _clientInstance = createClient(url, key, {

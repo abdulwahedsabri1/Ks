@@ -10,9 +10,7 @@ type ScannedMenu = {
 };
 
 function getGeminiApiKey(): string {
-  const key =
-    (typeof process !== "undefined" && process.env ? process.env["GEMINI_API_KEY"] || process.env["VITE_GEMINI_API_KEY"] : undefined) ||
-    (typeof import.meta !== "undefined" && import.meta.env ? import.meta.env["VITE_GEMINI_API_KEY"] : undefined);
+  const key = process.env["GEMINI_API_KEY"];
   if (!key) {
     throw new Error(
       "GEMINI_API_KEY is not configured on the server environment. Please set GEMINI_API_KEY in your deployment project settings.",

@@ -2740,3 +2740,5 @@ function QrPage() {
     </>
   );
 }
+
+export default QrPage;
