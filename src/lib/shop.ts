@@ -145,6 +145,13 @@ export function shopLocationBadgeLabel(shop?: Pick<Shop, "features"> | null): st
   return typeof custom === "string" && custom.trim() ? custom.trim() : "📍 Click Here for Location";
 }
 
+export function shopShareEnabled(shop?: Pick<Shop, "plan" | "features"> | null): boolean {
+  if (!shopFeatures(shop).share) return false;
+  const f = shop?.features as Record<string, any> | undefined;
+  if (!f) return true;
+  return f["share_enabled"] !== false;
+}
+
 export function shopCatalogLabel(shop?: Pick<Shop, "niche" | "features"> | null): string {
   const f = shop?.features as Record<string, any> | undefined;
   const custom = f?.["catalog_label"];
@@ -668,6 +675,7 @@ export const PLANS: PlanItem[] = [
       "Coupon codes",
       "UPI Payments",
       "YouTube Channel integration",
+      "Product & Store Link sharing",
     ],
   },
 ];
@@ -698,6 +706,7 @@ export type PlanFeatures = {
   coupons: boolean;
   upi: boolean;
   youtube: boolean;
+  share: boolean;
 };
 
 export const PLAN_FEATURES: Record<string, PlanFeatures> = {
@@ -724,6 +733,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     coupons: false,
     upi: false,
     youtube: false,
+    share: false,
   },
   basic: {
     items: 50,
@@ -748,6 +758,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     coupons: false,
     upi: false,
     youtube: false,
+    share: false,
   },
   pro: {
     items: Infinity,
@@ -772,6 +783,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     coupons: false,
     upi: false,
     youtube: false,
+    share: false,
   },
   premium: {
     items: Infinity,
@@ -796,6 +808,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     coupons: true,
     upi: true,
     youtube: true,
+    share: true,
   },
 };
 
@@ -819,7 +832,8 @@ export type FeatureKey =
   | "multi_language"
   | "coupons"
   | "upi"
-  | "youtube";
+  | "youtube"
+  | "share";
 
 export const FEATURE_LABELS: Record<FeatureKey, string> = {
   logo_cover: "Business logo & cover photo",
@@ -842,6 +856,7 @@ export const FEATURE_LABELS: Record<FeatureKey, string> = {
   coupons: "Discount & Coupon codes",
   upi: "UPI payments",
   youtube: "YouTube Channel integration",
+  share: "Product & Store Link sharing",
 };
 
 export const FEATURE_KEYS = Object.keys(FEATURE_LABELS) as FeatureKey[];

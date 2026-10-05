@@ -80,6 +80,7 @@ const COMPARE_ROWS: CompRow[] = [
   },
   { feature: "Google Reviews integration", trial: false, basic: false, pro: false, premium: true },
   { feature: "YouTube Channel & Video integration", trial: false, basic: false, pro: false, premium: true },
+  { feature: "Product & Store link sharing buttons", trial: false, basic: false, pro: false, premium: true },
   { feature: "Custom domain", trial: false, basic: false, pro: false, premium: true },
   { feature: "Priority support", trial: false, basic: false, pro: false, premium: true },
 ];

@@ -56,6 +56,7 @@ import {
   shopMapUrl,
   shopLocationBlinkEnabled,
   shopLocationBadgeLabel,
+  shopShareEnabled,
   shopCustomDomain,
   publicShopUrl,
   slugify,
@@ -108,6 +109,7 @@ function computeLiveShop(shop: Shop, form: any): Shop {
     upi_qr_url: safeStr(form["upi_qr_url"]),
     location_blink_enabled: form["location_blink_enabled"],
     label_location_popup: safeStr(form["label_location_popup"]),
+    share_enabled: form["share_enabled"],
   };
 
   return {
@@ -200,6 +202,7 @@ function SettingsPage() {
     cover_url: "",
     location_blink_enabled: true,
     label_location_popup: "📍 Click Here for Location",
+    share_enabled: true,
   });
 
   const [saving, setSaving] = useState(false);
@@ -340,6 +343,7 @@ function SettingsPage() {
       cover_url: shop.cover_url || "",
       location_blink_enabled: shopLocationBlinkEnabled(shop),
       label_location_popup: shopLocationBadgeLabel(shop),
+      share_enabled: shopShareEnabled(shop),
     };
 
     setForm(initial);
@@ -408,6 +412,7 @@ function SettingsPage() {
         cover_url: form.cover_url,
         location_blink_enabled: form.location_blink_enabled,
         label_location_popup: form.label_location_popup,
+        share_enabled: form.share_enabled,
       };
 
       let updatedShop: Shop | null = null;
@@ -1274,6 +1279,46 @@ function SettingsPage() {
                     placeholder="https://youtube.com/@yourchannel or https://youtube.com/watch?v=..."
                     onChange={(v) => updateForm((prev) => ({ ...prev, youtube_url: v }))}
                   />
+                )}
+
+                {/* Product & Store Link Sharing (Premium Feature) */}
+                {!feat.share ? (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold text-amber-500 flex items-center gap-1.5">
+                        <Lock className="size-3.5" /> Product & Shop Sharing Buttons (Premium Feature)
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Enable share buttons on individual menu items and storefront so customers can easily share via WhatsApp & social media.
+                      </p>
+                    </div>
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      className="h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 shrink-0 font-bold text-xs w-full sm:w-auto"
+                    >
+                      <a href="/pricing">Upgrade to Premium</a>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3.5 rounded-xl border bg-muted/20 p-4 border-amber-500/30">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <Label htmlFor="share-buttons-toggle" className="font-bold text-xs sm:text-sm text-foreground flex items-center gap-1.5 cursor-pointer">
+                          <Share2 className="size-4 text-amber-500" /> Enable Product & Storefront Share Buttons
+                        </Label>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          Display instant "Share Item" buttons on every product card and a "Share Shop" button in your store header.
+                        </p>
+                      </div>
+                      <Switch
+                        id="share-buttons-toggle"
+                        checked={form.share_enabled}
+                        onCheckedChange={(v) => updateForm((prev) => ({ ...prev, share_enabled: v }))}
+                      />
+                    </div>
+                  </div>
                 )}
 
                 {!feat.advanced_social_links ? (

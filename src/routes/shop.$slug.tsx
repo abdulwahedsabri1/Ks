@@ -17,6 +17,7 @@ import {
   Twitter,
   Globe,
   Youtube,
+  Share2,
   AlertTriangle,
   Eye,
   Compass,
@@ -60,6 +61,7 @@ import {
   shopMapUrl,
   shopLocationBlinkEnabled,
   shopLocationBadgeLabel,
+  shopShareEnabled,
   getCategoryInstructionsConfig,
   THEME_CONFIG,
   type CartLine,
@@ -612,7 +614,9 @@ function PublicMenu() {
           {(() => {
             const socials = shopSocialLinks(shop);
             const reviewLink = shopGoogleReviewLink(shop);
+            const canShare = shopShareEnabled(shop);
             const hasSocials =
+              canShare ||
               socials.whatsapp_group ||
               socials.youtube ||
               socials.instagram ||
@@ -635,6 +639,29 @@ function PublicMenu() {
                     <MessageCircle className="size-3.5 shrink-0 text-emerald-500" />
                     <span>Join WhatsApp Group</span>
                   </a>
+                )}
+
+                {canShare && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const shareData = {
+                        title: shop.name,
+                        text: `Check out ${shop.name}${shop.tagline ? " — " + shop.tagline : ""} on MY Link QR!`,
+                        url: window.location.href,
+                      };
+                      if (navigator.share) {
+                        navigator.share(shareData).catch(() => undefined);
+                      } else {
+                        navigator.clipboard.writeText(window.location.href);
+                        toast.success("Public shop link copied to clipboard!");
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/35 px-3 py-1 text-xs font-bold text-amber-500 hover:bg-amber-500/25 transition-all hover:scale-105 active:scale-95 shadow-xs cursor-pointer"
+                  >
+                    <Share2 className="size-3.5 shrink-0 text-amber-500" />
+                    <span>Share Shop</span>
+                  </button>
                 )}
 
                 {reviewLink && (
@@ -757,6 +784,27 @@ function PublicMenu() {
               className={`flex flex-col overflow-hidden rounded-xl border ${theme.border} ${theme.card} transition-all ${item.is_available === false ? "opacity-75" : ""}`}
             >
               <div className={`relative aspect-square w-full ${theme.bg}`}>
+                {shopShareEnabled(shop) && (
+                  <button
+                    type="button"
+                    aria-label={`Share ${item.name}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const itemUrl = `${window.location.origin}/shop/${shop.slug}?item=${item.id}`;
+                      const text = `Check out ${item.name} (${money(item.discount_price ?? item.price, shop.currency)}) at ${shop.name}! ${itemUrl}`;
+                      if (navigator.share) {
+                        navigator.share({ title: item.name, text, url: itemUrl }).catch(() => undefined);
+                      } else {
+                        navigator.clipboard.writeText(itemUrl);
+                        toast.success(`Share link for "${item.name}" copied to clipboard!`);
+                      }
+                    }}
+                    className="absolute top-2.5 right-2.5 size-8 rounded-full bg-black/60 backdrop-blur-md border border-white/25 text-white flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all hover:scale-110 active:scale-95 shadow-md z-10 cursor-pointer"
+                    title={`Share ${item.name}`}
+                  >
+                    <Share2 className="size-3.5" />
+                  </button>
+                )}
                 <img
                   src={item.image_url || getFoodImageUrl(item.name, "")}
                   alt={item.name}
