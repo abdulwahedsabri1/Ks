@@ -34,18 +34,17 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 
 function createSupabaseAdminClient() {
   const SUPABASE_URL =
-    process.env["SUPABASE_URL"] ||
-    process.env["VITE_SUPABASE_URL"] ||
-    import.meta.env["VITE_SUPABASE_URL"] ||
+    (typeof process !== "undefined" && process.env ? process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"] : undefined) ||
+    (typeof import.meta !== "undefined" && import.meta.env ? import.meta.env["VITE_SUPABASE_URL"] : undefined) ||
     "https://qmxrfzvvgwhzhqzhmwrf.supabase.co";
 
-  const SUPABASE_SERVICE_ROLE_KEY = process.env["SUPABASE_SERVICE_ROLE_KEY"];
+  const SUPABASE_SERVICE_ROLE_KEY =
+    typeof process !== "undefined" && process.env ? process.env["SUPABASE_SERVICE_ROLE_KEY"] : undefined;
 
   if (!SUPABASE_SERVICE_ROLE_KEY) {
     const fallbackKey =
-      process.env["SUPABASE_PUBLISHABLE_KEY"] ||
-      process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
-      import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
+      (typeof process !== "undefined" && process.env ? process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] : undefined) ||
+      (typeof import.meta !== "undefined" && import.meta.env ? import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] : undefined) ||
       "sb_publishable_zsLutER8J1k7E2qpwyE8vw_uVC24oU-";
 
     console.warn(

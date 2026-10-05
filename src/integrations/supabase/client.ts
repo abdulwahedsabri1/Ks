@@ -33,15 +33,13 @@ function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env or project defaults for SSR (server-side rendering)
   const SUPABASE_URL =
-    import.meta.env["VITE_SUPABASE_URL"] ||
-    process.env["VITE_SUPABASE_URL"] ||
-    process.env["SUPABASE_URL"] ||
+    (typeof import.meta !== "undefined" && import.meta.env ? import.meta.env["VITE_SUPABASE_URL"] : undefined) ||
+    (typeof process !== "undefined" && process.env ? process.env["VITE_SUPABASE_URL"] || process.env["SUPABASE_URL"] : undefined) ||
     "https://qmxrfzvvgwhzhqzhmwrf.supabase.co";
 
   const SUPABASE_PUBLISHABLE_KEY =
-    import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
-    process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
-    process.env["SUPABASE_PUBLISHABLE_KEY"] ||
+    (typeof import.meta !== "undefined" && import.meta.env ? import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] : undefined) ||
+    (typeof process !== "undefined" && process.env ? process.env["VITE_SUPABASE_PUBLISHABLE_KEY"] || process.env["SUPABASE_PUBLISHABLE_KEY"] : undefined) ||
     "sb_publishable_zsLutER8J1k7E2qpwyE8vw_uVC24oU-";
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
